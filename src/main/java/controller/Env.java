@@ -10,7 +10,7 @@ public class Env {
     private static String PROP_FILE_NAME = ""; // = "./project.properties";
 
     private static Env instance = null;
-    private Properties prop;
+    private final Properties prop;
 
     private Env() {
 
@@ -34,7 +34,7 @@ public class Env {
     /**
      * プロパティーファイル名をセット.
      * <p>
-     * 使用前にかならずファイル名をセットすること。
+     * 使用前にかならずファイル名をセットすること。標準では「"./project.properties"」
      *
      * @param propFileName プロパティーファイル名
      */

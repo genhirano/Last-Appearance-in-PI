@@ -1,4 +1,4 @@
-package second;
+package model;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -85,12 +85,12 @@ public class YCD_Searcher extends Thread {
     /**
      * 検索中リスト.
      */
-    private List<String> processTarget = new ArrayList<>();
+    private final List<String> processTarget = new ArrayList<>();
 
     /**
      * 処理ステータス.
      */
-    private Status status = Status.ABORT;
+    private Status status;
 
     public Status getStatus() {
         return this.status;

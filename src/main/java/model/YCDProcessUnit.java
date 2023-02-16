@@ -1,4 +1,4 @@
-package second;
+package model;
 
 public class YCDProcessUnit {
 

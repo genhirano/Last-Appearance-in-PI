@@ -1,4 +1,4 @@
-package second;
+package model;
 
 public enum YCDHeaderInfoElem {
 
@@ -10,8 +10,8 @@ public enum YCDHeaderInfoElem {
     ,BLOCK_ID("BlockID")
     ;
 
-    private String name = "";
-    private YCDHeaderInfoElem(String name){
+    private final String name;
+    YCDHeaderInfoElem(String name){
         this.name = name;
     }
 

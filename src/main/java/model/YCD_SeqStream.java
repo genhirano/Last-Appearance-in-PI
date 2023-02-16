@@ -1,4 +1,4 @@
-package second;
+package model;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -18,7 +18,7 @@ public class YCD_SeqStream implements AutoCloseable{
     /**
      * 1回の検索処理で処理する桁数（ユニット桁数）
      */
-    private Integer processUnitSize;
+    private final Integer processUnitSize;
 
     /**
      * 対象ファイルパス
@@ -46,17 +46,17 @@ public class YCD_SeqStream implements AutoCloseable{
      *
      * next() で次のプロセスユニットを読み込んでカレントが遷移する.
      */
-    private YCDProcessUnit currentProcessUnit = null; //現在
+    private YCDProcessUnit currentProcessUnit; //現在
 
     /**
      * カレントプロセスユニットを読み込んだ時の余り文字列保持.
      */
-    public String surplusDigitStr = "";
+    public String surplusDigitStr;
 
     /**
      * ブロックごと読み込み用の現在ブロック保持.
      */
-    private Long currentBlock = 1L;
+    private Long currentBlock;
 
 
     private Boolean isClosed = true;
@@ -318,13 +318,11 @@ public class YCD_SeqStream implements AutoCloseable{
         }
 
         //8バイト（19桁）読むと、ファイルの有効データ末端を超えて読むため、このファイルの有効桁より後の桁は切る
-        Boolean isOver = false;
         Long readEndDigit = this.currentBlock * 19;
         if (readEndDigit > this.digit_Length) {
             //このファイルに格納されている桁数よりオーバーして読み込んだ場合はオーバー分を切り捨てる
             Long over = readEndDigit - this.digit_Length;
             numStr = numStr.substring(0, (int) (19 - over));  //左を残し、右からオーバー分を切り捨てる
-            isOver = true;
         }
 
         //カレントブロックを一つ進める

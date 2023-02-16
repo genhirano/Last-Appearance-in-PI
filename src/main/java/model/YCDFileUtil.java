@@ -1,4 +1,4 @@
-package second;
+package model;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -15,7 +15,7 @@ public class YCDFileUtil {
      * YCDファイル先頭からここで得られたバイト数の次のバイトからが実データとなる。
      *
      * @return ファイルのヘッダー部分のサイズ(Byte)
-     * @throws IOException
+     * @throws IOException ファイルアクセスエラー
      */
     public static Integer getHeaderSize(String ycdFileName) throws IOException {
         //最初の CRLFを探し、それに 1を加えた
