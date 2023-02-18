@@ -22,8 +22,8 @@
 */
 
 
+import model.YCD_Provider;
 import org.junit.jupiter.api.TestInfo;
-import model.YCD_Searcher;
 
 import java.io.File;
 import java.util.*;
@@ -36,7 +36,7 @@ import java.util.*;
 
          List < File > fileList = createFileList();
 
-         Map<String, Map<YCD_Searcher.Container, String>> map = new HashMap<>();
+         Map<String, Map<YCD_Provider.Container, String>> map = new HashMap<>();
 
          map.put("10", new HashMap<>());
          map.put("11", new HashMap<>());
@@ -44,7 +44,7 @@ import java.util.*;
          map.put("2213606776", new HashMap<>());
          map.put("22136067760000000000", new HashMap<>());
 
-         YCD_Searcher y = new YCD_Searcher(fileList, map);
+         YCD_Provider y = new YCD_Provider(fileList, map);
          y.start();
          try {
              y.join();
