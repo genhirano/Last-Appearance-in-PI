@@ -128,30 +128,6 @@ public class TestBase {
         return fileList;
     }
 
-    public static List<File> createFileListBig(){
-        List<File> fileList = new ArrayList<>();
-
-        String path = "H:\\Pi";
-        //String path = "c:";
-
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 0.ycd"));
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 1.ycd"));
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 2.ycd"));
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 3.ycd"));
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 4.ycd"));
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 5.ycd"));
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 6.ycd"));
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 7.ycd"));
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 8.ycd"));
-        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 9.ycd"));
-
-        return fileList;
-    }
-
-
-
-
-
     public TestBase(){
 
         String path = new File(".").getAbsoluteFile().getParent();

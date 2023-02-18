@@ -17,17 +17,6 @@ public class YCD_Provider extends Thread {
         ;
     }
 
-    public enum Container {
-        SEARCH_ID,
-        START_DIGIT,
-        PREV_FIND_POS,
-        FIND_DIGIT,
-        REACHED_DIGIT,
-        START_TIME,
-        END_TIME,
-        ;
-    }
-
     public enum FileInfo {
         FIRST_DATA,
         FIRST_DIGIT,
@@ -35,51 +24,12 @@ public class YCD_Provider extends Thread {
         ;
     }
 
-
-    /**
-     * 検索実行ID.
-     */
-    private final String searchID = RandomStringUtils.randomAlphanumeric(5);
-
-    public String getSearchID() {
-        return this.searchID;
-    }
-
-
-    /**
-     * 検索対象リスト.
-     */
-    private final Map<String, Map<Container, String>> targetMap;
-
-    public Map<String, Map<Container, String>> getTargetMap() {
-        return this.targetMap;
-    }
-
-
-    /**
-     * 検索対象リストの中にある最長の桁数.
-     */
-    private final Integer longerTargetLength;
-
-    /**
-     * 検索対象ファイルリスト.
-     */
-    private final List<File> fileList;
-
     /**
      * 検索対象ファイルの情報保持Map.
      */
-    private final Map<File, Map<FileInfo, String>> fileInfoMap = new HashMap<>();
+    private final Map<File, Map<FileInfo, String>> fileInfoMap;
     public Map<File, Map<FileInfo, String>> getFileInfoMap(){
         return this.fileInfoMap;
-    }
-    /**
-     * 検索終了桁数（進捗）.
-     */
-    private Long processDigit = 0L;
-
-    public Long getProcessDigit() {
-        return this.processDigit;
     }
 
     /**
@@ -91,145 +41,88 @@ public class YCD_Provider extends Thread {
      * 処理ステータス.
      */
     private Status status;
-
     public Status getStatus() {
         return this.status;
     }
 
-    /**
-     * デバッグ用わざと遅くするミリセカンド.
-     */
-    private Long debugWait = 0L;
 
-    public void setDebugwait(Long mills) {
-        this.debugWait = mills;
-    }
+    private Integer targetLength;
+    private Integer unitLnegth;
+    private Long startDigit;
+    private Long endDigit;
 
+    public YCD_Provider(List<File> fileList, Integer targetLength, Integer unitLength, Long startDigit, Long endDigit) {
 
+        //全ファイルヘッダー情報取得
+        this.fileInfoMap = this.createFileInfo(fileList,targetLength);
 
+        this.targetLength = targetLength;
+        this.unitLnegth = unitLength;
+        this.startDigit = startDigit;
+        this.endDigit = endDigit;
 
-
-    public YCD_Provider(List<File> fileList, Map<String, Map<Container, String>> targetMap) {
-        this.fileList = fileList;
-        this.targetMap = targetMap;
-
-        //検索対象Mapのチェック
-        this.check_before_targetMap(targetMap);
-
-        //検索対象の最大文字列長さを取得
-        Integer longerLength = -1;
-        for (String s : targetMap.keySet()) {
-            if (longerLength < s.length()) {
-                longerLength = s.length();
-            }
-        }
-        this.longerTargetLength = longerLength;
-
-        //検索続行リスト作成。当初は全て対象とする。
-        for (String s : targetMap.keySet()) {
-            this.processTarget.add(s);
-        }
-
-        //円周率ファイルの先頭から、連結に必要な桁数だけ切り出す
-        try {
-            for (File f : fileList) {
-
-                Map<FileInfo, String> value = new HashMap<>();
-
-                //先頭データをターゲットの一番長い桁数に合わせて取得
-                String s = YCDFileUtil.getFirstData(f.getPath(), this.longerTargetLength);
-                value.put(FileInfo.FIRST_DATA, s);
-
-                //ファイルのスタート桁位置
-                Map<YCDHeaderInfoElem, String> fileInfoMap = YCDFileUtil.getYCDHeader(f.getPath());
-                Integer blockID = Integer.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_ID));
-                Long blockSize = Long.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_SIZE));
-
-                value.put(FileInfo.FIRST_DIGIT, String.valueOf((blockID * blockSize) + 1L));
-                value.put(FileInfo.END_DIGIT, String.valueOf((blockID + 1L) * blockSize));
-                this.fileInfoMap.put(f, value);
-
-            }
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+        //処理ステータスを READY とする
         this.status = Status.READY;
 
-    }
-
-    private void check_before_targetMap(Map<String, Map<Container, String>> targetMap) {
-
-        //空チェック
-        if (targetMap.isEmpty()) {
-            throw new IllegalArgumentException("target is not Set");
-        }
-
-        //検索スタート桁設定チェック
-        for (String s : targetMap.keySet()) {
-
-            //スタート位置が設定されていない場合は1桁目から検索開始とする
-            if(!targetMap.get(s).containsKey(Container.START_DIGIT)){
-                targetMap.get(s).put(Container.START_DIGIT, "1");
-            }
-
-            try {
-                Long i = Long.valueOf(targetMap.get(s).get(Container.START_DIGIT));
-
-                if (0L >= i) {
-                    throw new IllegalArgumentException();
-                }
-
-            } catch (Exception e) {
-                throw new IllegalArgumentException("start digit is not valid :[" + targetMap.get(s).get(Container.START_DIGIT) + "]");
-            }
-        }
     }
 
 
     @Override
     public void run() {
 
-        //処理開始時間
-        final String startTimeStr = String.valueOf(new Date().getTime());
-
+        //処理ステータスを EXECUTING とする
         this.status = Status.EXECUTING;
-
-        //検索対象がない場合は、終了として終わる
-        if(this.targetMap.isEmpty()){
-            this.status = Status.FINISHED;
-            return;
-        }
 
         try {
 
-            //ひとつ前のデータ保持用。初期値は検索最大長さの無効文字列
-            String prevData = StringUtils.repeat("@", this.longerTargetLength);
+            //ひとつ前の読み込みデータを作成
+            String prevUnitData = "";
+            Long unitStartPoint = 1L;
 
-            //すべての検索対象の中から一番小さい検索開始桁数を取得
-            Long minStartPos = Long.MAX_VALUE;
+            //提供開始位置までシーク
+            for(File f : this.fileInfoMap.keySet()){
+                Map<FileInfo, String> m = this.fileInfoMap.get(f);
 
-            //全ての検索対象に対してスタート時刻などを一斉セット。
-            for (String t : this.targetMap.keySet()) {
-                targetMap.get(t).put(Container.SEARCH_ID, this.searchID);
-                targetMap.get(t).put(Container.START_TIME, startTimeStr);
-                targetMap.get(t).put(Container.FIND_DIGIT, "-1");
+                try (YCD_SeqStream stream = new YCD_SeqStream(f.getPath(), 30);) {
 
-                //未発見とする
-                targetMap.get(t).remove(Container.FIND_DIGIT);
+                    //ユニット単位での読み込みループ
+                    int i = 0;
+                    while (stream.hasNext()) {
 
-                //終了時刻は最後にセット
-                targetMap.get(t).remove(Container.END_TIME);
+                        YCDProcessUnit pdu = stream.next();
+                        String readData = pdu.getValue();
 
-                targetMap.get(t).remove(Container.REACHED_DIGIT);
+                        //検索実行文字列の作成
+                        String thisLine = prevUnitData + readData;
 
-                //最小スタート位置取得用
-                if (minStartPos > Long.valueOf(this.targetMap.get(t).get(Container.START_DIGIT))){
-                    minStartPos = Long.valueOf(this.targetMap.get(t).get(Container.START_DIGIT));
+                        if( (0 == i) ||(1 == i) ){
+                            System.out.println(unitStartPoint + " : " +  thisLine);
+                        }
+                        i++;
+
+                        if(!stream.hasNext()){
+                            System.out.println(readData);
+                        }
+
+
+                        unitStartPoint = unitStartPoint + (prevUnitData.length());
+
+
+                        prevUnitData = readData;
+
+
+
+                    }
+
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
 
+
             }
+
+/*
 
             //検索対象ファイルループ
             for (Integer i = 0; i < fileList.size(); i++) {
@@ -247,12 +140,6 @@ public class YCD_Provider extends Thread {
                 }
 
                 try (YCD_SeqStream stream = new YCD_SeqStream(fileList.get(i).getPath(), 190);) {
-
-                    //デバッグ時用 わざと遅くする
-                    try {
-                        Thread.sleep(this.debugWait);
-                    } catch (InterruptedException e) {
-                    }
 
                     //ユニット単位での読み込みループ
                     while (stream.hasNext()) {
@@ -281,7 +168,6 @@ public class YCD_Provider extends Thread {
                                 thisLine = thisLine + nextBuff;
                             }
 
-                            List<String> fixList = new ArrayList<>();
                             for (String t : this.processTarget) {
 
                                 Long findIndex = -1L;
@@ -299,8 +185,6 @@ public class YCD_Provider extends Thread {
                                         if (targetMap.containsKey(t)) {
                                             if (findIndex >= Long.valueOf(this.targetMap.get(t).get(Container.START_DIGIT))) {
                                                 this.targetMap.get(t).put(Container.FIND_DIGIT, findIndex.toString());
-                                                this.targetMap.get(t).put(Container.END_TIME, String.valueOf(new Date().getTime()));
-                                                fixList.add(t);
                                                 break;
                                             }
                                         }
@@ -351,18 +235,17 @@ public class YCD_Provider extends Thread {
             for (String t : targetMap.keySet()) {
                 if (!targetMap.get(t).containsKey(Container.FIND_DIGIT)) {
                     targetMap.get(t).put(Container.REACHED_DIGIT, String.valueOf(this.getMaxDepth() - t.length()));
-                    targetMap.get(t).put(Container.END_TIME, String.valueOf(new Date().getTime()));
                 }
 
             }
 
             this.status = Status.FINISHED;
+*/
 
         } catch (Exception e) {
             this.status = Status.ABORT;
             throw new RuntimeException(e);
         }
-
 
 
     }
@@ -380,5 +263,70 @@ public class YCD_Provider extends Thread {
 
     }
 
+
+    private Map<File, Map<FileInfo, String>> createFileInfo(List<File> fileList, Integer targetLength){
+
+        //対象ファイル全ての情報事前取得
+        try {
+
+            Map<File, Map<FileInfo, String>> fileMap = new LinkedHashMap<>();
+
+            //全てのファイルが対象(小さい順に並んでいること)
+            for (File f : fileList) {
+
+                Map<FileInfo, String> value = new HashMap<>();
+
+                //ファイル情報取得
+                Map<YCDHeaderInfoElem, String> fileInfoMap = YCDFileUtil.getYCDHeader(f.getPath());
+
+                //先頭桁と最終桁の取得
+                Integer blockID = Integer.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_ID));
+                Long blockSize = Long.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_SIZE));
+                value.put(FileInfo.FIRST_DIGIT, String.valueOf((blockID * blockSize) + 1L));
+                value.put(FileInfo.END_DIGIT, String.valueOf((blockID + 1L) * blockSize));
+
+                //全ての円周率ファイルの先頭から、そのファイルの前のファイルの末尾に付加する桁数だけ切り出す
+                value.put(FileInfo.FIRST_DATA, YCDFileUtil.getFirstData(f.getPath(), targetLength));
+
+                fileMap.put(f, value);
+
+            }
+
+            //ファイルがきちんと並んでいるかチェック
+            if(!Long.valueOf(fileMap.get(fileList.get(0)).get(FileInfo.FIRST_DIGIT)).equals(1L)){
+                throw new RuntimeException("Illegal first digit in file : " + fileList.get(0).getName());
+            }
+
+            //ファイルの順序と桁連結チェック
+            //先頭ファイルの末尾桁番号を取得
+            Long prevLastDigit = Long.valueOf(fileMap.get(fileList.get(0)).get(FileInfo.END_DIGIT));
+            for(File fi : fileMap.keySet()){
+                Map<FileInfo, String> m = fileMap.get(fi);
+
+                //最初のファイルはスキップ
+                if(Long.valueOf(m.get(FileInfo.FIRST_DIGIT)).equals(1L)){
+                    continue;
+                }
+
+                //このファイルの先頭桁番号取得
+                Long thisStart = Long.valueOf(m.get(FileInfo.FIRST_DIGIT));
+
+                //前のファイルのラスト桁番号 +1 がこのファイルの先頭桁番号でなければならない
+                if( !thisStart.equals(prevLastDigit + 1L) ) {
+                    throw new RuntimeException("Illegal start digit in file : " + fi.getName() + " - is Start : " + thisStart);
+                }
+
+                //このファイルの最後尾桁番号を保持
+                prevLastDigit = Long.valueOf(m.get(FileInfo.END_DIGIT));
+
+            }
+
+            return fileMap;
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
 
 }
