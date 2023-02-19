@@ -119,6 +119,8 @@ public class TestBase {
 
         String path = new File(".").getAbsoluteFile().getParent();
         path = path + "\\src\\test\\resources\\1000000";
+        //String path = "H:\\Pi";
+
 
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 0.ycd"));
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 1.ycd"));

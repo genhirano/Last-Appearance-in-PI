@@ -22,7 +22,7 @@
 */
 
 
-import model.YCD_Provider;
+import model.pi.YCD_Provider;
 import org.junit.jupiter.api.TestInfo;
 
 import java.io.File;
@@ -36,8 +36,27 @@ class MyTest extends TestBase {
 
         List<File> fileList = createFileList();
 
-        YCD_Provider p = new YCD_Provider(fileList, 10, 100, 1L, 1000L);
-        p.run();
+        Long count = 0L;
+        try (YCD_Provider p = new YCD_Provider(fileList, 10, 30);) {
+
+            while(p.hasNext()){
+                YCD_Provider.Unit u1 = p.getNext();
+
+                count++;
+                if(  (10000 > u1.getStartDigit())  ){
+                    System.out.println(u1.getStartDigit() + " : " + u1.getData());
+                }
+
+                if( (990000< u1.getStartDigit()) && (1090000 > u1.getStartDigit())  ){
+                    System.out.println(u1.getStartDigit() + " : " + u1.getData());
+                }
+
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
 
     }
 }

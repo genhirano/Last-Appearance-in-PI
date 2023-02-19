@@ -1,4 +1,4 @@
-package model;
+package model.ycd;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;

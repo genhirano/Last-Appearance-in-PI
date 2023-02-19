@@ -1,4 +1,4 @@
-package model;
+package model.ycd;
 
 import java.io.*;
 import java.nio.ByteBuffer;
