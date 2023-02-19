@@ -33,30 +33,33 @@ class MyTest extends TestBase {
 
     @org.junit.jupiter.api.Test
     void 作りながら動かす用(TestInfo testInfo) {
+        btest();
+    }
 
-        List<File> fileList = createFileList();
+    public static void btest() {
 
-        Long count = 0L;
-        try (YCD_Provider p = new YCD_Provider(fileList, 10, 30);) {
+        String str1 = "11111111";
+        String str2 = "11000000";
+        int num1    = Integer.parseInt(str1, 2); // 2
 
-            while(p.hasNext()){
-                YCD_Provider.Unit u1 = p.getNext();
+        int num2    = Integer.parseInt(str2, 2); // 2
 
-                count++;
-                if(  (10000 > u1.getStartDigit())  ){
-                    System.out.println(u1.getStartDigit() + " : " + u1.getData());
-                }
+        byte[] b2 = { (byte) num1, (byte) num2};
 
-                if( (990000< u1.getStartDigit()) && (1090000 > u1.getStartDigit())  ){
-                    System.out.println(u1.getStartDigit() + " : " + u1.getData());
-                }
+        String ret =  toBinaryString(b2);
 
-            }
+        System.out.println(ret);
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
 
 
     }
+
+    public static String toBinaryString(byte[] b) {
+        StringBuffer sb = new StringBuffer();
+        sb.append(String.format("%8s", Integer.toBinaryString(b[0] & 0xFF)).replace(' ', '0'));
+        sb.append(String.format("%8s", Integer.toBinaryString(b[1] & 0xFF)).replace(' ', '0').substring(0,2) );
+        return sb.toString();
+    }
+
 }
