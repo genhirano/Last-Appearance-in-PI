@@ -1,4 +1,4 @@
- /*
+/*
 -- Pi - Dec - Chudnovsky - 0.ycd
 1415926535 8979323846 2643383279 5028841971 6939937510  :  50
 5820974944 5923078164 0628620899 8628034825 3421170679  :  100
@@ -22,41 +22,41 @@
 */
 
 
+import model.pi.YCD_Provider;
 import org.junit.jupiter.api.TestInfo;
-import model.YCD_Searcher;
 
 import java.io.File;
 import java.util.*;
 
- @SuppressWarnings("NonAsciiCharacters")
- class MyTest extends TestBase{
+@SuppressWarnings("NonAsciiCharacters")
+class MyTest extends TestBase {
 
-     @org.junit.jupiter.api.Test
-     void 作りながら動かす用(TestInfo testInfo) {
+    @org.junit.jupiter.api.Test
+    void 作りながら動かす用(TestInfo testInfo) {
 
-         List < File > fileList = createFileList();
+        List<File> fileList = createFileList();
 
-         Map<String, Map<YCD_Searcher.Container, String>> map = new HashMap<>();
+        Long count = 0L;
+        try (YCD_Provider p = new YCD_Provider(fileList, 10, 30);) {
 
-         map.put("10", new HashMap<>());
-         map.put("11", new HashMap<>());
-         map.put("1419", new HashMap<>());
-         map.put("2213606776", new HashMap<>());
-         map.put("22136067760000000000", new HashMap<>());
+            while(p.hasNext()){
+                YCD_Provider.Unit u1 = p.getNext();
 
-         YCD_Searcher y = new YCD_Searcher(fileList, map);
-         y.start();
-         try {
-             y.join();
-         } catch (InterruptedException e) {
-             // 例外処理
-             e.printStackTrace();
-         }
+                count++;
+                if(  (10000 > u1.getStartDigit())  ){
+                    System.out.println(u1.getStartDigit() + " : " + u1.getData());
+                }
 
-         for(String s : y.getTargetMap().keySet()){
-             System.out.println(s + " | " + y.getTargetMap().get(s));
-         }
+                if( (990000< u1.getStartDigit()) && (1090000 > u1.getStartDigit())  ){
+                    System.out.println(u1.getStartDigit() + " : " + u1.getData());
+                }
 
-     }
+            }
 
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
 }
