@@ -1,14 +1,132 @@
 package model.pi;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FlagFolder {
 
-    private byte[] flagArr = { (byte) 0, (byte) 0};
+    public static void setTargetLength(Integer targetLength) {
+        TARGET_LENGTH = targetLength;
+    }
 
+
+    //private byte[] flagArr = { (byte) 0, (byte) 0};
+
+    //byte	8ビット整数 -128～127
+    private FlagFolder parent;
     private FlagFolder[] childlen;
 
-    private FlagFolder parent;
+    public FlagFolder[] getChildlen() {
+        return this.childlen;
+    }
 
-    public FlagFolder(FlagFolder parent, String data){ //3456
+    ;
+
+    private FlagFolder getParent() {
+        return this.parent;
+    }
+
+    private byte depth;
+
+    private static Integer TARGET_LENGTH = -1;
+
+    private byte myChar;
+
+    public byte getMyChar() {
+        return this.myChar;
+    }
+
+    private boolean wasFinded = false;
+
+    public boolean wasFinded() {
+        return this.wasFinded;
+    }
+
+    private byte getDepth() {
+        byte depth = 0;
+        if (null != parent) {
+            depth = (byte) (depth + this.getParent().getDepth() + 1);
+        }
+        return depth;
+    }
+
+
+    public List<List<FlagFolder>> getFlat() {
+
+        List<List<FlagFolder>> grandRet = new ArrayList<>();
+
+
+
+
+        for (FlagFolder child : this.childlen) {
+
+            if (null == child.getChildlen()) {
+                List<FlagFolder> ret = new ArrayList<>();
+                ret.add(this);
+                ret.add(child);
+                grandRet.add(ret);
+                continue;
+            }
+
+            List<List<FlagFolder>> childNumlList = child.getFlat();
+
+            for (List<FlagFolder> s : childNumlList) {
+                List<FlagFolder> ret = new ArrayList<>();
+                if(s.isEmpty()) {
+                    ret.add(this);
+                } else {
+                    ret.add(this);
+                    ret.addAll(s);
+                }
+/*
+                String addStr = "";
+                if(null == this.parent){
+                    addStr = "|" + String.valueOf(this.myChar) + this.wasFinded + String.valueOf(this.getDepth()) + "|" + s;
+                }else{
+                    addStr ="{" +  String.valueOf(this.myChar) + this.wasFinded + this.getDepth() + "}" + s ;
+                }
+*/
+                grandRet.add(ret);
+            }
+
+        }
+
+        return grandRet;
+
+
+    }
+
+    public static int count = 0;
+
+    public static FlagFolder createFlagFolderTree(Integer targetLength) {
+        TARGET_LENGTH = targetLength;
+
+        if (1 > TARGET_LENGTH) {
+            throw new RuntimeException("TARGET LENGTH is :" + TARGET_LENGTH + " Please set valid Target Length");
+        }
+
+        return new FlagFolder(null, (byte) -1);
+    }
+
+    private FlagFolder(FlagFolder parent, byte num) {
+        super();
+
+        count++;
+        this.parent = parent;
+        this.myChar = num;
+
+        if (TARGET_LENGTH > this.getDepth()) {
+            FlagFolder[] flagFolders = new FlagFolder[10];
+            for (byte i = 0; i < 10; i++) {
+                flagFolders[i] = new FlagFolder(this, i);
+            }
+            this.childlen = flagFolders;
+        }
+
+        //自分が桁深さ何階層目かを算出
+
+
+        //トーナメント方式
 
 
         //データが１つだったら末っ子

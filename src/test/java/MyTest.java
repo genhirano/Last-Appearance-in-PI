@@ -22,6 +22,7 @@
 */
 
 
+import model.pi.FlagFolder;
 import model.pi.YCD_Provider;
 import org.junit.jupiter.api.TestInfo;
 
@@ -30,6 +31,24 @@ import java.util.*;
 
 @SuppressWarnings("NonAsciiCharacters")
 class MyTest extends TestBase {
+
+
+    @org.junit.jupiter.api.Test
+    void 作りながら動かす用2(TestInfo testInfo) {
+        FlagFolder f = FlagFolder.createFlagFolderTree(3);
+
+        List<List<FlagFolder>> l =  f.getFlat();
+
+        for(List<FlagFolder> s : l){
+            for(FlagFolder ss : s){
+                System.out.print(ss.getMyChar());
+            }
+            System.out.println();
+        }
+
+        System.out.println(FlagFolder.count);
+
+    }
 
     @org.junit.jupiter.api.Test
     void 作りながら動かす用(TestInfo testInfo) {
@@ -40,25 +59,22 @@ class MyTest extends TestBase {
 
         String str1 = "11111111";
         String str2 = "11000000";
-        int num1    = Integer.parseInt(str1, 2); // 2
+        int num1 = Integer.parseInt(str1, 2); // 2
 
-        int num2    = Integer.parseInt(str2, 2); // 2
+        int num2 = Integer.parseInt(str2, 2); // 2
 
-        byte[] b2 = { (byte) num1, (byte) num2};
+        byte[] b2 = {(byte) num1, (byte) num2};
 
-        String ret =  toBinaryString(b2);
+        String ret = toBinaryString(b2);
 
         System.out.println(ret);
-
-
-
 
     }
 
     public static String toBinaryString(byte[] b) {
         StringBuffer sb = new StringBuffer();
         sb.append(String.format("%8s", Integer.toBinaryString(b[0] & 0xFF)).replace(' ', '0'));
-        sb.append(String.format("%8s", Integer.toBinaryString(b[1] & 0xFF)).replace(' ', '0').substring(0,2) );
+        sb.append(String.format("%8s", Integer.toBinaryString(b[1] & 0xFF)).replace(' ', '0').substring(0, 2));
         return sb.toString();
     }
 
