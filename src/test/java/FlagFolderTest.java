@@ -23,14 +23,12 @@
 
 
 import model.pi.FlagFolder;
-import model.pi.YCD_Provider;
 import org.junit.jupiter.api.TestInfo;
 
-import java.io.File;
 import java.util.*;
 
 @SuppressWarnings("NonAsciiCharacters")
-class MyTest extends TestBase {
+class FlagFolderTest extends TestBase {
 
 
     @org.junit.jupiter.api.Test
