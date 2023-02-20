@@ -9,10 +9,6 @@ public class FlagFolder {
         TARGET_LENGTH = targetLength;
     }
 
-
-    //private byte[] flagArr = { (byte) 0, (byte) 0};
-
-    //byte	8ビット整数 -128～127
     private FlagFolder parent;
     private FlagFolder[] childlen;
 
@@ -55,9 +51,6 @@ public class FlagFolder {
 
         List<List<FlagFolder>> grandRet = new ArrayList<>();
 
-
-
-
         for (FlagFolder child : this.childlen) {
 
             if (null == child.getChildlen()) {
@@ -72,27 +65,20 @@ public class FlagFolder {
 
             for (List<FlagFolder> s : childNumlList) {
                 List<FlagFolder> ret = new ArrayList<>();
-                if(s.isEmpty()) {
+                if (s.isEmpty()) {
                     ret.add(this);
                 } else {
                     ret.add(this);
                     ret.addAll(s);
                 }
-/*
-                String addStr = "";
-                if(null == this.parent){
-                    addStr = "|" + String.valueOf(this.myChar) + this.wasFinded + String.valueOf(this.getDepth()) + "|" + s;
-                }else{
-                    addStr ="{" +  String.valueOf(this.myChar) + this.wasFinded + this.getDepth() + "}" + s ;
-                }
-*/
+
                 grandRet.add(ret);
+
             }
 
         }
 
         return grandRet;
-
 
     }
 
@@ -122,17 +108,6 @@ public class FlagFolder {
             }
             this.childlen = flagFolders;
         }
-
-        //自分が桁深さ何階層目かを算出
-
-
-        //トーナメント方式
-
-
-        //データが１つだったら末っ子
-
-        //データが2つ以上であれば子あり
-
 
     }
 
