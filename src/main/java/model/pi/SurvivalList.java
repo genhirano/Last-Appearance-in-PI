@@ -1,5 +1,9 @@
 package model.pi;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class SurvivalList extends ArrayList<String> {
@@ -7,7 +11,9 @@ public class SurvivalList extends ArrayList<String> {
     //一回戦の計画をする
     //二回戦はマージする
 
-    public SurvivalList(Integer targetLength, String start, Integer listsize) {
+    private String myName;
+
+    public SurvivalList(Integer targetLength, Integer start, Integer listsize) {
         super();
 
         //生き残りリスト。当初は全員生き残りとする
@@ -20,41 +26,30 @@ public class SurvivalList extends ArrayList<String> {
             throw new RuntimeException("target length is not valid (over 100): " + targetLength);
         }
 
-        if (start.isEmpty()) {
-            throw new RuntimeException("start is empty: " + start);
-        }
-        if (start.length() != targetLength) {
-            throw new RuntimeException("start is invalid length : " + start);
+        if (0 >start) {
+            throw new RuntimeException("start is invalid: " + start);
         }
 
-        try {
-            Integer i = Integer.parseInt(start);
-            if (0 > i) {
-                throw new RuntimeException("start is invalid: " + start);
+        //生き残り（全員生き残っているとする）を作成
+        //リストサイズの指定が大きすぎて、素直に追加するとターゲット長さを超えてしまうので、その際はターゲット長のマックスで打ち切り
+        String max = String.format("%0" + targetLength + "d", start);
+        for (int i = 0; i < listsize; i++) {
+            String s = String.format("%0" + targetLength + "d", i + start);
+            if (s.length() > targetLength) {
+                break;
             }
-        } catch (Exception e) {
-            throw new RuntimeException("start is invalid: " + start + " " + e.getLocalizedMessage());
+            this.add(s);
+            max = s;
         }
-
-        Integer startInt = Integer.parseInt(start);
 
         //基本ファイル名
         String targetLengthStr = String.format("%02d", targetLength);
-        System.out.println(targetLengthStr
-                + "_" + String.format("%0" + targetLength + "d",startInt)
-                + "_" + String.format("%0" + targetLength + "d", (listsize - 1) + startInt)
-        );
+        this.myName = targetLengthStr
+                + "_" + String.format("%0" + targetLength + "d", start)
+                + "_" + max;
 
 
-        for (int i = 0; i < listsize; i++) {
-            this.add(String.format("%0" + targetLength + "d", i + startInt));
-        }
 
-
-        System.out.println(this.toString());
-
-        System.out.print("_" + this.size() + "_" + "456678765432");
-        System.out.println("_" + "00022" + "_" + "456678765432");
 
 
 
@@ -67,7 +62,28 @@ public class SurvivalList extends ArrayList<String> {
          */
 
 
+    }
 
+    public void saveToFile(Integer ycdFileIndex) throws IOException {
+
+        String writeFileName = "./target/output/";
+
+        writeFileName = writeFileName + this.myName + "_" + ycdFileIndex + ".txt";
+
+        try {
+
+            //出力先を作成する
+            try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(writeFileName)));) {
+                for (String s : this) {
+                    pw.println(s);
+                }
+            }
+
+        } catch (IOException e) {
+
+            //TODO 必要であればメッセージを追加する
+            throw new IOException(e);
+        }
 
     }
 
