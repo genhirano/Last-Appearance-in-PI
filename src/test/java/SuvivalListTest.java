@@ -25,8 +25,7 @@ import model.pi.SurvivalList;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.TestInfo;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -89,6 +88,15 @@ class SuvivalListTest extends TestBase {
             readLine = min + "," + max + ",,,";
         }else{
             readLine = list.get(list.size()-1);
+
+            String[] readLineArr = readLine.split(",");
+
+            //最終行の
+            Integer nextStart = Integer.valueOf(readLineArr[1]) + 1;
+            min = String.format("%0" + readLineArr[1].length() + "d",nextStart );
+            max = String.format("%0" + min.length() + "d", (listSize-1) );
+            readLine = min + "," + max + ",,,";
+
         }
 
         String[] splited =  readLine.split(",");
@@ -99,10 +107,6 @@ class SuvivalListTest extends TestBase {
         System.out.println(splited[1]);
 
         SurvivalList sl = new SurvivalList(targetlength, Integer.valueOf(splited[0]), Integer.valueOf(splited[1]) );
-
-        for(String s : sl){
-            //System.out.println(s);
-        }
 
         //検索して、最後の一つにする
         Random r = new Random();
@@ -119,6 +123,29 @@ class SuvivalListTest extends TestBase {
 
         System.out.println(sl + " " + sl.getLastFindIndex()) ;
 
+
+        //最後の一つになったとする
+
+        try {
+
+            //出力先を作成する
+            try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(targetFile.getPath())));) {
+
+                //既存のデータ書き込み
+                //todo アペンドにする
+                for (String s : list) {
+                    pw.println(s);
+                }
+
+                //今回分
+                pw.println(sl + " " + sl.getLastFindIndex());
+
+            }
+
+        } catch (IOException e) {
+            //TODO 必要であればメッセージを追加する
+            throw new IOException(e);
+        }
 
 
 
