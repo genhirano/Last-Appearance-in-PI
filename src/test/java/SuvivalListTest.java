@@ -27,22 +27,117 @@ import org.junit.jupiter.api.TestInfo;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 @SuppressWarnings("NonAsciiCharacters")
 class SuvivalListTest extends TestBase {
 
     @org.junit.jupiter.api.Test
-    void 作りながら動かす用(TestInfo testInfo) throws IOException {
+    void 作りながら動かす用2(TestInfo testInfo) throws IOException {
 
-        //現在フォルダを検索して、次のスタートエンドを決定する
-        //次のリストをつくる
-        //検索開始して、最後の一つになるまで検索する
+        //結果保存ファイルを検索し、あれば読み込み、なければ新規作成する
+        //ファイルを読み込み、次のスタートエンドを決定する
+        //次のリストをメモリにつくる
+        //メモリリストの検索開始して、最後の一つになるまで検索する
         //その一つを記録する
         //もどる
 
+        Integer targetlength = 3;
+        String filename = String.format("%02d", targetlength) + ".txt";
+
+        Integer listSize = 10;
+
+        String path = "./target/output";
+        File dir = new File(path);
+        File[] files = dir.listFiles();
+        File targetFile = null;
+        for (int i = 0; i < files.length; i++) {
+            File file = files[i];
+            if (file.getName().equals(filename)) {
+                System.out.println("found!");
+                targetFile = file;
+                break;
+            }
+        }
+
+        if (null == targetFile) {
+            // Fileオブジェクトの生成
+            File file = new File(path + "/" + filename);
+            file.createNewFile();
+            targetFile = file;
+        }
+
+        System.out.println(targetFile.getName());
+
+        String fname = targetFile.getPath();
+        List<String> list = null;
+        list = Files.readAllLines(Paths.get(fname), StandardCharsets.UTF_8);
+
+        String readLine;
+        String min = "";
+        String max = "";
+        if(0 == list.size()){
+            min = StringUtils.repeat("0", targetlength);
+            max =String.format("%0" + min.length() + "d", (listSize-1) );
+            readLine = min + "," + max + ",,,";
+        }else{
+            readLine = list.get(list.size()-1);
+        }
+
+        String[] splited =  readLine.split(",");
+
+        System.out.println(readLine);
+
+        System.out.println(splited[0]);
+        System.out.println(splited[1]);
+
+        SurvivalList sl = new SurvivalList(targetlength, Integer.valueOf(splited[0]), Integer.valueOf(splited[1]) );
+
+        for(String s : sl){
+            //System.out.println(s);
+        }
+
+        //検索して、最後の一つにする
+        Random r = new Random();
+        Integer nokoriIndex = r.nextInt(sl.size()-1);
+
+        for(int i = sl.size()-1; i >= 0; i--){
+
+            if(i == nokoriIndex){
+                continue;
+            }
+            sl.remove(sl.get(i),345L);
+
+        }
+
+        System.out.println(sl + " " + sl.getLastFindIndex()) ;
+
+
+
+
+
+
+
+
+
+    }
+
+    @org.junit.jupiter.api.Test
+    void 作りながら動かす用(TestInfo testInfo) throws IOException {
+
+        //結果保存ファイルを検索し、あれば読み込み、なければ新規作成する
+        //ファイルを読み込み、次のスタートエンドを決定する
+        //次のリストをメモリにつくる
+        //メモリリストの検索開始して、最後の一つになるまで検索する
+        //その一つを記録する
+        //もどる
 
 
         Integer targetlength = 3;
@@ -55,10 +150,8 @@ class SuvivalListTest extends TestBase {
 
             SurvivalList sl = new SurvivalList(targetlength, current, step);
 
-            sl.saveToFile(0);
             current = current + step;
         }
-
 
 
         //resume
@@ -78,8 +171,8 @@ class SuvivalListTest extends TestBase {
 
 
         //不純物の削除
-        for(int i = fileInfoList.size()-1; i >=0; i--){
-            if(targetlength != Integer.valueOf(fileInfoList.get(i).get(0))  ){
+        for (int i = fileInfoList.size() - 1; i >= 0; i--) {
+            if (targetlength != Integer.valueOf(fileInfoList.get(i).get(0))) {
                 fileInfoList.remove(i);
             }
         }
@@ -87,9 +180,9 @@ class SuvivalListTest extends TestBase {
         //終了位置が一番小さいものを検索して、保持する
         Integer minStart = Integer.MAX_VALUE;
         List<String> min = null;
-        for(List<String> l : fileInfoList){
+        for (List<String> l : fileInfoList) {
             Integer start = Integer.valueOf(l.get(1));
-            if(minStart >= start){
+            if (minStart >= start) {
                 min = l;
                 minStart = start;
             }
@@ -97,8 +190,6 @@ class SuvivalListTest extends TestBase {
         System.out.println(min);
 
         //いちいちで、残り一つになるまでやっていく
-
-
 
 
     }

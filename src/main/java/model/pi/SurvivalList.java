@@ -11,59 +11,35 @@ public class SurvivalList extends ArrayList<String> {
     //一回戦の計画をする
     //二回戦はマージする
 
-    private String myName;
+    private Long lastFindIndex = -1L;
+    public Long getLastFindIndex(){
+        if(1 != this.size()){
+            throw new RuntimeException("まださいごではない");
+        }
 
-    public SurvivalList(Integer targetLength, Integer start, Integer listsize) {
+        return this.lastFindIndex;
+    }
+
+
+    public SurvivalList(Integer targetLength, Integer start, Integer end) {
         super();
-
-        //生き残りリスト。当初は全員生き残りとする
-
-        //ターゲットの長さチェック
-        if (1 > targetLength) {
-            throw new RuntimeException("target length is not valid (under 1): " + targetLength);
-        }
-        if (100 <= targetLength) {
-            throw new RuntimeException("target length is not valid (over 100): " + targetLength);
-        }
-
-        if (0 >start) {
-            throw new RuntimeException("start is invalid: " + start);
-        }
 
         //生き残り（全員生き残っているとする）を作成
         //リストサイズの指定が大きすぎて、素直に追加するとターゲット長さを超えてしまうので、その際はターゲット長のマックスで打ち切り
-        String max = String.format("%0" + targetLength + "d", start);
-        for (int i = 0; i < listsize; i++) {
-            String s = String.format("%0" + targetLength + "d", i + start);
-            if (s.length() > targetLength) {
-                break;
-            }
+
+        for(int i = start; i <= end; i++){
+            String s = String.format("%0" + targetLength + "d", i);
             this.add(s);
-            max = s;
         }
-
-        //基本ファイル名
-        String targetLengthStr = String.format("%02d", targetLength);
-        this.myName = targetLengthStr
-                + "_" + String.format("%0" + targetLength + "d", start)
-                + "_" + max;
-
-
-
-
-
-
-
-        /*
-        ターゲット桁数
-        先頭文字列
-        最終文字列
-        検索終了位置 15桁とする (19,000,000,000,000)
-         */
-
 
     }
 
+    public void remove(String findValue, Long findPos){
+        this.lastFindIndex = findPos;
+        this.remove(this.indexOf(findValue)) ;
+    }
+
+/*
     public void saveToFile(Integer ycdFileIndex) throws IOException {
 
         String writeFileName = "./target/output/";
@@ -86,5 +62,5 @@ public class SurvivalList extends ArrayList<String> {
         }
 
     }
-
+*/
 }
