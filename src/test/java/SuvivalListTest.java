@@ -82,46 +82,46 @@ class SuvivalListTest extends TestBase {
         String readLine;
         String min = "";
         String max = "";
-        if(0 == list.size()){
+        if (0 == list.size()) {
             min = StringUtils.repeat("0", targetlength);
-            max =String.format("%0" + min.length() + "d", (listSize-1) );
+            max = String.format("%0" + min.length() + "d", (listSize - 1));
             readLine = min + "," + max + ",,,";
-        }else{
-            readLine = list.get(list.size()-1);
+        } else {
+            readLine = list.get(list.size() - 1);
 
             String[] readLineArr = readLine.split(",");
 
             //最終行の
             Integer nextStart = Integer.valueOf(readLineArr[1]) + 1;
-            min = String.format("%0" + readLineArr[1].length() + "d",nextStart );
-            max = String.format("%0" + min.length() + "d", (listSize-1) );
+            min = String.format("%0" + readLineArr[1].length() + "d", nextStart);
+            max = String.format("%0" + min.length() + "d", (listSize - 1));
             readLine = min + "," + max + ",,,";
 
         }
 
-        String[] splited =  readLine.split(",");
+        String[] splited = readLine.split(",");
 
         System.out.println(readLine);
 
         System.out.println(splited[0]);
         System.out.println(splited[1]);
 
-        SurvivalList sl = new SurvivalList(targetlength, Integer.valueOf(splited[0]), Integer.valueOf(splited[1]) );
+        SurvivalList sl = new SurvivalList(targetlength, Integer.valueOf(splited[0]), Integer.valueOf(splited[1]));
 
         //検索して、最後の一つにする
         Random r = new Random();
-        Integer nokoriIndex = r.nextInt(sl.size()-1);
+        Integer nokoriIndex = r.nextInt(sl.size());
 
-        for(int i = sl.size()-1; i >= 0; i--){
+        for (int i = sl.size() - 1; i >= 0; i--) {
 
-            if(i == nokoriIndex){
+            if (i == nokoriIndex) {
                 continue;
             }
-            sl.remove(sl.get(i),345L);
+            sl.remove(sl.get(i), 345L);
 
         }
 
-        System.out.println(sl + " " + sl.getLastFindIndex()) ;
+        System.out.println(sl.get(0) + "," + sl.getLastFindIndex());
 
 
         //最後の一つになったとする
@@ -138,7 +138,7 @@ class SuvivalListTest extends TestBase {
                 }
 
                 //今回分
-                pw.println(sl + " " + sl.getLastFindIndex());
+                pw.println(sl.get(0) + "," + sl.getLastFindIndex());
 
             }
 
@@ -146,12 +146,6 @@ class SuvivalListTest extends TestBase {
             //TODO 必要であればメッセージを追加する
             throw new IOException(e);
         }
-
-
-
-
-
-
 
 
     }
