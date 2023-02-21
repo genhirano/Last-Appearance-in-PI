@@ -35,7 +35,7 @@ class SuvivalListTest extends TestBase {
     @org.junit.jupiter.api.Test
     void 作りながら動かす用(TestInfo testInfo) {
 
-        SurvivalList sl = new SurvivalList(5, 2, 0L);
+        SurvivalList sl = new SurvivalList(5, "00002", 10);
 
 
     }
@@ -43,26 +43,17 @@ class SuvivalListTest extends TestBase {
 
     @org.junit.jupiter.api.Test
     void コンストラクタTest(TestInfo testInfo) {
-
-        //対象長さ
-        assertThrows(RuntimeException.class, () -> new SurvivalList(-1, 1, 1L));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(0, 1, 1L));
-        new SurvivalList(1, 1, 1L);
-        new SurvivalList(2, 1, 1L);
-
-
-        //グループサイズ
-        assertThrows(RuntimeException.class, () -> new SurvivalList(5, -1, 1L));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(5, 0, 1L));
-        new SurvivalList(5, 1, 1L);
-        new SurvivalList(5, 2, 1L);
-
-        //グループヘッダ番号
-        assertThrows(RuntimeException.class, () -> new SurvivalList(5, 2, -1L));
-        new SurvivalList(5, 2, -0L);
-        new SurvivalList(5, 2, 0L);
-        new SurvivalList(5, 2, 1L);
-
+        assertThrows(RuntimeException.class, () -> new SurvivalList(-1, "1", 1));
+        assertThrows(RuntimeException.class, () -> new SurvivalList(1, "a", 1));
+        assertThrows(RuntimeException.class, () -> new SurvivalList(1, "", 1));
+        assertThrows(RuntimeException.class, () -> new SurvivalList(1, null, 1));
+        assertThrows(RuntimeException.class, () -> new SurvivalList(1, "00", 1));
+        assertThrows(RuntimeException.class, () -> new SurvivalList(1, "00", 1));
+        assertThrows(RuntimeException.class, () -> new SurvivalList(100, "000", 1));
+        assertThrows(RuntimeException.class, () -> new SurvivalList(100, "000", -1));
+        assertThrows(RuntimeException.class, () -> new SurvivalList(100, "000", 0));
+        new SurvivalList(1, "1", 1);
+        new SurvivalList(2, "11", 1);
     }
 
 
