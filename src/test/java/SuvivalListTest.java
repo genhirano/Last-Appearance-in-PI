@@ -49,11 +49,11 @@ class SuvivalListTest extends TestBase {
         //もどる
 
         Integer targetlength = 3;
+        String path = "./target/output";
         String filename = String.format("%02d", targetlength) + ".txt";
-
         Integer listSize = 10;
 
-        String path = "./target/output";
+        //保存用ファイルの存在確認
         File dir = new File(path);
         File[] files = dir.listFiles();
         File targetFile = null;
@@ -66,55 +66,57 @@ class SuvivalListTest extends TestBase {
             }
         }
 
+        //保存用ファイルがなかった場合は空ファイルを作成する（初めての実行）
         if (null == targetFile) {
             // Fileオブジェクトの生成
             File file = new File(path + "/" + filename);
             file.createNewFile();
             targetFile = file;
+            System.out.println("create!");
         }
 
         System.out.println(targetFile.getName());
 
+        //保存用ファイルから全データ読み込み
         String fname = targetFile.getPath();
-        List<String> list = null;
-        list = Files.readAllLines(Paths.get(fname), StandardCharsets.UTF_8);
+        List<String> list = Files.readAllLines(Paths.get(fname), StandardCharsets.UTF_8);
 
-        String readLine;
-        String min = "";
-        String max = "";
+
+        //次に実行すべき情報を作る
+        //（すでにある保存データの一番最後の、その次として実行する情報を作る）
+        String nextMin = "";
+        String nextMax = "";
         if (0 == list.size()) {
-            min = StringUtils.repeat("0", targetlength);
-            max = String.format("%0" + min.length() + "d", (listSize - 1));
-            readLine = min + "," + max + ",,,";
+            //保存ファイルが空っぽならば、最初としての実行情報を創作する
+            nextMin = StringUtils.repeat("0", targetlength); //スタート桁は0桁目
+            nextMax = String.format("%0" + nextMin.length() + "d", (0 + listSize - 1)); //終了桁（スタート+指定の桁数）
         } else {
-            readLine = list.get(list.size() - 1);
+            //保存ファイルの一番最後の行の次として実行情報を作る
 
+            //最終行のデータ取得
+            String readLine = list.get(list.size() - 1);
             String[] readLineArr = readLine.split(",");
 
-            //最終行の
+            //次のスタート桁は、最終行のMAX + 1 桁目
             Integer nextStart = Integer.valueOf(readLineArr[1]) + 1;
-            min = String.format("%0" + readLineArr[1].length() + "d", nextStart);
-            max = String.format("%0" + min.length() + "d", (listSize - 1));
-            readLine = min + "," + max + ",,,";
+            nextMin = String.format("%0" + readLineArr[1].length() + "d", nextStart);
+
+            //次の終了桁は スタート桁位置 + 指定の桁数
+            nextMax = String.format("%0" + nextMin.length() + "d", nextStart + listSize - 1);
 
         }
 
-        String[] splited = readLine.split(",");
+        System.out.println(nextMin + "" + nextMax);
 
-        System.out.println(readLine);
-
-        System.out.println(splited[0]);
-        System.out.println(splited[1]);
-
-        SurvivalList sl = new SurvivalList(targetlength, Integer.valueOf(splited[0]), Integer.valueOf(splited[1]));
+        SurvivalList sl = new SurvivalList(targetlength, Integer.valueOf(nextMin), Integer.valueOf(nextMax));
 
         //検索して、最後の一つにする
-        Random r = new Random();
-        Integer nokoriIndex = r.nextInt(sl.size());
+        //Random r = new Random();
+        //Integer nokoriIndex = r.nextInt(sl.size());
 
         for (int i = sl.size() - 1; i >= 0; i--) {
 
-            if (i == nokoriIndex) {
+            if (i == 2) {
                 continue;
             }
             sl.remove(sl.get(i), 345L);
@@ -129,16 +131,10 @@ class SuvivalListTest extends TestBase {
         try {
 
             //出力先を作成する
-            try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(targetFile.getPath())));) {
+            try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(targetFile.getPath(),true)));) {
 
-                //既存のデータ書き込み
-                //todo アペンドにする
-                for (String s : list) {
-                    pw.println(s);
-                }
-
-                //今回分
-                pw.println(sl.get(0) + "," + sl.getLastFindIndex());
+                //今回分追加
+                pw.println(nextMin + ","+ nextMax + ","+  sl.get(0) + "," + sl.getLastFindIndex());
 
             }
 
