@@ -8,16 +8,6 @@ import java.util.ArrayList;
 
 public class SurvivalList extends ArrayList<String> {
 
-    private Long lastFindIndex = -1L;
-    public Long getLastFindIndex(){
-        if(1 != this.size()){
-            throw new RuntimeException("まださいごではない");
-        }
-
-        return this.lastFindIndex;
-    }
-
-
     public SurvivalList(Integer targetLength, Integer start, Integer end) {
         super();
 
@@ -32,7 +22,6 @@ public class SurvivalList extends ArrayList<String> {
     }
 
     public void remove(String findValue, Long findPos){
-        this.lastFindIndex = findPos;
         this.remove(this.indexOf(findValue)) ;
     }
 

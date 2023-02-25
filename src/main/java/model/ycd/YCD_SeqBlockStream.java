@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * シーケンシャルアクセスYCDファイル
  */
-public class YCD_SeqStream implements AutoCloseable{
+public class YCD_SeqBlockStream implements AutoCloseable{
 
     /**
      * 1回の検索処理で処理する桁数（ユニット桁数）
@@ -89,7 +89,7 @@ public class YCD_SeqStream implements AutoCloseable{
      * @param fileName 対象YCDファイルパス.
      * @param unitSize １プロセスの処理桁数.
      */
-    public YCD_SeqStream(String fileName, Integer unitSize) throws IOException {
+    public YCD_SeqBlockStream(String fileName, Integer unitSize) throws IOException {
 
         //用語定義
         // 　リードブロック　19桁づつ保存された8バイトのデータ。これがシーケンシャルにファイルに保存されている。

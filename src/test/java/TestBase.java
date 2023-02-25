@@ -112,20 +112,49 @@ public class TestBase {
     //4895849832 2987070902 2612045337 8854120901 8121603437  :  400,000,000,100
 
 
+/*
+https://oeis.org/search?q=2512258603197
+# A332262 (b-file synthesized from sequence entry)
+ 1                32
+ 2               605
+ 3             8,553
+ 4            99,846
+ 5         1,369,560
+ 6        14,118,307
+ 7       166,100,500
+ 8     1,816,743,905
+ 9    22,445,207,398
+10   241,641,121,039
+11 2,512,258,603,197
+
+  19,000,000,000,000
+
+
+100 trillion digits of pi ( (caution: you'll need 82 TB of storage space))
+https://storage.googleapis.com/pi100t/index.html
+
+
+今日の数学
+https://www2.hamajima.co.jp/kyoto-math/pdf/kyomath202211.pdf
+
+
+ */
 
     //対象ファイルリスト作成
     public static List<File> createFileList(){
         List<File> fileList = new ArrayList<>();
 
-        String path = new File(".").getAbsoluteFile().getParent();
-        path = path + "\\src\\test\\resources\\1000000";
-        //String path = "H:\\Pi";
-
+        //String path = new File(".").getAbsoluteFile().getParent();
+        //path = path + "\\src\\test\\resources\\1000000";
+        String path = "H:\\Pi";
 
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 0.ycd"));
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 1.ycd"));
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 2.ycd"));
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 3.ycd"));
+        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 4.ycd"));
+        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 5.ycd"));
+        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 6.ycd"));
 
         return fileList;
     }

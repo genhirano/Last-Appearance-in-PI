@@ -1,4 +1,4 @@
-import model.pi.YCD_Provider;
+import model.ycd.YCD_SeqProvider;
 import org.junit.jupiter.api.TestInfo;
 
 import java.io.File;
@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 //-- Pi - Dec - Chudnovsky - 1.ycd
 //1415926535 8979323846 2643383279 5028841971 6939937510  :  50
@@ -39,9 +40,9 @@ class Pi_ProviderTest extends TestBase {
 
         List<File> fileList = createFileList();
 
-        try (YCD_Provider p = new YCD_Provider(fileList, 10, 30);) {
+        try (YCD_SeqProvider p = new YCD_SeqProvider(fileList, 10, 30);) {
 
-            YCD_Provider.Unit u = null;
+            YCD_SeqProvider.Unit u = null;
 
             //最初の30桁
             u = p.getNext();
@@ -63,34 +64,56 @@ class Pi_ProviderTest extends TestBase {
             // 1000001 : 3092756283309275628320845315846520010277
             // 1000031 : 6520010277972356129230126058635360116492
 
+            Boolean checked01 = false;
+            Boolean checked02 = false;
+            Boolean checked03 = false;
+            Boolean checked04 = false;
+            Boolean checked05 = false;
+
             while (p.hasNext()) {
                 u = p.getNext();
 
                 //最初のファイル ラスト前
                 if ((999951 == u.getStartDigit())) {
                     assertEquals("5678796130331164628399634646042209010610", u.getData());
+                    checked01 = true;
                 }
 
                 //最初のファイル ラスト。桁が足りずに短い桁になっている
                 //次のファイルの先頭10桁「3092756283」が、ケツに付与されている
                 if ((999981 == u.getStartDigit())) {
                     assertEquals("220901061057794581513092756283", u.getData());
+                    checked02 = true;
                 }
 
                 //-----------
                 //次のファイルの先頭。
                 if ((1000001 == u.getStartDigit())) {
-                    assertEquals("3092756283309275628320845315846520010277", u.getData());
+                    assertEquals("309275628320845315846520010277", u.getData());
+                    checked03 = true;
                 }
 
                 //次のファイルの２ユニット目
-                if ((1000031 == u.getStartDigit())) {
+                if ((1000021 == u.getStartDigit())) {
                     assertEquals("6520010277972356129230126058635360116492", u.getData());
+                    checked04 = true;
                 }
+
+                //任意テスト
+                if ((1369531 == u.getStartDigit())) {
+                    assertEquals("9075136182741967948495297639533394766485", u.getData());
+                    checked05 = true;
+                }
+
             }
+
+            assertTrue(checked01 && checked02 && checked03 && checked04 && checked05);
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+
 
         System.out.println("実行時間: " + (new Date().getTime() - startTime) + "ms");
     }
