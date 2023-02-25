@@ -51,7 +51,7 @@ class SuvivalListTest extends TestBase {
         Integer targetlength = 3;
         String path = "./target/output";
         String filename = String.format("%02d", targetlength) + ".txt";
-        Integer listSize = 10;
+        Integer listSize = 30;
 
         //保存用ファイルの存在確認
         File dir = new File(path);
@@ -77,72 +77,95 @@ class SuvivalListTest extends TestBase {
 
         System.out.println(targetFile.getName());
 
-        //保存用ファイルから全データ読み込み
-        String fname = targetFile.getPath();
-        List<String> list = Files.readAllLines(Paths.get(fname), StandardCharsets.UTF_8);
+        while (true) {
+
+            //保存用ファイルから全データ読み込み
+            String fname = targetFile.getPath();
+            List<String> list = Files.readAllLines(Paths.get(fname), StandardCharsets.UTF_8);
+
+            //次に実行すべき情報を作る
+            //（すでにある保存データの一番最後の、その次として実行する情報を作る）
+            String nextMin = "";
+            String nextMax = "";
+            if (0 == list.size()) {
+                //保存ファイルが空っぽならば、最初としての実行情報を創作する
+                nextMin = StringUtils.repeat("0", targetlength); //スタート桁は0桁目
+                nextMax = String.format("%0" + nextMin.length() + "d", (0 + listSize - 1)); //終了桁（スタート+指定の桁数）
+            } else {
+                //保存ファイルの一番最後の行の次として実行情報を作る
+
+                //最終行のデータ取得
+                String readLine = list.get(list.size() - 1);
+
+                if(readLine.trim().isEmpty()){
+                    throw new IOException("file is invalid(Last Line is empty!) " + filename);
+                }
+
+                String[] readLineArr = readLine.split(",");
+
+                String prevEndStr = readLineArr[1];
+
+                //終了条件
+                if (prevEndStr.equals(StringUtils.repeat("9", targetlength))){
+                    break;
+                }
 
 
-        //次に実行すべき情報を作る
-        //（すでにある保存データの一番最後の、その次として実行する情報を作る）
-        String nextMin = "";
-        String nextMax = "";
-        if (0 == list.size()) {
-            //保存ファイルが空っぽならば、最初としての実行情報を創作する
-            nextMin = StringUtils.repeat("0", targetlength); //スタート桁は0桁目
-            nextMax = String.format("%0" + nextMin.length() + "d", (0 + listSize - 1)); //終了桁（スタート+指定の桁数）
-        } else {
-            //保存ファイルの一番最後の行の次として実行情報を作る
+                //次のスタート桁は、最終行のMAX + 1 桁目
+                Integer nextStart = Integer.valueOf(prevEndStr) + 1;
+                nextMin = String.format("%0" + prevEndStr.length() + "d", nextStart);
 
-            //最終行のデータ取得
-            String readLine = list.get(list.size() - 1);
-            String[] readLineArr = readLine.split(",");
+                //次の終了桁は スタート桁位置 + 指定の桁数
+                nextMax = String.format("%0" + prevEndStr.length() + "d", nextStart + listSize - 1);
 
-            //次のスタート桁は、最終行のMAX + 1 桁目
-            Integer nextStart = Integer.valueOf(readLineArr[1]) + 1;
-            nextMin = String.format("%0" + readLineArr[1].length() + "d", nextStart);
-
-            //次の終了桁は スタート桁位置 + 指定の桁数
-            nextMax = String.format("%0" + nextMin.length() + "d", nextStart + listSize - 1);
-
-        }
-
-        System.out.println(nextMin + "" + nextMax);
-
-        SurvivalList sl = new SurvivalList(targetlength, Integer.valueOf(nextMin), Integer.valueOf(nextMax));
-
-        //検索して、最後の一つにする
-        //Random r = new Random();
-        //Integer nokoriIndex = r.nextInt(sl.size());
-
-        for (int i = sl.size() - 1; i >= 0; i--) {
-
-            if (i == 2) {
-                continue;
-            }
-            sl.remove(sl.get(i), 345L);
-
-        }
-
-        System.out.println(sl.get(0) + "," + sl.getLastFindIndex());
-
-
-        //最後の一つになったとする
-
-        try {
-
-            //出力先を作成する
-            try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(targetFile.getPath(),true)));) {
-
-                //今回分追加
-                pw.println(nextMin + ","+ nextMax + ","+  sl.get(0) + "," + sl.getLastFindIndex());
+                if (targetlength < nextMax.length()) {
+                    nextMax = StringUtils.repeat("9", targetlength);
+                }
 
             }
 
-        } catch (IOException e) {
-            //TODO 必要であればメッセージを追加する
-            throw new IOException(e);
-        }
+            SurvivalList sl = new SurvivalList(targetlength, Integer.valueOf(nextMin), Integer.valueOf(nextMax));
 
+
+
+
+            //検索して、最後の一つにする
+            //Random r = new Random();
+            //Integer nokoriIndex = r.nextInt(sl.size());
+
+            for (int i = sl.size() - 1; i >= 0; i--) {
+
+                if (i == 2) {
+                    continue;
+                }
+                sl.remove(sl.get(i), 345L);
+
+            }
+
+            //最後の一つになったとする
+            try {
+
+                //出力先を作成する
+                try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(targetFile.getPath(), true)));) {
+
+                    //今回分追加
+                    pw.println(nextMin + "," + nextMax + "," + sl.get(0) + "," + sl.getLastFindIndex());
+                    System.out.println(nextMin + "," + nextMax + "," + sl.get(0) + "," + sl.getLastFindIndex());
+
+                }
+
+                List<String> lastLine = Files.readAllLines(Paths.get(fname), StandardCharsets.UTF_8);
+                if(4 != lastLine.get(lastLine.size()-1).split(",").length){
+                    throw new RuntimeException("file is invalid last laine EOF Posision(Save is Done.)");
+                }
+
+
+            } catch (IOException e) {
+                //TODO 必要であればメッセージを追加する
+                throw new IOException(e);
+            }
+
+        }
 
     }
 
