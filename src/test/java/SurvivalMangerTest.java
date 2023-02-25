@@ -22,21 +22,22 @@
 */
 
 import model.pi.SurvivalList;
+import model.pi.SurvivalManager;
+import model.ycd.YCD_SeqProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.TestInfo;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 @SuppressWarnings("NonAsciiCharacters")
-class SuvivalListTest extends TestBase {
+class SurvivalMangerTest extends TestBase {
+
 
     @org.junit.jupiter.api.Test
     void 作りながら動かす用2(TestInfo testInfo) throws IOException {
@@ -48,10 +49,13 @@ class SuvivalListTest extends TestBase {
         //その一つを記録する
         //もどる
 
-        Integer targetlength = 4;
+        List<File> fileList = createFileList();
+
+        Integer targetlength = 7;
+        Integer listSize = 20000;
+
         String path = "./target/output";
         String filename = String.format("%02d", targetlength) + ".txt";
-        Integer listSize = 13;
 
         //保存用ファイルの存在確認
         File dir = new File(path);
@@ -90,14 +94,19 @@ class SuvivalListTest extends TestBase {
             if (0 == list.size()) {
                 //保存ファイルが空っぽならば、最初としての実行情報を創作する
                 nextMin = StringUtils.repeat("0", targetlength); //スタート桁は0桁目
+
                 nextMax = String.format("%0" + nextMin.length() + "d", (0 + listSize - 1)); //終了桁（スタート+指定の桁数）
+                if (targetlength < nextMax.length()) {
+                    nextMax = StringUtils.repeat("9", targetlength);
+                }
+
             } else {
                 //保存ファイルの一番最後の行の次として実行情報を作る
 
                 //最終行のデータ取得
                 String readLine = list.get(list.size() - 1);
 
-                if(readLine.trim().isEmpty()){
+                if (readLine.trim().isEmpty()) {
                     throw new IOException("file is invalid(Last Line is empty!) " + filename);
                 }
 
@@ -106,7 +115,7 @@ class SuvivalListTest extends TestBase {
                 String prevEndStr = readLineArr[1];
 
                 //終了条件
-                if (prevEndStr.equals(StringUtils.repeat("9", targetlength))){
+                if (prevEndStr.equals(StringUtils.repeat("9", targetlength))) {
                     break;
                 }
 
@@ -126,130 +135,61 @@ class SuvivalListTest extends TestBase {
 
             SurvivalList sl = new SurvivalList(targetlength, Integer.valueOf(nextMin), Integer.valueOf(nextMax));
 
+            String lastData = "";
+            Long lastFoundPos = -1L;
 
+            try (YCD_SeqProvider p = new YCD_SeqProvider(fileList, targetlength, 3000000);) {
 
+                while (p.hasNext()) {
 
-            //検索して、最後の一つにする
-            //Random r = new Random();
-            //Integer nokoriIndex = r.nextInt(sl.size());
+                    YCD_SeqProvider.Unit currentPi = p.getNext();
+                    System.out.println("NEXT Pi Unit! : " + currentPi.getStartDigit() + "　から   " + nextMin + "-" + nextMax + " リスト残り:" + sl.size());
 
-            for (int i = sl.size() - 1; i >= 0; i--) {
+                    for (int i = sl.size() - 1; i >= 0; i--) {
 
-                if (i == 2) {
-                    continue;
-                }
-                sl.remove(sl.get(i), 345L);
+                        Integer pos = currentPi.getData().indexOf(sl.get(i));
 
-            }
+                        if (0 <= pos) {
+                            Long curFindPos = currentPi.getStartDigit() + pos;
+                            if (lastFoundPos < curFindPos) {
+                                lastData = sl.get(i);
+                                lastFoundPos = curFindPos;
+                            }
+                            sl.remove(i);
+                        }
+                    }
 
-            //最後の一つになったとする
-            try {
+                    if (0 >= sl.size()) {
+                        break;
+                    }
 
-                //出力先を作成する
-                try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(targetFile.getPath(), true)));) {
-
-                    //今回分追加
-                    //pw.println(nextMin + "," + nextMax + "," + sl.get(0) + "," + sl.getLastFindIndex());
-                    //System.out.println(nextMin + "," + nextMax + "," + sl.get(0) + "," + sl.getLastFindIndex());
-
-                }
-
-                List<String> lastLine = Files.readAllLines(Paths.get(fname), StandardCharsets.UTF_8);
-                if(4 != lastLine.get(lastLine.size()-1).split(",").length){
-                    throw new RuntimeException("file is invalid last laine EOF Posision(Save is Done.)");
                 }
 
+                if (!sl.isEmpty()) {
+                    throw new RuntimeException("The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)");
+                }
 
-            } catch (IOException e) {
-                //TODO 必要であればメッセージを追加する
-                throw new IOException(e);
+                System.out.println(sl.size());
+
+
+                System.out.println("ラストは : " + lastData + " の " + lastFoundPos);
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+
+            //出力先を作成する
+            try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(targetFile.getPath(), true)));) {
+
+                //今回分追加
+                pw.println(nextMin + "," + nextMax + "," + lastData + "," + lastFoundPos);
+                System.out.println(nextMin + "," + nextMax + "," + lastData + "," + lastFoundPos);
+
             }
 
         }
 
-    }
-
-    @org.junit.jupiter.api.Test
-    void 作りながら動かす用(TestInfo testInfo) throws IOException {
-
-        //結果保存ファイルを検索し、あれば読み込み、なければ新規作成する
-        //ファイルを読み込み、次のスタートエンドを決定する
-        //次のリストをメモリにつくる
-        //メモリリストの検索開始して、最後の一つになるまで検索する
-        //その一つを記録する
-        //もどる
-
-
-        Integer targetlength = 3;
-        Integer max = Integer.valueOf(StringUtils.repeat("3", targetlength));
-
-        Integer current = 0;
-
-        Integer step = 100;
-        while (current <= max) {
-
-            SurvivalList sl = new SurvivalList(targetlength, current, step);
-
-            current = current + step;
-        }
-
-
-        //resume
-        //次のスタート位置を探す
-
-        String path = "./target/output";
-        File dir = new File(path);
-        File[] files = dir.listFiles();
-        List<List<String>> fileInfoList = new ArrayList<>();
-        for (int i = 0; i < files.length; i++) {
-            File file = files[i];
-
-            String fileName = file.getName().replace(".txt", "");
-            List sarr = Arrays.asList(fileName.split("_"));
-            fileInfoList.add(sarr);
-        }
-
-
-        //不純物の削除
-        for (int i = fileInfoList.size() - 1; i >= 0; i--) {
-            if (targetlength != Integer.valueOf(fileInfoList.get(i).get(0))) {
-                fileInfoList.remove(i);
-            }
-        }
-
-        //終了位置が一番小さいものを検索して、保持する
-        Integer minStart = Integer.MAX_VALUE;
-        List<String> min = null;
-        for (List<String> l : fileInfoList) {
-            Integer start = Integer.valueOf(l.get(1));
-            if (minStart >= start) {
-                min = l;
-                minStart = start;
-            }
-        }
-        System.out.println(min);
-
-        //いちいちで、残り一つになるまでやっていく
-
-
-    }
-
-
-    @org.junit.jupiter.api.Test
-    void コンストラクタTest(TestInfo testInfo) {
-/*
-        assertThrows(RuntimeException.class, () -> new SurvivalList(-1, "1", 1));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(1, "a", 1));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(1, "", 1));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(1, null, 1));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(1, "00", 1));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(1, "00", 1));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(100, "000", 1));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(100, "000", -1));
-        assertThrows(RuntimeException.class, () -> new SurvivalList(100, "000", 0));
-        new SurvivalList(1, "1", 1);
-        new SurvivalList(2, "11", 1);
-*/
     }
 
 

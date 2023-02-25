@@ -1,15 +1,10 @@
-package model.pi;
-
-import model.ycd.YCDFileUtil;
-import model.ycd.YCDHeaderInfoElem;
-import model.ycd.YCDProcessUnit;
-import model.ycd.YCD_SeqStream;
+package model.ycd;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class YCD_Provider extends Thread implements AutoCloseable {
+public class YCD_SeqProvider implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
@@ -61,13 +56,13 @@ public class YCD_Provider extends Thread implements AutoCloseable {
     private File currentFile = null;
     private File lastFile = null;
 
-    private YCD_SeqStream currentStream = null;
+    private YCD_SeqBlockStream currentStream = null;
 
     String prevUnitData = "";
     Long unitStartPoint = 1L;
 
 
-    public YCD_Provider(List<File> fileList, Integer targetLength, Integer unitLength) throws IOException {
+    public YCD_SeqProvider(List<File> fileList, Integer targetLength, Integer unitLength) throws IOException {
 
         this.targetLength = targetLength;
         this.unitLnegth = unitLength;
@@ -86,8 +81,8 @@ public class YCD_Provider extends Thread implements AutoCloseable {
 
     }
 
-    private YCD_SeqStream createStream(File file, Integer unitLength) throws IOException {
-        return new YCD_SeqStream(file.getPath(), unitLength);
+    private YCD_SeqBlockStream createStream(File file, Integer unitLength) throws IOException {
+        return new YCD_SeqBlockStream(file.getPath(), unitLength);
     }
 
     public Boolean hasNext(){
@@ -109,7 +104,6 @@ public class YCD_Provider extends Thread implements AutoCloseable {
 
     public Unit getNext() throws IOException {
 
-
         //すでにカレントストリーム末尾に達していたら次のファイルへ
         if (!this.currentStream.hasNext()) {
             this.currentStream.close();
@@ -130,6 +124,10 @@ public class YCD_Provider extends Thread implements AutoCloseable {
             if(!findNextFile){
                 this.currentFile = null;
             }
+
+            //新しいファイルに映ったときは、ひとつ前データをクリアする
+            //（境目については前のファイルのケツ部分で解決済み）
+            this.prevUnitData = "";
 
         }
 
@@ -164,87 +162,6 @@ public class YCD_Provider extends Thread implements AutoCloseable {
         return u;
 
     }
-
-
-    @Override
-    public void run() {
-
-        try {
-
-            Long unitStartPoint = 1L;
-
-            for (File f : this.fileInfoMap.keySet()) {
-
-                Map<FileInfo, String> m = this.fileInfoMap.get(f);
-
-                try (YCD_SeqStream stream = new YCD_SeqStream(f.getPath(), this.unitLnegth);) {
-
-                    //ひとつ前の読み込みデータを作成
-                    String prevUnitData = "";
-
-                    //ユニット単位での読み込みループ
-                    int i = 0;
-                    while (stream.hasNext()) {
-
-                        YCDProcessUnit pdu = stream.next();
-                        String readData = pdu.getValue();
-
-                        //検索実行文字列の作成
-                        String thisLine = prevUnitData + readData;
-
-
-                        //ファイル末尾に達したら次のファイルの先頭をケツにくっつける
-                        if (!stream.hasNext()) {
-                            Integer thisFileIndex = Integer.valueOf(this.fileInfoMap.get(f).get(FileInfo.BLOCK_INDEX));
-
-                            for (File f2 : this.fileInfoMap.keySet()) {
-                                Integer theFileIndex = Integer.valueOf(this.fileInfoMap.get(f2).get(FileInfo.BLOCK_INDEX));
-                                if (theFileIndex.equals(thisFileIndex + 1)) {
-                                    thisLine = thisLine + this.fileInfoMap.get(f2).get(FileInfo.FIRST_DATA);
-
-                                    //System.out.println("thisdata : " + thisLine);
-                                    //System.out.println("nextdata : " + this.fileInfoMap.get(f2).get(FileInfo.FIRST_DATA));
-
-
-                                    break;
-                                }
-
-                            }
-                        }
-
-
-                        //if ((0 == i) || (1 == i)|| (2 == i)|| (43477 == i)|| (43478 == i)|| (43479 == i)) {
-                        //    System.out.println(i + "  " + String.format("%,d", unitStartPoint) + " unit : " + thisLine);
-                        //}
-
-                        //if ((0 == i % 100000)) {
-                        //    System.out.println(i + "  " + String.format("%,d", unitStartPoint) + " unit : " + thisLine);
-                        //}
-
-                        i++;
-
-                        prevUnitData = thisLine.substring(thisLine.length() - this.targetLength);
-
-                        unitStartPoint = unitStartPoint + (thisLine.length()) - (prevUnitData.length());
-
-
-                    }
-
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-
-    }
-
 
     public Long getMaxDepth() {
         Long maxDepth = -1L;
