@@ -52,7 +52,7 @@ class SurvivalMangerTest extends TestBase {
         List<File> fileList = createFileList();
 
         Integer targetlength = 7;
-        Integer listSize = 20000;
+        Integer listSize = 50000;
 
         String path = "./target/output";
         String filename = String.format("%02d", targetlength) + ".txt";
@@ -138,12 +138,18 @@ class SurvivalMangerTest extends TestBase {
             String lastData = "";
             Long lastFoundPos = -1L;
 
-            try (YCD_SeqProvider p = new YCD_SeqProvider(fileList, targetlength, 3000000);) {
+
+            int count = 0;
+            try (YCD_SeqProvider p = new YCD_SeqProvider(fileList, targetlength, 19000);) {
 
                 while (p.hasNext()) {
 
                     YCD_SeqProvider.Unit currentPi = p.getNext();
-                    System.out.println("NEXT Pi Unit! : " + currentPi.getStartDigit() + "　から   " + nextMin + "-" + nextMax + " リスト残り:" + sl.size());
+
+                    count ++;
+                    if(0 == count % 1000){
+                        System.out.println("NEXT Pi Unit! : " + currentPi.getStartDigit() + "　から   " + nextMin + "-" + nextMax + " リスト残り:" + sl.size());
+                    }
 
                     for (int i = sl.size() - 1; i >= 0; i--) {
 
