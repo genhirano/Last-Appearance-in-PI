@@ -8,9 +8,6 @@ import java.util.ArrayList;
 
 public class SurvivalList extends ArrayList<String> {
 
-    //一回戦の計画をする
-    //二回戦はマージする
-
     private Long lastFindIndex = -1L;
     public Long getLastFindIndex(){
         if(1 != this.size()){
