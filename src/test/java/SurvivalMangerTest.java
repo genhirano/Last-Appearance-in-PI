@@ -31,9 +31,13 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("NonAsciiCharacters")
 class SurvivalMangerTest extends TestBase {
@@ -51,9 +55,17 @@ class SurvivalMangerTest extends TestBase {
 
         List<File> fileList = createFileList();
 
-        Integer targetlength = 7;
+        Integer targetlength = 8;
         Integer listSize = 50000;
+        Integer unitLength = 1900;
+        Integer reportSpan = 5000;
 
+        /*
+        Integer targetlength = 6;
+        Integer listSize = 51111;
+        Integer unitLength = 1900;
+        Integer reportSpan = 100;
+*/
         String path = "./target/output";
         String filename = String.format("%02d", targetlength) + ".txt";
 
@@ -64,7 +76,7 @@ class SurvivalMangerTest extends TestBase {
         for (int i = 0; i < files.length; i++) {
             File file = files[i];
             if (file.getName().equals(filename)) {
-                System.out.println("found!");
+                System.out.println( filename + "  found!");
                 targetFile = file;
                 break;
             }
@@ -76,10 +88,19 @@ class SurvivalMangerTest extends TestBase {
             File file = new File(path + "/" + filename);
             file.createNewFile();
             targetFile = file;
-            System.out.println("create!");
+            System.out.println( filename + "create!");
         }
 
-        System.out.println(targetFile.getName());
+        //YCDフィアルの全体像をつかむ
+        //全ファイルヘッダー情報取得
+        Map<File, Map<YCD_SeqProvider.FileInfo, String>> ycdFileMap = YCD_SeqProvider.createFileInfo(fileList,targetlength);
+        Integer fileCont = ycdFileMap.size();
+        Long total = 0L;
+        for(File f : ycdFileMap.keySet()){
+            total = Long.valueOf(ycdFileMap.get(f).get(YCD_SeqProvider.FileInfo.END_DIGIT));
+        }
+        System.out.println("FILE COUNT:" + fileCont + "  MAX DEPTH: " + total);
+
 
         while (true) {
 
@@ -91,6 +112,11 @@ class SurvivalMangerTest extends TestBase {
             //（すでにある保存データの一番最後の、その次として実行する情報を作る）
             String nextMin = "";
             String nextMax = "";
+            YCD_SeqProvider.Unit currentPi = null;
+            ZonedDateTime startTime = null;
+            ZonedDateTime endTime = null;
+
+
             if (0 == list.size()) {
                 //保存ファイルが空っぽならば、最初としての実行情報を創作する
                 nextMin = StringUtils.repeat("0", targetlength); //スタート桁は0桁目
@@ -140,16 +166,15 @@ class SurvivalMangerTest extends TestBase {
 
 
             int count = 0;
-            try (YCD_SeqProvider p = new YCD_SeqProvider(fileList, targetlength, 19000);) {
+            try (YCD_SeqProvider p = new YCD_SeqProvider(fileList, targetlength, unitLength);) {
+
+                startTime = ZonedDateTime.now();
 
                 while (p.hasNext()) {
 
-                    YCD_SeqProvider.Unit currentPi = p.getNext();
+                    currentPi = p.getNext();
 
-                    count ++;
-                    if(0 == count % 1000){
-                        System.out.println("NEXT Pi Unit! : " + currentPi.getStartDigit() + "　から   " + nextMin + "-" + nextMax + " リスト残り:" + sl.size());
-                    }
+                    count++;
 
                     for (int i = sl.size() - 1; i >= 0; i--) {
 
@@ -165,6 +190,14 @@ class SurvivalMangerTest extends TestBase {
                         }
                     }
 
+                    if ( (0 == count % reportSpan) || (sl.isEmpty())) {
+                        System.out.println(
+                                "FILE_INDEX:" + currentPi.getFileInfo().get(YCD_SeqProvider.FileInfo.BLOCK_INDEX)
+                                        + " " + currentPi.getStartDigit() + " から "
+                                        + nextMin + "-" + nextMax + " リスト残り:" + sl.size());
+                    }
+
+
                     if (0 >= sl.size()) {
                         break;
                     }
@@ -175,10 +208,7 @@ class SurvivalMangerTest extends TestBase {
                     throw new RuntimeException("The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)");
                 }
 
-                System.out.println(sl.size());
-
-
-                System.out.println("ラストは : " + lastData + " の " + lastFoundPos);
+                endTime = ZonedDateTime.now();
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -189,8 +219,24 @@ class SurvivalMangerTest extends TestBase {
             try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(targetFile.getPath(), true)));) {
 
                 //今回分追加
-                pw.println(nextMin + "," + nextMax + "," + lastData + "," + lastFoundPos);
-                System.out.println(nextMin + "," + nextMax + "," + lastData + "," + lastFoundPos);
+                Duration summerVacationDuration = Duration.between(startTime, endTime);
+
+                //進捗状況
+                Double allMax =  Double.valueOf(StringUtils.repeat("9", targetlength));
+                double d = (Double.valueOf(nextMax) / allMax) * 100;
+                d = ((double)Math.round(d * 1000))/1000;
+
+                String recordStr =
+                        nextMin
+                                + "," + nextMax
+                                + "," + lastData
+                                + "," + lastFoundPos
+                                + "," + currentPi.getFileInfo().get(YCD_SeqProvider.FileInfo.BLOCK_INDEX)
+                                + "," + d + "%"
+                                + "," + summerVacationDuration.getSeconds() + "sec";
+
+                pw.println(recordStr);
+                System.out.println(recordStr);
 
             }
 
