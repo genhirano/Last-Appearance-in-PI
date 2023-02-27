@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8"/>
+    <title >Last Appearance in PI Project</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="google" content="notranslate">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.10.0/css/all.css">
+</head>
+
+<!-- ヘッダー -->
+<header>
+    <!-- タイトル・サブタイトル -->
+    <section class="hero is-small is-primary">
+        <div class="hero-body">
+            <h1 class="title">
+                Last Appearance in PI Project
+            </h1>
+            <h2 class="subtitle">
+                Search for pi and find the slowest appearing number and position.
+            </h2>
+        </div>
+    </section>
+</header>
+
+<!-- ボディ -->
+<body>
+
+<!-- メインコンテンツ -->
+<div class="column">
+    <!-- 本文 -->
+    <article class="box media">
+        <div class="media-content">
+            <div class="content">
+
+                <table class="table is-narrow"  style="table-layout:fixed;">
+                    <tr>
+                        <th width="50px">data(please reload!)</th>
+                    </tr>
+
+                    <tr th:each="line : ${DATA}">
+                        <td width="50px">
+                            <p th:text="${line}"></p>
+                        </td>
+                    </tr>
+
+                </table>
+            </div>
+            <p th:text="'system is ' + ${RUNNING_TIME} + 'sec running.'"/>
+            <p th:text="'since ' + ${SYSTEMSTART}"/>
+        </div>
+    </article>
+
+</div>
+
+
+
+<!-- フッター -->
+<footer class="footer has-background-primary-dark has-text-white">
+    <p class="has-text-centered">
+        Copyright © 2022-2023 GENHIRANO
+    </p>
+    <p class="has-text-centered">
+        All Rights Reserved
+    </p>
+    <p align="center">
+        <a class="button is-link" href="https://www.facebook.com/genhirano" target="_blank">
+            contact : <span class="icon"><i class="fab fa-facebook"></i></span>
+        </a>
+    </p>
+</footer>
+
+</body>
+</html>

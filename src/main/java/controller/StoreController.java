@@ -174,13 +174,123 @@ public class StoreController {
                             + "," + end
                             + "," + lastData
                             + "," + lastFoundPos
-                            + "," + d + "%"
-                            + "," + summerVacationDuration.getSeconds() + "sec";
+                            + "," + summerVacationDuration.getSeconds();
 
             pw.println(recordStr);
             System.out.println(recordStr);
 
         }
+
+    }
+
+    public List<String> getAll() {
+        List<String> retList = new ArrayList<>();
+
+        for (int i = 1; i <= Integer.MAX_VALUE; i++) {
+
+            String filename = String.format("%02d", i) + ".txt";
+            File file = new File(this.storeFilePath + "/" + filename);
+
+            if (!file.exists()) {
+                break;
+            }
+            //保存用ファイルから全データ読み込み
+            List<String> lines = null;
+            try {
+                lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new RuntimeException("fatal file read! " + file.getName(), e);
+            }
+            retList.add("-----" + filename + "-----");
+            retList.addAll(lines);
+        }
+
+        return retList;
+
+    }
+
+    public List<String> getSummary() {
+        List<String> retList = new ArrayList<>();
+
+        for (int i = 1; i <= Integer.MAX_VALUE; i++) {
+
+            String answer = "";
+
+            String filename = String.format("%02d", i) + ".txt";
+            File file = new File(this.storeFilePath + "/" + filename);
+
+            if (!file.exists()) {
+                break;
+            }
+
+            //タイトル
+            answer = answer + "number of digits:" + String.format("%02d", i);
+
+            //保存用ファイルから全データ読み込み
+            List<String> lines = null;
+            try {
+                lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+
+                String maxDepthStr = "";
+                Long maxDepth = Long.MIN_VALUE;
+                Long allSec = 0L;
+                for(String s : lines){
+
+                    String[] splited = s.split(",");
+                    Long depth = Long.valueOf(splited[3]);
+
+                    if(depth > maxDepth){
+                        maxDepth = depth;
+                        maxDepthStr = splited[2];
+                    }
+
+                    //かかった時間(秒)の積算
+                    allSec = allSec + Long.valueOf(splited[4]);
+
+                }
+
+                //一番最後の行を見る
+                String lastLine = lines.get(lines.size()-1);
+                if(lastLine.isEmpty()){
+                    //ファイルに一行もない場合
+                    answer = answer + " init progress...";
+                    break;
+                }
+
+                //最終行の分析
+                String[] lastSplited = lastLine.split(",");
+
+                //進捗状況
+                Integer allMax = Integer.valueOf(StringUtils.repeat("9", i));
+                double progress = 0;
+                if(allMax.equals(Integer.valueOf(lastSplited[1]))){
+                    //最後まで到達していたら進捗100％とする
+                    progress=100.0d;
+
+                    answer = answer +  " the last appearing number: " + maxDepth;
+                    answer = answer +  " appearing depth: " + maxDepthStr;
+                    answer = answer +  " process time: " + allSec + "sec";
+
+                }else{
+                    //進捗取得
+                    double d = (Double.valueOf(lastSplited[1]) / allMax) * 100;
+                    progress = ((double) Math.round(d * 1000)) / 1000;
+
+                    answer = answer +  " brute forced: " + maxDepthStr;
+                    answer = answer + "  (remaining: " + (allMax - Integer.valueOf(lastSplited[2]) + " Progress: " + progress + "% " +  " processing time: " + allSec + "sec)");
+
+                }
+
+                retList.add(answer);
+
+            } catch (IOException e) {
+                throw new RuntimeException("fatal file read! " + file.getName(), e);
+            }
+
+        }
+
+        return retList;
+
 
     }
 
