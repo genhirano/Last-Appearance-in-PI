@@ -9,7 +9,7 @@ public class YCD_SeqProvider implements AutoCloseable {
     @Override
     public void close() throws Exception {
 
-        if(null != this.currentStream){
+        if (null != this.currentStream) {
             this.currentStream.close();
         }
 
@@ -45,8 +45,15 @@ public class YCD_SeqProvider implements AutoCloseable {
             return data;
         }
 
+        private Map<FileInfo, String> fileInfo;
 
-        private Unit(Long startDigit, String data) {
+        public Map<FileInfo, String> getFileInfo() {
+            return this.fileInfo;
+        }
+
+
+        private Unit(Map<FileInfo, String> fileInfo, Long startDigit, String data) {
+            this.fileInfo = fileInfo;
             this.startDigit = startDigit;
             this.data = data;
         }
@@ -68,13 +75,13 @@ public class YCD_SeqProvider implements AutoCloseable {
         this.unitLnegth = unitLength;
 
         //全ファイルヘッダー情報取得
-        this.fileInfoMap = this.createFileInfo(fileList, targetLength);
+        this.fileInfoMap = createFileInfo(fileList, targetLength);
 
         //カレントファイルを先頭ファイルにする
         this.currentFile = fileList.get(0);
 
         //終了判定用に最後のファイルを保持しておく
-        this.lastFile = fileList.get(fileList.size()-1);
+        this.lastFile = fileList.get(fileList.size() - 1);
 
         //初めての呼び出し
         this.currentStream = this.createStream(this.currentFile, this.unitLnegth);
@@ -85,14 +92,14 @@ public class YCD_SeqProvider implements AutoCloseable {
         return new YCD_SeqBlockStream(file.getPath(), unitLength);
     }
 
-    public Boolean hasNext(){
+    public Boolean hasNext() {
 
         //カレントストリームにまだ次があれば「次あり」
-        if(this.currentStream.hasNext()){
+        if (this.currentStream.hasNext()) {
             return true;
         }
         //カレントストリームに次がなくても、次のファイルがあれば「次あり」
-        if(!this.currentFile.getName().equals(this.lastFile.getName())){
+        if (!this.currentFile.getName().equals(this.lastFile.getName())) {
             return true;
         }
 
@@ -121,7 +128,7 @@ public class YCD_SeqProvider implements AutoCloseable {
                     break;
                 }
             }
-            if(!findNextFile){
+            if (!findNextFile) {
                 this.currentFile = null;
             }
 
@@ -131,13 +138,11 @@ public class YCD_SeqProvider implements AutoCloseable {
 
         }
 
-
+        //カレントストリームを次に進めて
         YCDProcessUnit pdu = this.currentStream.next();
-        String readData = pdu.getValue();
 
-        //検索実行文字列の作成
-        String thisLine = this.prevUnitData + readData;
-
+        //データを得る。そのとき、一つ前のケツの文字を先頭に挿入して読み込みユニット間の検索漏れを防ぐ
+        String thisLine = new StringBuffer(this.prevUnitData).append(pdu.getValue()).toString();
 
         //読んだ後、ファイル末尾に達していたら次のファイルの先頭をもってきてここのケツにくっつける
         if (!this.currentStream.hasNext()) {
@@ -158,7 +163,7 @@ public class YCD_SeqProvider implements AutoCloseable {
         Long thisStartPoint = this.unitStartPoint;
         this.unitStartPoint = this.unitStartPoint + (thisLine.length()) - (prevUnitData.length());
 
-        Unit u = new Unit(thisStartPoint, thisLine);
+        Unit u = new Unit(this.fileInfoMap.get(this.currentFile), thisStartPoint, thisLine);
         return u;
 
     }
@@ -176,7 +181,7 @@ public class YCD_SeqProvider implements AutoCloseable {
     }
 
 
-    private Map<File, Map<FileInfo, String>> createFileInfo(List<File> fileList, Integer targetLength) {
+    public static Map<File, Map<FileInfo, String>> createFileInfo(List<File> fileList, Integer targetLength) {
 
         //対象ファイル全ての情報事前取得
         try {

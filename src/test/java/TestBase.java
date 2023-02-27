@@ -152,9 +152,17 @@ https://www2.hamajima.co.jp/kyoto-math/pdf/kyomath202211.pdf
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 1.ycd"));
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 2.ycd"));
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 3.ycd"));
-        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 4.ycd"));
-        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 5.ycd"));
-        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 6.ycd"));
+        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 4.ycd"));
+        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 5.ycd"));
+        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 6.ycd"));
+        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 7.ycd"));
+        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 8.ycd"));
+        fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 9.ycd"));
+        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 10.ycd"));
+        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 11.ycd"));
+        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 12.ycd"));
+        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 13.ycd"));
+        //fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 14.ycd"));
 
         return fileList;
     }
