@@ -58,7 +58,7 @@ public class StoreController {
     }
 
 
-    private String storeFilePath = "./target/output";
+    private String storeFilePath = ".";
 
 
     private static StoreController instance;
@@ -146,7 +146,7 @@ public class StoreController {
     }
 
     public void saveFile(Integer targetLength, String start, String end, String lastData, Long
-            lastFoundPos, ZonedDateTime startTime, ZonedDateTime endTime) throws IOException {
+            lastFoundPos, ZonedDateTime startTime, ZonedDateTime endTime) {
 
         String filename = String.format("%02d", targetLength) + ".txt";
 
@@ -154,8 +154,12 @@ public class StoreController {
         File file = new File(this.storeFilePath + "/" + filename);
 
         if (!file.exists()) {
-            file.createNewFile();
-            System.out.println(filename + "create!");
+            try {
+                file.createNewFile();
+                System.out.println(filename + "create!");
+            } catch (IOException e) {
+                throw new RuntimeException(file.getPath(),e);
+            }
         }
 
         try (
@@ -179,6 +183,8 @@ public class StoreController {
             pw.println(recordStr);
             System.out.println(recordStr);
 
+        }catch(IOException e){
+            throw new RuntimeException("保存ファイル書き込み失敗",e);
         }
 
     }
