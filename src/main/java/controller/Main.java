@@ -54,6 +54,8 @@ public class Main {
         ResourceBundle rb = ResourceBundle.getBundle("default");
         createFileListByProp(rb);
 
+        System.out.println(rb.toString());
+
         List<File> piFileList = createFileListByProp(rb);
         String path = rb.getString("outputPath");
         Integer maxLength = Integer.valueOf(rb.getString("maxLength"));
@@ -83,7 +85,7 @@ public class Main {
             String noStr = String.format("%03d", i);
 
             try{
-                String s = rb.getString("piFile" + noStr);
+                String s = rb.getString("ycd" + noStr);
                 File f = new File(s);
                 if(!f.exists()){
                     throw new RuntimeException("piFile is not found: " + s);

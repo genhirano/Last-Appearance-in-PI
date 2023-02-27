@@ -111,7 +111,7 @@ public class Searcher extends Thread{
                                 "targetLength: " + targetBean.getTargetLength()
                                         + " PiFILE_INDEX:" + currentPi.getFileInfo().get(YCD_SeqProvider.FileInfo.BLOCK_INDEX)
                                         + " SearchingDepth: " + currentPi.getStartDigit()
-                                        + targetBean.getStart() + "-" + targetBean.getEnd()
+                                        + " targetLenge: " +targetBean.getStart() + "-" + targetBean.getEnd()
                                         + " remaining: " + sl.size());
                     }
 
@@ -144,11 +144,7 @@ public class Searcher extends Thread{
             }
 
             //結果保存
-            try {
-                sc.saveFile(targetBean.getTargetLength(), targetBean.getStart(), targetBean.getEnd(), lastData, lastFoundPos, startTime, endTime);
-            } catch (IOException e) {
-                throw new RuntimeException("結果保存に失敗", e);
-            }
+            sc.saveFile(targetBean.getTargetLength(), targetBean.getStart(), targetBean.getEnd(), lastData, lastFoundPos, startTime, endTime);
 
         }
     }
