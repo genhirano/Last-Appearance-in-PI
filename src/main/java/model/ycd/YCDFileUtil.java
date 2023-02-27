@@ -66,8 +66,6 @@ public class YCDFileUtil {
 
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 
-            Integer lineCount = 0;
-
             String line;
             while ((line = br.readLine()) != null) {
 

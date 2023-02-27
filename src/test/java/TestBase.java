@@ -167,24 +167,6 @@ https://www2.hamajima.co.jp/kyoto-math/pdf/kyomath202211.pdf
         return fileList;
     }
 
-    public TestBase(){
-
-        String path = new File(".").getAbsoluteFile().getParent();
-        path = path + "\\src\\test\\resources\\test.properties";
-
-        Env.setPropFileName(path);
-
-        try(FileInputStream fis = new FileInputStream(path)){
-            Env.getInstance().getProp().load(fis);
-
-            Env.getInstance().getProp().load(fis);
-
-
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
 
 }
