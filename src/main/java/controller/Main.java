@@ -1,14 +1,55 @@
 package controller;
 
 import model.ycd.YCD_SeqProvider;
+import spark.*;
+import spark.template.thymeleaf.ThymeleafTemplateEngine;
 
 import java.io.File;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
+
+import static spark.Spark.*;
+import static spark.debug.DebugScreen.enableDebugScreen;
 
 public class Main {
 
+    private static ZonedDateTime startTime = ZonedDateTime.now();
+
+    //ThymeleafTemplateEngine
+    private static final TemplateEngine templateEngine = new ThymeleafTemplateEngine();
 
     public static void main(String[] arg) {
+
+        //デバッグ画面を有効にする
+        enableDebugScreen();
+
+        port(8080); // Spark will run on port 8080
+
+        staticFiles.location("/public"); //document root
+
+        get("/", new TemplateViewRoute() {
+            @Override
+            public ModelAndView handle(Request req, Response resp) throws Exception {
+
+                ZonedDateTime nowTime = ZonedDateTime.now();
+                Duration summerVacationDuration = Duration.between(startTime, nowTime);
+
+                StoreController sc =  StoreController.getInstance();
+                List<String> sum = sc.getSummary();
+                Collections.reverse(sum);
+
+
+                Map<String, Object> model = new HashMap<>();
+
+                model.put("DATA", sum);
+                model.put("SYSTEMSTART", startTime);
+                model.put("RUNNING_TIME", summerVacationDuration.getSeconds());
+
+                return new ModelAndView(model, "index");
+
+            }
+        }, templateEngine);
 
         ResourceBundle rb = ResourceBundle.getBundle("default");
         createFileListByProp(rb);
@@ -31,7 +72,6 @@ public class Main {
         System.out.println("FILE COUNT:" + fileCont + "  MAX DEPTH: " + total);
 
         Searcher s = new Searcher(piFileList,path,7,100000,1900,500);
-
         s.start();
 
     }
@@ -58,14 +98,9 @@ public class Main {
                     break;
                 }
             }
-
-
         }
 
-
         return fileList;
-
     }
-
 
 }
