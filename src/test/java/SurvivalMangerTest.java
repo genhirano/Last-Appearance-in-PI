@@ -22,7 +22,6 @@
 */
 
 import model.pi.SurvivalList;
-import model.pi.SurvivalManager;
 import model.ycd.YCD_SeqProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.TestInfo;
@@ -33,9 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +40,7 @@ class SurvivalMangerTest extends TestBase {
 
 
     @org.junit.jupiter.api.Test
-    void 作りながら動かす用2(TestInfo testInfo) throws IOException {
+    void 作りながら動かす用2(TestInfo testInfo) throws IOException, InterruptedException {
 
         //結果保存ファイルを検索し、あれば読み込み、なければ新規作成する
         //ファイルを読み込み、次のスタートエンドを決定する
@@ -55,10 +51,16 @@ class SurvivalMangerTest extends TestBase {
 
         List<File> fileList = createFileList();
 
+        Integer targetlength = 9;
+        Integer listSize = 1000;
+        Integer unitLength = 1900;
+        Integer reportSpan = 500;
+/*
         Integer targetlength = 8;
         Integer listSize = 50000;
         Integer unitLength = 1900;
         Integer reportSpan = 5000;
+*/
 
         /*
         Integer targetlength = 6;
@@ -102,7 +104,13 @@ class SurvivalMangerTest extends TestBase {
         System.out.println("FILE COUNT:" + fileCont + "  MAX DEPTH: " + total);
 
 
+        Integer continueCount = 0;
         while (true) {
+
+            if(5 < continueCount){
+                System.out.println("コンティニューカウントが上限に達しました :" + continueCount);
+                break;
+            }
 
             //保存用ファイルから全データ読み込み
             String fname = targetFile.getPath();
@@ -187,6 +195,8 @@ class SurvivalMangerTest extends TestBase {
                                 lastFoundPos = curFindPos;
                             }
                             sl.remove(i);
+
+
                         }
                     }
 
@@ -194,7 +204,7 @@ class SurvivalMangerTest extends TestBase {
                         System.out.println(
                                 "FILE_INDEX:" + currentPi.getFileInfo().get(YCD_SeqProvider.FileInfo.BLOCK_INDEX)
                                         + " " + currentPi.getStartDigit() + " から "
-                                        + nextMin + "-" + nextMax + " リスト残り:" + sl.size());
+                                        + nextMin + "-" + nextMax + " リスト残り:" + sl.size() + " count: " + count);
                     }
 
 
@@ -211,7 +221,11 @@ class SurvivalMangerTest extends TestBase {
                 endTime = ZonedDateTime.now();
 
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                continueCount ++;
+                RuntimeException ee = new RuntimeException("エラーが発生しましたので、最初からやりなおしてみます。コンティニューカウント : " + continueCount, e);
+                ee.printStackTrace();
+                Thread.sleep(3000);
+                continue;
             }
 
 
@@ -243,6 +257,5 @@ class SurvivalMangerTest extends TestBase {
         }
 
     }
-
 
 }

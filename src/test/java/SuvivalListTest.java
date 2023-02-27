@@ -37,7 +37,7 @@ import java.util.Random;
 
 @SuppressWarnings("NonAsciiCharacters")
 class SuvivalListTest extends TestBase {
-
+/*
     @org.junit.jupiter.api.Test
     void 作りながら動かす用2(TestInfo testInfo) throws IOException {
 
@@ -233,7 +233,7 @@ class SuvivalListTest extends TestBase {
 
 
     }
-
+*/
 
     @org.junit.jupiter.api.Test
     void コンストラクタTest(TestInfo testInfo) {

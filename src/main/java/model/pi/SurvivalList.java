@@ -1,5 +1,7 @@
 package model.pi;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,44 +11,27 @@ import java.util.ArrayList;
 public class SurvivalList extends ArrayList<String> {
 
     public SurvivalList(Integer targetLength, Integer start, Integer end) {
+
         super();
 
         //生き残り（全員生き残っているとする）を作成
-        //リストサイズの指定が大きすぎて、素直に追加するとターゲット長さを超えてしまうので、その際はターゲット長のマックスで打ち切り
-
+        //リストサイズの指定が大きい場合、素直に追加するとターゲット桁長さを超えてしまうので、その際はターゲット長のマックスで打ち切り
         for(int i = start; i <= end; i++){
             String s = String.format("%0" + targetLength + "d", i);
-            this.add(s);
-        }
 
-    }
-
-    public void remove(String findValue, Long findPos){
-        this.remove(this.indexOf(findValue)) ;
-    }
-
-/*
-    public void saveToFile(Integer ycdFileIndex) throws IOException {
-
-        String writeFileName = "./target/output/";
-
-        writeFileName = writeFileName + this.myName + "_" + ycdFileIndex + ".txt";
-
-        try {
-
-            //出力先を作成する
-            try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(writeFileName)));) {
-                for (String s : this) {
-                    pw.println(s);
-                }
+            if(targetLength < s.length() ){
+                break;
             }
 
-        } catch (IOException e) {
+            this.add(s);
 
-            //TODO 必要であればメッセージを追加する
-            throw new IOException(e);
+            //全桁 9 であればもうそれ以上は不要なので、追加は終わり
+            if(s.equals(StringUtils.repeat( "9", targetLength))){
+                break;
+            }
+
         }
 
     }
-*/
+
 }
