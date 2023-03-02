@@ -47,8 +47,8 @@
 
                 </table>
             </div>
-            <p th:text="'system is ' + ${RUNNING_TIME} + 'sec running.'"/>
-            <p th:text="'since ' + ${SYSTEMSTART}"/>
+            <p th:text="'Max Pi Depth:' + ${YCD_MAX_DEPTH}"/>
+            <p th:text="'system is ' + ${RUNNING_TIME} + 'sec running.   since ' + ${#temporals.format(SYSTEMSTART, 'yyyy/MM/dd HH:mm:ss')}"/>
         </div>
     </article>
 

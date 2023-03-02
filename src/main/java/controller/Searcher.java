@@ -4,26 +4,24 @@ import model.pi.SurvivalList;
 import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 
 public class Searcher extends Thread{
 
     private List<File> piFileList;
     private String savePath;
-    private Integer maxLength;
+    private Integer maxTargetLength;
     private Integer listSize;
     private Integer unitLength;
     private Integer reportSpan;
 
-    public Searcher(List<File> piFileList, String savePath, Integer maxLength, Integer listSize, Integer unitLength, Integer reportSpan){
+    public Searcher(List<File> piFileList, String savePath, Integer maxTargetLength, Integer listSize, Integer unitLength, Integer reportSpan){
         super();
 
         this.piFileList = piFileList;
         this.savePath = savePath;
-        this.maxLength = maxLength;
+        this.maxTargetLength = maxTargetLength;
         this.listSize = listSize;
         this.unitLength = unitLength;
         this.reportSpan = reportSpan;
@@ -41,22 +39,17 @@ public class Searcher extends Thread{
         while (true) {
 
             if (5 < continueCount) {
-                System.out.println("コンティニューカウントが上限に達しました :" + continueCount);
-                break;
+                throw new RuntimeException("Fail!  Retry limit exceeded." + continueCount);
             }
 
             //結果保存ファイルの全ロード
             //(リジュームのため、非効率ではあるが、ユニットロードの度に毎回やる。このおかげでいつでも途中終了できる)
             StoreController sc = StoreController.getInstance();
-            List<StoreController.StartEndBean> storeDataList = sc.getNextList(listSize, maxLength);
+            List<StoreController.StartEndBean> storeDataList = sc.getNextList(listSize, maxTargetLength);
 
             //今回の対象範囲の決定
-            Integer targetLength = 0;
             StoreController.StartEndBean targetBean = null;
             for (StoreController.StartEndBean se : storeDataList) {
-
-                //対象桁数
-                targetLength++;
 
                 //終わっていないこと（Startが空文字ならばすでに終了済みである）
                 if ("".equals(se.getStart())) {
@@ -74,7 +67,6 @@ public class Searcher extends Thread{
                 break;
             }
 
-            YCD_SeqProvider.Unit currentPi = null;
             ZonedDateTime startTime = null;
             ZonedDateTime endTime = null;
 
@@ -87,9 +79,7 @@ public class Searcher extends Thread{
 
                 startTime = ZonedDateTime.now();
 
-                while (p.hasNext()) {
-
-                    currentPi = p.getNext();
+                for(YCD_SeqProvider.Unit currentPi : p){
 
                     for (int i = sl.size() - 1; i >= 0; i--) {
 
@@ -131,7 +121,7 @@ public class Searcher extends Thread{
 
             } catch (Exception e) {
                 continueCount++;
-                RuntimeException ee = new RuntimeException("エラーが発生しましたので、最初からやりなおしてみます。コンティニューカウント : " + continueCount, e);
+                RuntimeException ee = new RuntimeException("ERROR!  start over. count: " + continueCount, e);
                 ee.printStackTrace();
 
                 try {

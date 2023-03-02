@@ -4,15 +4,21 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class YCD_SeqProvider implements AutoCloseable {
+public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.Unit>, Iterator<YCD_SeqProvider.Unit> {
 
     @Override
     public void close() throws Exception {
 
         if (null != this.currentStream) {
             this.currentStream.close();
+            this.currentStream = null;
         }
 
+    }
+
+    @Override
+    public Iterator<Unit> iterator() {
+        return this;
     }
 
     public enum FileInfo {
@@ -92,7 +98,8 @@ public class YCD_SeqProvider implements AutoCloseable {
         return new YCD_SeqBlockStream(file.getPath(), unitLength);
     }
 
-    public Boolean hasNext() {
+    @Override
+    public boolean hasNext() {
 
         //カレントストリームにまだ次があれば「次あり」
         if (this.currentStream.hasNext()) {
@@ -108,13 +115,16 @@ public class YCD_SeqProvider implements AutoCloseable {
 
     }
 
-
-    public Unit getNext() throws IOException {
+    @Override
+    public Unit next() {
 
         //すでにカレントストリーム末尾に達していたら次のファイルへ
         if (!this.currentStream.hasNext()) {
-            this.currentStream.close();
-            this.currentStream = null;
+            try {
+                this.close();
+            } catch (Exception e) {
+                throw new RuntimeException("CurrentStream close fail", e);
+            }
 
             Integer thisFileIndex = Integer.valueOf(this.fileInfoMap.get(this.currentFile).get(FileInfo.BLOCK_INDEX));
 
@@ -123,7 +133,13 @@ public class YCD_SeqProvider implements AutoCloseable {
                 Integer theFileIndex = Integer.valueOf(this.fileInfoMap.get(f2).get(FileInfo.BLOCK_INDEX));
                 if (theFileIndex.equals(thisFileIndex + 1)) {
                     this.currentFile = f2;
-                    this.currentStream = createStream(this.currentFile, this.unitLnegth);
+
+                    try {
+                        this.currentStream = createStream(this.currentFile, this.unitLnegth);
+                    } catch (IOException e) {
+                        throw new RuntimeException(this.currentFile.getPath() + " Open file file ", e);
+                    }
+
                     findNextFile = true;
                     break;
                 }
@@ -138,34 +154,45 @@ public class YCD_SeqProvider implements AutoCloseable {
 
         }
 
-        //カレントストリームを次に進めて
-        YCDProcessUnit pdu = this.currentStream.next();
+        try {
+            //カレントストリームを次に進めて
+            YCDProcessUnit pdu = this.currentStream.next();
 
-        //データを得る。そのとき、一つ前のケツの文字を先頭に挿入して読み込みユニット間の検索漏れを防ぐ
-        String thisLine = new StringBuffer(this.prevUnitData).append(pdu.getValue()).toString();
+            //データを得る。そのとき、一つ前のケツの文字を先頭に挿入して読み込みユニット間の検索漏れを防ぐ
+            String thisLine = new StringBuffer(this.prevUnitData).append(pdu.getValue()).toString();
 
-        //読んだ後、ファイル末尾に達していたら次のファイルの先頭をもってきてここのケツにくっつける
-        if (!this.currentStream.hasNext()) {
-            Integer thisFileIndex = Integer.valueOf(this.fileInfoMap.get(this.currentFile).get(FileInfo.BLOCK_INDEX));
-            for (File f2 : this.fileInfoMap.keySet()) {
-                Integer theFileIndex = Integer.valueOf(this.fileInfoMap.get(f2).get(FileInfo.BLOCK_INDEX));
-                if (theFileIndex.equals(thisFileIndex + 1)) {
-                    thisLine = thisLine + this.fileInfoMap.get(f2).get(FileInfo.FIRST_DATA);
-                    break;
+            //読んだ後、ファイル末尾に達していたら次のファイルの先頭をもってきてここのケツにくっつける
+            if (!this.currentStream.hasNext()) {
+                Integer thisFileIndex = Integer.valueOf(this.fileInfoMap.get(this.currentFile).get(FileInfo.BLOCK_INDEX));
+                for (File f2 : this.fileInfoMap.keySet()) {
+                    Integer theFileIndex = Integer.valueOf(this.fileInfoMap.get(f2).get(FileInfo.BLOCK_INDEX));
+                    if (theFileIndex.equals(thisFileIndex + 1)) {
+                        thisLine = thisLine + this.fileInfoMap.get(f2).get(FileInfo.FIRST_DATA);
+                        break;
+                    }
+
                 }
-
             }
+
+            this.prevUnitData = thisLine.substring(thisLine.length() - this.targetLength);
+
+            Long thisStartPoint = this.unitStartPoint;
+            this.unitStartPoint = this.unitStartPoint + (thisLine.length()) - (prevUnitData.length());
+
+            Unit u = new Unit(this.fileInfoMap.get(this.currentFile), thisStartPoint, thisLine);
+
+            return u;
+
+        } catch (IOException e) {
+            throw new RuntimeException("YCD Data read error. " + this.currentFile.getPath(), e);
         }
 
-        this.prevUnitData = thisLine.substring(thisLine.length() - this.targetLength);
+    }
 
-
-        Long thisStartPoint = this.unitStartPoint;
-        this.unitStartPoint = this.unitStartPoint + (thisLine.length()) - (prevUnitData.length());
-
-        Unit u = new Unit(this.fileInfoMap.get(this.currentFile), thisStartPoint, thisLine);
-        return u;
-
+    @Override
+    public void remove() {
+        //削除はサポートしない
+        throw new UnsupportedOperationException();
     }
 
     public Long getMaxDepth() {

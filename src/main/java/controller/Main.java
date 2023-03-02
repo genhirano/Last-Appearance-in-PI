@@ -12,7 +12,11 @@ import java.util.*;
 import static spark.Spark.*;
 import static spark.debug.DebugScreen.enableDebugScreen;
 
+
+
 public class Main {
+    public static Integer YCD_FILE_COUNT;
+    public static Long YCD_MAX_DEPTH;
 
     private static ZonedDateTime startTime = ZonedDateTime.now();
 
@@ -43,6 +47,7 @@ public class Main {
                 Map<String, Object> model = new HashMap<>();
 
                 model.put("DATA", sum);
+                model.put("YCD_MAX_DEPTH", YCD_MAX_DEPTH);
                 model.put("SYSTEMSTART", startTime);
                 model.put("RUNNING_TIME", summerVacationDuration.getSeconds());
 
@@ -58,22 +63,23 @@ public class Main {
 
         List<File> piFileList = createFileListByProp(rb);
         String path = rb.getString("outputPath");
-        Integer maxLength = Integer.valueOf(rb.getString("maxLength"));
+        Integer maxTargetLength = Integer.valueOf(rb.getString("maxTargetLength"));
         Integer listSize = Integer.valueOf(rb.getString("listSize"));
         Integer unitLength = Integer.valueOf(rb.getString("unitLength"));
         Integer reportSpan = Integer.valueOf(rb.getString("reportSpan"));
 
+
         //YCDフィアルの全体像をつかむ
         //全ファイルヘッダー情報取得 (targetLengthはこの処理では重要でないので、適当な値を入れている)
         Map<File, Map<YCD_SeqProvider.FileInfo, String>> ycdFileMap = YCD_SeqProvider.createFileInfo(piFileList, 1);
-        Integer fileCont = ycdFileMap.size();
-        Long total = 0L;
+        YCD_FILE_COUNT = ycdFileMap.size();
+        YCD_MAX_DEPTH = 0L;
         for (File f : ycdFileMap.keySet()) {
-            total = Long.valueOf(ycdFileMap.get(f).get(YCD_SeqProvider.FileInfo.END_DIGIT));
+            YCD_MAX_DEPTH = Long.valueOf(ycdFileMap.get(f).get(YCD_SeqProvider.FileInfo.END_DIGIT));
         }
-        System.out.println("FILE COUNT:" + fileCont + "  MAX DEPTH: " + total);
+        System.out.println("FILE COUNT:" + YCD_FILE_COUNT + "  MAX DEPTH: " + YCD_MAX_DEPTH);
 
-        Searcher s = new Searcher(piFileList,path,7,100000,1900,500);
+        Searcher s = new Searcher(piFileList,path,maxTargetLength,listSize,unitLength,reportSpan);
         s.start();
 
     }
