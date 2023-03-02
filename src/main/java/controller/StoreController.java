@@ -19,10 +19,6 @@ public class StoreController {
             return targetLength;
         }
 
-        public void setTargetLength(Integer targetLength) {
-            this.targetLength = targetLength;
-        }
-
         Integer targetLength;
         String start;
         String end;
@@ -31,16 +27,8 @@ public class StoreController {
             return start;
         }
 
-        public void setStart(String start) {
-            this.start = start;
-        }
-
         public String getEnd() {
             return end;
-        }
-
-        public void setEnd(String end) {
-            this.end = end;
         }
 
         public StartEndBean() {
@@ -158,7 +146,7 @@ public class StoreController {
                 file.createNewFile();
                 System.out.println(filename + "create!");
             } catch (IOException e) {
-                throw new RuntimeException(file.getPath(),e);
+                throw new RuntimeException(file.getPath(), e);
             }
         }
 
@@ -183,8 +171,8 @@ public class StoreController {
             pw.println(recordStr);
             System.out.println(recordStr);
 
-        }catch(IOException e){
-            throw new RuntimeException("保存ファイル書き込み失敗",e);
+        } catch (IOException e) {
+            throw new RuntimeException("保存ファイル書き込み失敗", e);
         }
 
     }
@@ -230,7 +218,7 @@ public class StoreController {
             }
 
             //タイトル
-            answer = answer + "number of digits:" + String.format("%02d", i);
+            answer = answer + "number of digits:" + i;
 
             //保存用ファイルから全データ読み込み
             List<String> lines = null;
@@ -240,12 +228,12 @@ public class StoreController {
                 String maxDepthStr = "";
                 Long maxDepth = Long.MIN_VALUE;
                 Long allSec = 0L;
-                for(String s : lines){
+                for (String s : lines) {
 
                     String[] splited = s.split(",");
                     Long depth = Long.valueOf(splited[3]);
 
-                    if(depth > maxDepth){
+                    if (depth > maxDepth) {
                         maxDepth = depth;
                         maxDepthStr = splited[2];
                     }
@@ -256,8 +244,8 @@ public class StoreController {
                 }
 
                 //一番最後の行を見る
-                String lastLine = lines.get(lines.size()-1);
-                if(lastLine.isEmpty()){
+                String lastLine = lines.get(lines.size() - 1);
+                if (lastLine.isEmpty()) {
                     //ファイルに一行もない場合
                     answer = answer + " init progress...";
                     break;
@@ -268,22 +256,20 @@ public class StoreController {
 
                 //進捗状況
                 Integer allMax = Integer.valueOf(StringUtils.repeat("9", i));
-                double progress = 0;
-                if(allMax.equals(Integer.valueOf(lastSplited[1]))){
+                if (allMax.equals(Integer.valueOf(lastSplited[1]))) {
                     //最後まで到達していたら進捗100％とする
-                    progress=100.0d;
 
-                    answer = answer +  " the last appearing number: " + maxDepth;
-                    answer = answer +  " appearing depth: " + maxDepthStr;
-                    answer = answer +  " process time: " + allSec + "sec";
+                    answer = answer + " the last appearing number: " + maxDepthStr + ".";
+                    answer = answer + " depth: " + maxDepth + ".";
+                    answer = answer + " process time: " + allSec + "sec.";
 
-                }else{
+                } else {
                     //進捗取得
                     double d = (Double.valueOf(lastSplited[1]) / allMax) * 100;
-                    progress = ((double) Math.round(d * 1000)) / 1000;
+                    double progress = ((double) Math.round(d * 1000)) / 1000;
 
-                    answer = answer +  " brute forced: " + maxDepthStr;
-                    answer = answer + "  (remaining: " + (allMax - Integer.valueOf(lastSplited[2]) + " Progress: " + progress + "% " +  " processing time: " + allSec + "sec)");
+                    answer = answer + " brute forced:" + maxDepthStr;
+                    answer = answer + "  (remaining count:" + (allMax - Integer.valueOf(lastSplited[2]) + ") + Progress: " + progress + "% " + " processing time: " + allSec + "sec.");
 
                 }
 
