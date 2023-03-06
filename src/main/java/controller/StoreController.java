@@ -218,7 +218,7 @@ public class StoreController {
             }
 
             //タイトル
-            answer = answer + "number of digits:" + i;
+            answer = answer + "digits:" + i;
 
             //保存用ファイルから全データ読み込み
             List<String> lines = null;
@@ -258,18 +258,19 @@ public class StoreController {
                 Integer allMax = Integer.valueOf(StringUtils.repeat("9", i));
                 if (allMax.equals(Integer.valueOf(lastSplited[1]))) {
                     //最後まで到達していたら進捗100％とする
-
-                    answer = answer + " the last appearing number: " + maxDepthStr + ".";
+                    answer = answer + "     the last appearing: \"" + maxDepthStr + "\".";
                     answer = answer + " depth: " + maxDepth + ".";
                     answer = answer + " process time: " + allSec + "sec.";
 
                 } else {
-                    //進捗取得
+                    //処理中の進捗取得
                     double d = (Double.valueOf(lastSplited[1]) / allMax) * 100;
                     double progress = ((double) Math.round(d * 1000)) / 1000;
 
-                    answer = answer + " brute forced:" + maxDepthStr;
-                    answer = answer + "  (remaining count:" + (allMax - Integer.valueOf(lastSplited[2]) + ") + Progress: " + progress + "% " + " processing time: " + allSec + "sec.");
+                    answer = answer + "  brute forced depth:" + maxDepthStr;
+                    answer = answer + "  (not appear:" + (allMax - Integer.valueOf(lastSplited[2])) + ")";
+                    answer = answer + " Progress: " + progress + "%";
+                    answer = answer + " processing time: " + allSec + "sec.";
 
                 }
 

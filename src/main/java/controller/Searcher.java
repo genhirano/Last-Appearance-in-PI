@@ -1,6 +1,7 @@
 package controller;
 
 import model.pi.SurvivalList;
+import model.ycd.YCDFileUtil;
 import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
@@ -99,7 +100,7 @@ public class Searcher extends Thread{
                     if (0 == (sl.size() % reportSpan)) {
                         System.out.println(
                                 "targetLength: " + targetBean.getTargetLength()
-                                        + " PiFILE_INDEX:" + currentPi.getFileInfo().get(YCD_SeqProvider.FileInfo.BLOCK_INDEX)
+                                        + " PiFILE_INDEX:" + currentPi.getFileInfo().get(YCDFileUtil.FileInfo.BLOCK_INDEX)
                                         + " SearchingDepth: " + currentPi.getStartDigit()
                                         + " targetLenge: " +targetBean.getStart() + "-" + targetBean.getEnd()
                                         + " remaining: " + sl.size());

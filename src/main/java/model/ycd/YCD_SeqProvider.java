@@ -4,38 +4,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static model.ycd.YCDFileUtil.createFileInfo;
+
 public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.Unit>, Iterator<YCD_SeqProvider.Unit> {
-
-    @Override
-    public void close() throws Exception {
-
-        if (null != this.currentStream) {
-            this.currentStream.close();
-            this.currentStream = null;
-        }
-
-    }
-
-    @Override
-    public Iterator<Unit> iterator() {
-        return this;
-    }
-
-    public enum FileInfo {
-        BLOCK_INDEX,
-        FIRST_DATA,
-        FIRST_DIGIT,
-        END_DIGIT,
-        ;
-    }
 
     /**
      * 検索対象ファイルの情報保持Map.
      */
-    private final Map<File, Map<FileInfo, String>> fileInfoMap;
+    private final Map<File, Map<YCDFileUtil.FileInfo, String>> fileInfoMap;
 
-    private Integer targetLength;
-    private Integer unitLnegth;
+    private Integer overWrapLength;
+    private Integer baseUnitLength;
 
     public class Unit {
 
@@ -51,14 +30,14 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
             return data;
         }
 
-        private Map<FileInfo, String> fileInfo;
+        private Map<YCDFileUtil.FileInfo, String> fileInfo;
 
-        public Map<FileInfo, String> getFileInfo() {
+        public Map<YCDFileUtil.FileInfo, String> getFileInfo() {
             return this.fileInfo;
         }
 
 
-        private Unit(Map<FileInfo, String> fileInfo, Long startDigit, String data) {
+        private Unit(Map<YCDFileUtil.FileInfo, String> fileInfo, Long startDigit, String data) {
             this.fileInfo = fileInfo;
             this.startDigit = startDigit;
             this.data = data;
@@ -66,22 +45,27 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
 
     }
 
-    private File currentFile = null;
-    private File lastFile = null;
-
-    private YCD_SeqBlockStream currentStream = null;
+    private File currentFile;
+    private File lastFile;
+    private YCD_SeqBlockStream currentStream;
 
     String prevUnitData = "";
     Long unitStartPoint = 1L;
 
+    /**
+     * YCDから一定の桁数でデータを提供する
+     * @param fileList
+     * @param overWrapLength 重複して提供する桁長さ
+     * @param unitLength 基本切り出し桁長さ
+     * @throws IOException
+     */
+    public YCD_SeqProvider(List<File> fileList, Integer overWrapLength, Integer unitLength) throws IOException {
 
-    public YCD_SeqProvider(List<File> fileList, Integer targetLength, Integer unitLength) throws IOException {
-
-        this.targetLength = targetLength;
-        this.unitLnegth = unitLength;
+        this.overWrapLength = overWrapLength;
+        this.baseUnitLength = unitLength;
 
         //全ファイルヘッダー情報取得
-        this.fileInfoMap = createFileInfo(fileList, targetLength);
+        this.fileInfoMap = createFileInfo(fileList, overWrapLength);
 
         //カレントファイルを先頭ファイルにする
         this.currentFile = fileList.get(0);
@@ -90,12 +74,19 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
         this.lastFile = fileList.get(fileList.size() - 1);
 
         //初めての呼び出し
-        this.currentStream = this.createStream(this.currentFile, this.unitLnegth);
+        this.currentStream = this.createStream(this.currentFile, this.baseUnitLength);
 
     }
 
-    private YCD_SeqBlockStream createStream(File file, Integer unitLength) throws IOException {
-        return new YCD_SeqBlockStream(file.getPath(), unitLength);
+    /**
+     * 指定ファイルのストリームを新規作成する
+     * @param ycdFile 対象のYCDファイル
+     * @param unitLength ファイルの継ぎ目をオーバーラップさせる桁数
+     * @return Unit
+     * @throws IOException
+     */
+    private YCD_SeqBlockStream createStream(File ycdFile, Integer unitLength) throws IOException {
+        return new YCD_SeqBlockStream(ycdFile.getPath(), unitLength);
     }
 
     @Override
@@ -120,72 +111,89 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
 
         //すでにカレントストリーム末尾に達していたら次のファイルへ
         if (!this.currentStream.hasNext()) {
-            try {
-                this.close();
-            } catch (Exception e) {
-                throw new RuntimeException("CurrentStream close fail", e);
-            }
-
-            Integer thisFileIndex = Integer.valueOf(this.fileInfoMap.get(this.currentFile).get(FileInfo.BLOCK_INDEX));
-
-            Boolean findNextFile = false;
-            for (File f2 : this.fileInfoMap.keySet()) {
-                Integer theFileIndex = Integer.valueOf(this.fileInfoMap.get(f2).get(FileInfo.BLOCK_INDEX));
-                if (theFileIndex.equals(thisFileIndex + 1)) {
-                    this.currentFile = f2;
-
-                    try {
-                        this.currentStream = createStream(this.currentFile, this.unitLnegth);
-                    } catch (IOException e) {
-                        throw new RuntimeException(this.currentFile.getPath() + " Open file file ", e);
-                    }
-
-                    findNextFile = true;
-                    break;
-                }
-            }
-            if (!findNextFile) {
-                this.currentFile = null;
-            }
-
-            //新しいファイルに映ったときは、ひとつ前データをクリアする
-            //（境目については前のファイルのケツ部分で解決済み）
-            this.prevUnitData = "";
-
+            this.nextFile();
         }
 
         try {
+            //現在ポジションの次のユニットを取得
+
             //カレントストリームを次に進めて
             YCDProcessUnit pdu = this.currentStream.next();
 
-            //データを得る。そのとき、一つ前のケツの文字を先頭に挿入して読み込みユニット間の検索漏れを防ぐ
+            //データを得る。そのとき、一つ前のケツの文字を先頭に挿入する。これで読み込みユニット間の検索漏れを防ぐ
             String thisLine = new StringBuffer(this.prevUnitData).append(pdu.getValue()).toString();
 
+            //ファイル間重複提供処理
             //読んだ後、ファイル末尾に達していたら次のファイルの先頭をもってきてここのケツにくっつける
             if (!this.currentStream.hasNext()) {
-                Integer thisFileIndex = Integer.valueOf(this.fileInfoMap.get(this.currentFile).get(FileInfo.BLOCK_INDEX));
+                Integer thisFileIndex = Integer.valueOf(this.fileInfoMap.get(this.currentFile).get(YCDFileUtil.FileInfo.BLOCK_INDEX));
                 for (File f2 : this.fileInfoMap.keySet()) {
-                    Integer theFileIndex = Integer.valueOf(this.fileInfoMap.get(f2).get(FileInfo.BLOCK_INDEX));
+                    Integer theFileIndex = Integer.valueOf(this.fileInfoMap.get(f2).get(YCDFileUtil.FileInfo.BLOCK_INDEX));
                     if (theFileIndex.equals(thisFileIndex + 1)) {
-                        thisLine = thisLine + this.fileInfoMap.get(f2).get(FileInfo.FIRST_DATA);
+                        thisLine = thisLine + this.fileInfoMap.get(f2).get(YCDFileUtil.FileInfo.FIRST_DATA);
                         break;
                     }
-
                 }
             }
 
-            this.prevUnitData = thisLine.substring(thisLine.length() - this.targetLength);
+            //この次に読み込んだユニットの先頭に付与するデータとしてこのデータのケツのオーバーラップ分を保持しておく
+            this.prevUnitData = thisLine.substring(thisLine.length() - this.overWrapLength);
 
+            //ポジション更新
             Long thisStartPoint = this.unitStartPoint;
             this.unitStartPoint = this.unitStartPoint + (thisLine.length()) - (prevUnitData.length());
 
-            Unit u = new Unit(this.fileInfoMap.get(this.currentFile), thisStartPoint, thisLine);
-
-            return u;
+            //ユニットデータを作って返却
+            return new Unit(this.fileInfoMap.get(this.currentFile), thisStartPoint, thisLine);
 
         } catch (IOException e) {
             throw new RuntimeException("YCD Data read error. " + this.currentFile.getPath(), e);
         }
+
+    }
+
+    /**
+     * 次のファイルへ移行
+     */
+    private void nextFile(){
+
+        //次のファイルに移行する場合はまず、現在のストリームを閉じる
+        try {
+            this.close();
+        } catch (Exception e) {
+            throw new RuntimeException("CurrentStream close fail", e);
+        }
+
+        //現在のファイルインデックス取得
+        Integer thisFileIndex = Integer.valueOf(this.fileInfoMap.get(this.currentFile).get(YCDFileUtil.FileInfo.BLOCK_INDEX));
+
+        Boolean findNextFile = false;
+        for (File f2 : this.fileInfoMap.keySet()) {
+
+            //現在のファイルインデックスの次に出会ったらそれをカレントにする
+            Integer theFileIndex = Integer.valueOf(this.fileInfoMap.get(f2).get(YCDFileUtil.FileInfo.BLOCK_INDEX));
+            if (theFileIndex.equals(thisFileIndex + 1)) {
+                this.currentFile = f2;
+                try {
+                    //次のファイルのストリームを作成
+                    this.currentStream = createStream(this.currentFile, this.baseUnitLength);
+                } catch (IOException e) {
+                    throw new RuntimeException(this.currentFile.getPath() + " Open file file ", e);
+                }
+
+                findNextFile = true;
+                break;
+            }
+        }
+
+        //次のファイルがなかったら
+        if (!findNextFile) {
+            this.currentFile = null;
+        }
+
+        //新しいファイルにカレントが移ったときは、ひとつ前データをクリアする
+        //（境目について心配はない。前のファイルのケツ部分にこのファイルの先頭を付与して処理済みである）
+        this.prevUnitData = "";
 
     }
 
@@ -194,102 +202,18 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
         //削除はサポートしない
         throw new UnsupportedOperationException();
     }
-
-    public Long getMaxDepth() {
-        Long maxDepth = -1L;
-        for (File f : this.fileInfoMap.keySet()) {
-            Long d = Long.valueOf(this.fileInfoMap.get(f).get(FileInfo.END_DIGIT));
-            if (maxDepth < d) {
-                maxDepth = d;
-            }
+    @Override
+    public void close() throws Exception {
+        if (null != this.currentStream) {
+            this.currentStream.close();
+            this.currentStream = null;
         }
-        return maxDepth;
-
     }
 
-
-    public static Map<File, Map<FileInfo, String>> createFileInfo(List<File> fileList, Integer targetLength) {
-
-        //対象ファイル全ての情報事前取得
-        try {
-
-            Map<File, Map<FileInfo, String>> fileMap = new LinkedHashMap<>();
-
-            //全てのファイルが対象(小さい順に並んでいること)
-            for (File f : fileList) {
-
-                Map<FileInfo, String> value = new HashMap<>();
-
-                //ファイル情報取得
-                Map<YCDHeaderInfoElem, String> fileInfoMap = YCDFileUtil.getYCDHeader(f.getPath());
-
-                //ブロックID（ブロックIndexということにする）
-                Integer blockID = Integer.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_ID));
-                value.put(FileInfo.BLOCK_INDEX, String.valueOf(blockID));
-
-                //ブロックサイズ（そのファイルに格納されている総桁数）
-                Long blockSize = Long.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_SIZE));
-
-                //先頭桁と最終桁の取得
-                value.put(FileInfo.FIRST_DIGIT, String.valueOf((blockID * blockSize) + 1L));
-                value.put(FileInfo.END_DIGIT, String.valueOf((blockID + 1L) * blockSize));
-
-                //全ての円周率ファイルの先頭から、そのファイルの前のファイルの末尾に付加する桁数だけ切り出す
-                value.put(FileInfo.FIRST_DATA, YCDFileUtil.getFirstData(f.getPath(), targetLength));
-
-                fileMap.put(f, value);
-
-            }
-
-            //ファイルがきちんと並んでいるかチェック
-            Long firstDigit = Long.valueOf(fileMap.get(fileList.get(0)).get(FileInfo.FIRST_DIGIT));
-            if (!firstDigit.equals(1L)) {
-                throw new RuntimeException("Illegal first digit in file : " + fileList.get(0).getName() + " is " + firstDigit);
-            }
-
-            Integer tmpIndex = Integer.valueOf(fileMap.get(fileList.get(0)).get(FileInfo.BLOCK_INDEX));
-            if (!tmpIndex.equals(0)) {
-                throw new RuntimeException("Illegal first block id : " + fileList.get(0).getName() + " is " + tmpIndex);
-            }
-
-            //ファイルの順序と桁連結チェック
-            //先頭ファイルの末尾桁番号を取得
-            Integer previndex = tmpIndex;
-            Long prevLastDigit = Long.valueOf(fileMap.get(fileList.get(0)).get(FileInfo.END_DIGIT));
-            for (File fi : fileMap.keySet()) {
-                Map<FileInfo, String> m = fileMap.get(fi);
-
-                //最初のファイルはスキップ
-                if (Long.valueOf(m.get(FileInfo.FIRST_DIGIT)).equals(1L)) {
-                    continue;
-                }
-
-                //このファイルの先頭桁番号取得
-                //前のファイルのラスト桁番号 +1 がこのファイルの先頭桁番号でなければならない
-                Long thisStart = Long.valueOf(m.get(FileInfo.FIRST_DIGIT));
-                if (!thisStart.equals(prevLastDigit + 1L)) {
-                    throw new RuntimeException("Illegal start digit in file : " + fi.getName() + " - is Start : " + thisStart);
-                }
-
-                //このファイルのファイルインデックス取得
-                //前のファイルのインデックス +1 がこのファイルのインデックスでなければならない
-                Integer thisIndex = Integer.valueOf(m.get(FileInfo.BLOCK_INDEX));
-                if (!thisIndex.equals(previndex + 1)) {
-                    throw new RuntimeException("Illegal index in file : " + fi.getName() + " - is index : " + thisIndex);
-                }
-
-                //このファイルのインデックスと最後尾桁番号を次の比較用に保持
-                previndex = Integer.valueOf(m.get(FileInfo.BLOCK_INDEX));
-                prevLastDigit = Long.valueOf(m.get(FileInfo.END_DIGIT));
-
-            }
-
-            return fileMap;
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+    @Override
+    public Iterator<Unit> iterator() {
+        return this;
     }
+
 
 }
