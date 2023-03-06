@@ -2,12 +2,21 @@ package model.ycd;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class YCDFileUtil {
+
+
+    /**
+     * ファイルヘッダー情報のそれぞれのラベル
+     */
+    public enum FileInfo {
+        BLOCK_INDEX,
+        FIRST_DATA,
+        FIRST_DIGIT,
+        END_DIGIT,
+        ;
+    }
 
     /**
      * YCDファイルのヘッダー部分のサイズを返す.
@@ -195,6 +204,90 @@ public class YCDFileUtil {
     }
 
 
+    //YCDファイルリストから、ファイル情報を構築する。オーバーラップさせる桁数を指定し、先頭桁も取得する
+    public static Map<File, Map<YCDFileUtil.FileInfo, String>> createFileInfo(List<File> fileList, Integer overwrapLength) {
+
+        //対象ファイル全ての情報事前取得
+        try {
+
+            Map<File, Map<YCDFileUtil.FileInfo, String>> fileMap = new LinkedHashMap<>();
+
+            //全てのファイルが対象(小さい順に並んでいること)
+            for (File f : fileList) {
+
+                Map<YCDFileUtil.FileInfo, String> value = new HashMap<>();
+
+                //ファイル情報取得
+                Map<YCDHeaderInfoElem, String> fileInfoMap = YCDFileUtil.getYCDHeader(f.getPath());
+
+                //ブロックID（ブロックIndexということにする）
+                Integer blockID = Integer.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_ID));
+                value.put(YCDFileUtil.FileInfo.BLOCK_INDEX, String.valueOf(blockID));
+
+                //ブロックサイズ（そのファイルに格納されている総桁数）
+                Long blockSize = Long.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_SIZE));
+
+                //先頭桁と最終桁の取得
+                value.put(YCDFileUtil.FileInfo.FIRST_DIGIT, String.valueOf((blockID * blockSize) + 1L));
+                value.put(YCDFileUtil.FileInfo.END_DIGIT, String.valueOf((blockID + 1L) * blockSize));
+
+                //全ての円周率ファイルの先頭から、そのファイルの前のファイルの末尾に付加する桁数だけ切り出す
+                value.put(YCDFileUtil.FileInfo.FIRST_DATA, YCDFileUtil.getFirstData(f.getPath(), overwrapLength));
+
+                fileMap.put(f, value);
+
+            }
+
+            //ファイルがきちんと並んでいるかチェック
+            Long firstDigit = Long.valueOf(fileMap.get(fileList.get(0)).get(YCDFileUtil.FileInfo.FIRST_DIGIT));
+            if (!firstDigit.equals(1L)) {
+                throw new RuntimeException("Illegal first digit in file : " + fileList.get(0).getName() + " is " + firstDigit);
+            }
+
+            Integer tmpIndex = Integer.valueOf(fileMap.get(fileList.get(0)).get(YCDFileUtil.FileInfo.BLOCK_INDEX));
+            if (!tmpIndex.equals(0)) {
+                throw new RuntimeException("Illegal first block id : " + fileList.get(0).getName() + " is " + tmpIndex);
+            }
+
+            //ファイルの順序と桁連結チェック
+            //先頭ファイルの末尾桁番号を取得
+            Integer previndex = tmpIndex;
+            Long prevLastDigit = Long.valueOf(fileMap.get(fileList.get(0)).get(YCDFileUtil.FileInfo.END_DIGIT));
+            for (File fi : fileMap.keySet()) {
+                Map<YCDFileUtil.FileInfo, String> m = fileMap.get(fi);
+
+                //最初のファイルはスキップ
+                if (Long.valueOf(m.get(YCDFileUtil.FileInfo.FIRST_DIGIT)).equals(1L)) {
+                    continue;
+                }
+
+                //このファイルの先頭桁番号取得
+                //前のファイルのラスト桁番号 +1 がこのファイルの先頭桁番号でなければならない
+                Long thisStart = Long.valueOf(m.get(YCDFileUtil.FileInfo.FIRST_DIGIT));
+                if (!thisStart.equals(prevLastDigit + 1L)) {
+                    throw new RuntimeException("Illegal start digit in file : " + fi.getName() + " - is Start : " + thisStart);
+                }
+
+                //このファイルのファイルインデックス取得
+                //前のファイルのインデックス +1 がこのファイルのインデックスでなければならない
+                Integer thisIndex = Integer.valueOf(m.get(YCDFileUtil.FileInfo.BLOCK_INDEX));
+                if (!thisIndex.equals(previndex + 1)) {
+                    throw new RuntimeException("Illegal index in file : " + fi.getName() + " - is index : " + thisIndex);
+                }
+
+                //このファイルのインデックスと最後尾桁番号を次の比較用に保持
+                previndex = Integer.valueOf(m.get(YCDFileUtil.FileInfo.BLOCK_INDEX));
+                prevLastDigit = Long.valueOf(m.get(YCDFileUtil.FileInfo.END_DIGIT));
+
+            }
+
+            return fileMap;
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
 
 
 }
