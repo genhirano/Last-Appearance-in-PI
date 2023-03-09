@@ -52,7 +52,7 @@ public class Main {
         System.out.println("FILE COUNT:" + YCD_FILE_MAP.size() + "  MAX DEPTH: " + ycdMaxDepth);
 
         //バックグラウンド処理開始-------------------------------------
-        Searcher s = new Searcher(piFileList, path, maxTargetLength, listSize, unitLength, reportSpan);
+        Searcher s = new Searcher(piFileList, maxTargetLength, listSize, unitLength, reportSpan);
         s.start();
 
         //WEB-------------------------------------

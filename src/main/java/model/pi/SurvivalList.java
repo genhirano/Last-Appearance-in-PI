@@ -2,16 +2,16 @@ package model.pi;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
+/**
+ * サバイバルリスト.
+ *
+ * 基本的にはArrayList<String>と同じだが、StartからEndまでの連番ゼロ埋めを自動生成した状態を初期値とする.
+ */
 public class SurvivalList extends ArrayList<String> {
 
     public SurvivalList(Integer targetLength, Integer start, Integer end) {
-
         super();
 
         //生き残り（全員生き残っているとする）を作成
