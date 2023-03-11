@@ -3,6 +3,7 @@ package model.pi;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * サバイバルリスト.
@@ -44,9 +45,34 @@ public class SurvivalList extends ArrayList<String> {
         }
     }
 
-    public SurvivalList(){
+    /**
+     * コンストラクタ（使用禁止).
+     *
+     * @throws IllegalAccessException このコンストラクタは使用できません。
+     */
+    public SurvivalList() throws IllegalAccessException {
+        super();
+        throw new IllegalAccessException("no args");
+    }
 
+    /**
+     * コンストラクタ（使用禁止).
+     *
+     * @throws IllegalAccessException このコンストラクタは使用できません。
+     */
+    public SurvivalList(int initialCapacity) throws IllegalAccessException {
+        super();
+        throw new IllegalAccessException("no args");
+    }
 
+    /**
+     * コンストラクタ（使用禁止).
+     *
+     * @throws IllegalAccessException このコンストラクタは使用できません。
+     */
+    public SurvivalList(Collection<? extends String> c) throws IllegalAccessException {
+        super();
+        throw new IllegalAccessException("no args");
     }
 
 
