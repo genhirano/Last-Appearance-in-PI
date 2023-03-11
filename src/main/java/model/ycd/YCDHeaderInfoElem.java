@@ -1,5 +1,9 @@
 package model.ycd;
 
+/**
+ * YCDファイルのヘッダー情報.
+ *
+ */
 public enum YCDHeaderInfoElem {
 
     FILE_VERSION("FileVersion")

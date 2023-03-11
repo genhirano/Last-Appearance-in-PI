@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * シーケンシャルアクセスYCDファイル
  */
-public class YCD_SeqBlockStream implements AutoCloseable{
+public class YCD_SeqBlockStream implements AutoCloseable {
 
     /**
      * 1回の検索処理で処理する桁数（ユニット桁数）
@@ -43,7 +43,7 @@ public class YCD_SeqBlockStream implements AutoCloseable{
 
     /**
      * カレントプロセスユニット.
-     *
+     * <p>
      * next() で次のプロセスユニットを読み込んでカレントが遷移する.
      */
     private YCDProcessUnit currentProcessUnit; //現在
@@ -58,8 +58,8 @@ public class YCD_SeqBlockStream implements AutoCloseable{
      */
     private Long currentBlock;
 
-
     private Boolean isClosed = true;
+
     public Boolean isClosed() {
         return this.isClosed;
     }
@@ -67,6 +67,7 @@ public class YCD_SeqBlockStream implements AutoCloseable{
     public Integer getProcessUnitSize() {
         return this.processUnitSize;
     }
+
     public String getYCDFilePath() {
         return this.filePath;
     }
@@ -74,11 +75,13 @@ public class YCD_SeqBlockStream implements AutoCloseable{
     public Long getDigit_Start() {
         return this.digit_Start;
     }
+
     public Long getDigit_Length() {
         return this.digit_Length;
     }
 
     private Long currentReadBlockSeq = 0L; //１ベース
+
     public Long getCurrentReadBlockSeq() {
         return this.currentReadBlockSeq;
     }
@@ -86,8 +89,9 @@ public class YCD_SeqBlockStream implements AutoCloseable{
     /**
      * YCDファイルのシーケンシャルアクセスを構築する.
      *
-     * @param fileName 対象YCDファイルパス.
+     * @param fileName 対象YCDファイル名（フルパス).
      * @param unitSize １プロセスの処理桁数.
+     * @throws IOException ファイル読み込みエラー
      */
     public YCD_SeqBlockStream(String fileName, Integer unitSize) throws IOException {
 
@@ -109,9 +113,9 @@ public class YCD_SeqBlockStream implements AutoCloseable{
         this.digit_Start = 1 + this.digit_Length * Integer.valueOf(map.get(YCDHeaderInfoElem.BLOCK_ID));
 
         //検索１プロセスのユニットの桁数
-        if(0 < unitSize){
+        if (0 < unitSize) {
             this.processUnitSize = unitSize;
-        }else{
+        } else {
             this.processUnitSize = 19000; //19で割り切れるから早いかも
         }
         if (19 > this.processUnitSize) {
@@ -139,7 +143,7 @@ public class YCD_SeqBlockStream implements AutoCloseable{
     /**
      * ファイルを開く.
      *
-     * @throws IOException
+     * @throws IOException ファイル読み込みエラー
      */
     private void open() throws IOException {
         try {
@@ -152,7 +156,7 @@ public class YCD_SeqBlockStream implements AutoCloseable{
             this.fileStream = new BufferedInputStream((InputStream) fi);
 
             //ヘッダー読み飛ばし
-            this.fileStream.skip(headerSize+1);
+            this.fileStream.skip(headerSize + 1);
 
             this.isClosed = false;
 
@@ -164,7 +168,7 @@ public class YCD_SeqBlockStream implements AutoCloseable{
     /**
      * ファイルを閉じる.
      *
-     * @throws IOException
+     * @throws IOException ファイルクローズエラー
      */
     @Override
     public void close() throws IOException {
@@ -189,6 +193,7 @@ public class YCD_SeqBlockStream implements AutoCloseable{
      * 読み終わり時にプロセスユニット桁数に満たない桁しか読めなかった場合は短い桁数が格納されたプロセスユニットとなる。
      *
      * @return 次のプロセスユニット
+     * @throws  IOException ファイル読み込みエラー
      */
     public YCDProcessUnit next() throws IOException {
 
@@ -268,8 +273,6 @@ public class YCD_SeqBlockStream implements AutoCloseable{
     private Boolean hasNextReadBlock() {
         return this.digit_Length + 19 >= this.currentBlock * 19;
     }
-
-
 
 
     /**

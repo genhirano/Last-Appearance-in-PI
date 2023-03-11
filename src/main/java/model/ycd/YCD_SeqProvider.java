@@ -54,10 +54,10 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
 
     /**
      * YCDから一定の桁数でデータを提供する
-     * @param fileList
+     * @param fileList 読み込み対象YCDファイルリスト。小さい順に並べてあること。
      * @param overWrapLength 重複して提供する桁長さ
      * @param unitLength 基本切り出し桁長さ
-     * @throws IOException
+     * @throws IOException ファイル読み込みエラー
      */
     public YCD_SeqProvider(List<File> fileList, Integer overWrapLength, Integer unitLength) throws IOException {
 
