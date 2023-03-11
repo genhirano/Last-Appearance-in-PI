@@ -6,7 +6,6 @@ import java.util.*;
 
 public class YCDFileUtil {
 
-
     /**
      * ファイルヘッダー情報のそれぞれのラベル
      */
@@ -23,6 +22,7 @@ public class YCDFileUtil {
      * <p>
      * YCDファイル先頭からここで得られたバイト数の次のバイトからが実データとなる。
      *
+     * @param ycdFileName YCDファイル名
      * @return ファイルのヘッダー部分のサイズ(Byte)
      * @throws IOException ファイルアクセスエラー
      */
@@ -52,8 +52,9 @@ public class YCDFileUtil {
     /**
      * YCDファイルのファイルサイズを返す.
      *
+     * @param fileName YCDファイル名
      * @return ファイルサイズ(Byte)
-     * @throws IOException
+     * @throws FileNotFoundException 指定ファイルが存在しない場合
      */
     public static Long getFileSize(String fileName) throws FileNotFoundException {
         File f = new File(fileName);
@@ -66,8 +67,9 @@ public class YCDFileUtil {
     /**
      * YCDファイルのヘッダーを読み込んで返す.
      *
+     * @param fileName YCDファイル名
      * @return ヘッダー情報
-     * @throws IOException
+     * @throws IOException ファイル読み込みエラー
      */
     public static Map<YCDHeaderInfoElem, String> getYCDHeader(String fileName) throws IOException {
 
@@ -126,12 +128,12 @@ public class YCDFileUtil {
     /**
      * 文字列が半角数字のみの文字列かどうかチェックする（マイナス記号は対象外）
      *
-     * @param number
+     * @param numberStr チェック対象数値の文字列
      * @return 文字列が正の整数として評価できる：trure できない:false
      */
-    public static boolean isNumMatch(String number) {
+    public static boolean isNumMatch(String numberStr) {
         java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^[0-9]*$");
-        java.util.regex.Matcher matcher = pattern.matcher(number);
+        java.util.regex.Matcher matcher = pattern.matcher(numberStr);
         return matcher.matches();
     }
 
