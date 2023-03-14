@@ -1,6 +1,5 @@
 package controller;
 
-import model.ycd.YCD_SeqProvider;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
@@ -13,6 +12,10 @@ import java.util.List;
 
 public class StoreController {
 
+    /**
+     * 一回の検索用サバイバルリストの定義.
+     *
+     */
     public class StartEndBean {
 
         public Integer getTargetLength() {
@@ -46,11 +49,17 @@ public class StoreController {
     }
 
 
+    //Todo なおす
     private String storeFilePath = ".";
 
 
     private static StoreController instance;
 
+    /**
+     * インスタンスの取得（シングルトンパターンっぽく）
+     *
+     * @return StoreControllerのインスタンス
+     */
     public static StoreController getInstance() {
         if (null == instance) {
             instance = new StoreController();
@@ -62,6 +71,13 @@ public class StoreController {
         this.instance = this;
     }
 
+    /**
+     * 一度に検索する対象データの定義情報取得.
+     *
+     * @param listSize いくつの数字を対象とするか
+     * @param MaxLength 対象桁数
+     * @return １回の検索対象（サバイバルリスト）開始から終了までの情報
+     */
     public List<StartEndBean> getNextList(Integer listSize, Integer MaxLength) {
 
         List<StartEndBean> retList = new ArrayList();
@@ -133,14 +149,26 @@ public class StoreController {
         return retList;
     }
 
+    /**
+     * 検索結果をファイル保存する.
+     *
+     * @param targetLength 検索中桁数
+     * @param start 検索範囲の開始(最小)数字
+     * @param end 検索範囲の終了(最大)数字
+     * @param lastData 一番最後までサバイブした数字
+     * @param lastFoundPos lastDataの発見桁数
+     * @param startTime 処理開示時間
+     * @param endTime 処理終了時間
+     */
     public void saveFile(Integer targetLength, String start, String end, String lastData, Long
             lastFoundPos, ZonedDateTime startTime, ZonedDateTime endTime) {
 
         String filename = String.format("%02d", targetLength) + ".txt";
 
-        // Fileオブジェクトの生成
+        // 保存用Fileオブジェクトの生成
         File file = new File(this.storeFilePath + "/" + filename);
 
+        //保存対象ファイルがなければ作る
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -150,17 +178,14 @@ public class StoreController {
             }
         }
 
+        //保存対象ファイルをアペンドモードで
         try (
                 PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath(), true)));) {
 
-            //今回分追加
+            //処理開始と処理終了の時間差（実行時間）を計算
             Duration summerVacationDuration = Duration.between(startTime, endTime);
 
-            //進捗状況
-            Double allMax = Double.valueOf(StringUtils.repeat("9", targetLength));
-            double d = (Double.valueOf(end) / allMax) * 100;
-            d = ((double) Math.round(d * 1000)) / 1000;
-
+            //今回分データ作成
             String recordStr =
                     start
                             + "," + end
@@ -168,44 +193,25 @@ public class StoreController {
                             + "," + lastFoundPos
                             + "," + summerVacationDuration.getSeconds();
 
+            //書き込み（アペンドモード）
             pw.println(recordStr);
-            System.out.println(recordStr);
 
         } catch (IOException e) {
-            throw new RuntimeException("保存ファイル書き込み失敗", e);
+            throw new RuntimeException("File Write Error", e);
         }
 
     }
 
-    public List<String> getAll() {
-        List<String> retList = new ArrayList<>();
 
-        for (int i = 1; i <= Integer.MAX_VALUE; i++) {
-
-            String filename = String.format("%02d", i) + ".txt";
-            File file = new File(this.storeFilePath + "/" + filename);
-
-            if (!file.exists()) {
-                break;
-            }
-            //保存用ファイルから全データ読み込み
-            List<String> lines = null;
-            try {
-                lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                throw new RuntimeException("fatal file read! " + file.getName(), e);
-            }
-            retList.add("-----" + filename + "-----");
-            retList.addAll(lines);
-        }
-
-        return retList;
-
-    }
-
+    /**
+     * 全ての結果保存ファイルからサマリーを取得.
+     *
+     * @return サマリー表現文字列リスト(画面表示用にフォーマットされた文字列リスト)
+     */
     public List<String> getSummary() {
         List<String> retList = new ArrayList<>();
 
+        //全保存ファイルを対象。小さい順に処理。
         for (int i = 1; i <= Integer.MAX_VALUE; i++) {
 
             String answer = "";
@@ -213,10 +219,12 @@ public class StoreController {
             String filename = String.format("%02d", i) + ".txt";
             File file = new File(this.storeFilePath + "/" + filename);
 
+            //対象ファイルがなければそこで終了
             if (!file.exists()) {
                 break;
             }
 
+            //サマリ文字列作成開始
             //タイトル
             answer = answer + "digits:" + i;
 
@@ -228,26 +236,31 @@ public class StoreController {
                 String maxDepthStr = "";
                 Long maxDepth = Long.MIN_VALUE;
                 Long allSec = 0L;
+
+                //保存レコードループ
                 for (String s : lines) {
 
                     String[] splited = s.split(",");
                     Long depth = Long.valueOf(splited[3]);
 
+                    //かかった時間(秒)の積算
+                    allSec = allSec + Long.valueOf(splited[4]);
+
+                    //これまでで最大深度であれば一番遅い可能性あり。メモ更新
                     if (depth > maxDepth) {
                         maxDepth = depth;
                         maxDepthStr = splited[2];
                     }
 
-                    //かかった時間(秒)の積算
-                    allSec = allSec + Long.valueOf(splited[4]);
-
                 }
 
-                //一番最後の行を見る
+                //最終行を取得（終わっているかの判断 および 現在進捗情報を取得する）
                 String lastLine = lines.get(lines.size() - 1);
+
                 if (lastLine.isEmpty()) {
-                    //ファイルに一行もない場合
-                    answer = answer + " init progress...";
+                    //ファイルに一行もない場合は、単純に「初期化中」としておこう。。
+                    answer = answer + " initializeing progress...";
+                    retList.add(answer);
                     break;
                 }
 
@@ -261,7 +274,6 @@ public class StoreController {
                     answer = answer + "     the last appearing: \"" + maxDepthStr + "\".";
                     answer = answer + " depth: " + maxDepth + ".";
                     answer = answer + " process time: " + allSec + "sec.";
-
                 } else {
                     //処理中の進捗取得
                     double d = (Double.valueOf(lastSplited[1]) / allMax) * 100;
@@ -271,9 +283,9 @@ public class StoreController {
                     answer = answer + "  (not appear:" + (allMax - Integer.valueOf(lastSplited[2])) + ")";
                     answer = answer + " Progress: " + progress + "%";
                     answer = answer + " processing time: " + allSec + "sec.";
-
                 }
 
+                //このファイルのサマリ（画面表示などで使える文字列）をリストに追加
                 retList.add(answer);
 
             } catch (IOException e) {
@@ -284,8 +296,6 @@ public class StoreController {
 
         return retList;
 
-
     }
-
 
 }
