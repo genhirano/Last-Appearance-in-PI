@@ -7,9 +7,33 @@ import java.util.Properties;
 
 public class Env {
 
+    static enum PropKey {
+
+        outputPath(),
+        maxTargetLength(),
+        listSize(),
+        unitLength(),
+        reportSpan(),
+        port(),
+        ;
+
+        private String name = "";
+
+        PropKey() {
+            this.name = this.toString();
+        }
+
+        public String getKeyName() {
+            return this.name;
+        }
+
+    }
+
+
     private static String PROP_FILE_NAME = ""; // = "./project.properties";
 
     private static Env instance = null;
+
     private final Properties prop;
 
     private Env() {
@@ -45,7 +69,7 @@ public class Env {
 
     public static Env getInstance() {
 
-        if(null == instance){
+        if (null == instance) {
             instance = new Env();
         }
 
@@ -55,5 +79,6 @@ public class Env {
     public Properties getProp() {
         return this.prop;
     }
+
 
 }

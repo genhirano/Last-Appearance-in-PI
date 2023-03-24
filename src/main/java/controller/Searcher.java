@@ -62,7 +62,7 @@ public class Searcher extends Thread{
             }
 
             //次の実行情報が得られなければ終わり
-            if (targetBean.getStart().isEmpty()) {
+            if (null == targetBean) {
                 break;
             }
 

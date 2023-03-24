@@ -27,18 +27,30 @@ public class Main {
         //デバッグ画面を有効にする
         enableDebugScreen();
 
-        //環境設定ファイル読み込み
-        ResourceBundle rb = ResourceBundle.getBundle("default");
-        createFileListByProp(rb);
+        //プログラム引数がないときはデフォルト「./default.properties」を環境設定として読み込む
+        //(TESTの時はプログラム引数に任意のデータをセットすると同時に、プロパティー名を以下の記載と同じようにテスト用のものをせっとしておくこと)
+        if(1 > arg.length){
+            String propPath = new File(".").getAbsoluteFile().getParent();
+            Env.setPropFileName(propPath + "\\default.properties");
+        }
 
-        List<File> piFileList = createFileListByProp(rb);
-        String path = rb.getString("outputPath");
-        Integer maxTargetLength = Integer.valueOf(rb.getString("maxTargetLength"));
-        Integer listSize = Integer.valueOf(rb.getString("listSize"));
-        Integer unitLength = Integer.valueOf(rb.getString("unitLength"));
-        Integer reportSpan = Integer.valueOf(rb.getString("reportSpan"));
 
-        Integer portNo = Integer.valueOf(rb.getString("port"));
+        //TODO なおす
+        //in Test!!!!!
+        String path = new File(".").getAbsoluteFile().getParent();
+        Env.setPropFileName(path + "\\src\\test\\resources\\test.properties");
+
+
+        //読み込み円周率ファイルリスト作成
+        List<File> piFileList = createFileListByProp();
+
+        Integer maxTargetLength = Integer.valueOf(Env.getInstance().getProp().get(Env.PropKey.maxTargetLength.toString()).toString());
+        Integer listSize = Integer.valueOf(Env.getInstance().getProp().getProperty(Env.PropKey.listSize.toString()));
+        Integer unitLength = Integer.valueOf(Env.getInstance().getProp().getProperty(Env.PropKey.unitLength.toString()));
+        Integer reportSpan = Integer.valueOf(Env.getInstance().getProp().getProperty(Env.PropKey.reportSpan.toString()));
+
+        Integer portNo = Integer.valueOf(Env.getInstance().getProp().getProperty(Env.PropKey.port.toString()));
+
 
         //事前情報収集フェーズ-------------------------------------
 
@@ -91,22 +103,41 @@ public class Main {
             }
         }, templateEngine);
 
+
+        while(s.isAlive()){
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        System.out.println("End.");
+
     }
 
-    public static List<File> createFileListByProp(ResourceBundle rb) {
+    public static List<File> createFileListByProp() {
         List<File> fileList = new ArrayList<>();
 
-        for (int i = 0; i < 9999; i++) {
-            String noStr = String.format("%03d", i);
 
+        final String notfound = "NOTFOUND";
+        for (int i = 0; i < 9999; i++) {
+
+            String noStr = String.format("%03d", i);
             try {
-                String s = rb.getString("ycd" + noStr);
-                File f = new File(s);
+                String fullPath = Env.getInstance().getProp().getProperty("ycd" + noStr, notfound);
+
+                File f = new File(fullPath);
                 if (!f.exists()) {
-                    throw new RuntimeException("piFile is not found: " + s);
+                    if (i == 0) {
+                        throw new RuntimeException("piFile is not found: " + f);
+                    } else {
+                        break;
+                    }
+
                 }
 
-                fileList.add(new File(s));
+                fileList.add(new File(fullPath));
 
             } catch (MissingResourceException e) {
                 if (i == 0) {

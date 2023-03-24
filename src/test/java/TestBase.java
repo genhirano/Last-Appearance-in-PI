@@ -144,9 +144,9 @@ https://www2.hamajima.co.jp/kyoto-math/pdf/kyomath202211.pdf
     public static List<File> createFileList(){
         List<File> fileList = new ArrayList<>();
 
-        //String path = new File(".").getAbsoluteFile().getParent();
-        //path = path + "\\src\\test\\resources\\1000000";
-        String path = "H:\\Pi";
+        String path = new File(".").getAbsoluteFile().getParent();
+        path = path + "\\src\\test\\resources\\1000000";
+        //String path = "H:\\Pi";
 
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 0.ycd"));
         fileList.add(new File(path+"//Pi - Dec - Chudnovsky - 1.ycd"));
@@ -166,6 +166,7 @@ https://www2.hamajima.co.jp/kyoto-math/pdf/kyomath202211.pdf
 
         return fileList;
     }
+
 
 
 
