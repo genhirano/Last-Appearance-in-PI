@@ -1,6 +1,9 @@
 target/
 target/output/
 
+# result files
+*.txt
+
 # Compiled class file
 *.class
 

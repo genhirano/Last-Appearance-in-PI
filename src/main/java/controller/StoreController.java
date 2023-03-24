@@ -48,11 +48,6 @@ public class StoreController {
 
     }
 
-
-    //Todo なおす
-    private String storeFilePath = ".";
-
-
     private static StoreController instance;
 
     /**
@@ -80,12 +75,15 @@ public class StoreController {
      */
     public List<StartEndBean> getNextList(Integer listSize, Integer MaxLength) {
 
+        //結果保存先パスを取得
+        String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
+
         List<StartEndBean> retList = new ArrayList();
 
         for (int i = 1; i <= MaxLength; i++) {
 
             String filename = String.format("%02d", i) + ".txt";
-            File file = new File(this.storeFilePath + "/" + filename);
+            File file = new File(storeFilePath + "/" + filename);
 
             //次に実行すべき情報を作る
             //（すでにある保存データ最後の、その次として実行する情報を作る）
@@ -163,10 +161,13 @@ public class StoreController {
     public void saveFile(Integer targetLength, String start, String end, String lastData, Long
             lastFoundPos, ZonedDateTime startTime, ZonedDateTime endTime) {
 
+        //結果保存先パスを取得
+        String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
+
         String filename = String.format("%02d", targetLength) + ".txt";
 
         // 保存用Fileオブジェクトの生成
-        File file = new File(this.storeFilePath + "/" + filename);
+        File file = new File(storeFilePath + "/" + filename);
 
         //保存対象ファイルがなければ作る
         if (!file.exists()) {
@@ -209,6 +210,10 @@ public class StoreController {
      * @return サマリー表現文字列リスト(画面表示用にフォーマットされた文字列リスト)
      */
     public List<String> getSummary() {
+
+        //結果保存先パスを取得
+        String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
+
         List<String> retList = new ArrayList<>();
 
         //全保存ファイルを対象。小さい順に処理。
@@ -217,7 +222,7 @@ public class StoreController {
             String answer = "";
 
             String filename = String.format("%02d", i) + ".txt";
-            File file = new File(this.storeFilePath + "/" + filename);
+            File file = new File(storeFilePath + "/" + filename);
 
             //対象ファイルがなければそこで終了
             if (!file.exists()) {
