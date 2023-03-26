@@ -30,32 +30,22 @@ public class Main {
         //プログラム引数がないときはデフォルト「./default.properties」を環境設定として読み込む
         //(TESTの時はプログラム引数に任意のデータをセットすると同時に、プロパティー名を以下の記載と同じようにテスト用のものをせっとしておくこと)
         if(1 > arg.length){
+            //本番
             String propPath = new File(".").getAbsoluteFile().getParent();
             Env.setPropFileName(propPath + "\\default.properties");
+        }else{
+            //TEST
+            String path = new File(".").getAbsoluteFile().getParent();
+            Env.setPropFileName(path + "\\src\\test\\resources\\test.properties");
         }
 
-
-        //TODO なおす
-        //in Test!!!!!
-        String path = new File(".").getAbsoluteFile().getParent();
-        Env.setPropFileName(path + "\\src\\test\\resources\\test.properties");
-
-
         //読み込み円周率ファイルリスト作成
-        List<File> piFileList = createFileListByProp();
-
-        Integer maxTargetLength = Integer.valueOf(Env.getInstance().getProp().get(Env.PropKey.maxTargetLength.toString()).toString());
-        Integer listSize = Integer.valueOf(Env.getInstance().getProp().getProperty(Env.PropKey.listSize.toString()));
-        Integer unitLength = Integer.valueOf(Env.getInstance().getProp().getProperty(Env.PropKey.unitLength.toString()));
-        Integer reportSpan = Integer.valueOf(Env.getInstance().getProp().getProperty(Env.PropKey.reportSpan.toString()));
-
-        Integer portNo = Integer.valueOf(Env.getInstance().getProp().getProperty(Env.PropKey.port.toString()));
-
+        List<File> piFileList = Env.getInstance().createFileListByProp();
 
         //事前情報収集フェーズ-------------------------------------
 
         //検索対象のYCDフィアルの全体像をつかむ
-        //全ファイルヘッダー情報取得 (targetLengthはこの処理では重要でないので、適当な値を入れている)
+        //全ファイルヘッダー情報取得 (OverWrapLengthはこの処理では重要でないので、適当な値を入れている)
         YCD_FILE_MAP = createFileInfo(piFileList, 1);
         Long ycdMaxDepth = 0L;
         for (File f : YCD_FILE_MAP.keySet()) {
@@ -64,11 +54,11 @@ public class Main {
         System.out.println("FILE COUNT:" + YCD_FILE_MAP.size() + "  MAX DEPTH: " + ycdMaxDepth);
 
         //バックグラウンド処理開始-------------------------------------
-        Searcher s = new Searcher(piFileList, maxTargetLength, listSize, unitLength, reportSpan);
-        s.start();
+        Searcher searcher = new Searcher(piFileList, Env.getInstance().getMaxTargetLength(), Env.getInstance().getListSize(), Env.getInstance().getUnitLength(), Env.getInstance().getReportSpan());
+        searcher.start();
 
         //WEB-------------------------------------
-        port(portNo);
+        port(Env.getInstance().getPortNo());
         staticFiles.location("/public");
         get("/", new TemplateViewRoute() {
             @Override
@@ -104,9 +94,10 @@ public class Main {
         }, templateEngine);
 
 
-        while(s.isAlive()){
+        //検索スレッドの終了まち。なくても良いが、テストしやすい。
+        while(searcher.isAlive()){
             try {
-                Thread.sleep(1000);
+                Thread.sleep(5000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -116,39 +107,5 @@ public class Main {
 
     }
 
-    public static List<File> createFileListByProp() {
-        List<File> fileList = new ArrayList<>();
-
-
-        final String notfound = "NOTFOUND";
-        for (int i = 0; i < 9999; i++) {
-
-            String noStr = String.format("%03d", i);
-            try {
-                String fullPath = Env.getInstance().getProp().getProperty("ycd" + noStr, notfound);
-
-                File f = new File(fullPath);
-                if (!f.exists()) {
-                    if (i == 0) {
-                        throw new RuntimeException("piFile is not found: " + f);
-                    } else {
-                        break;
-                    }
-
-                }
-
-                fileList.add(new File(fullPath));
-
-            } catch (MissingResourceException e) {
-                if (i == 0) {
-                    throw new RuntimeException("piFile is not define by property file: " + noStr);
-                } else {
-                    break;
-                }
-            }
-        }
-
-        return fileList;
-    }
 
 }
