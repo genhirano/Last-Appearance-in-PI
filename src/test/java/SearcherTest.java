@@ -11,7 +11,7 @@ public class SearcherTest extends TestBase{
     void 一般テスト(TestInfo testInfo)  {
 
         String path = new File(".").getAbsoluteFile().getParent();
-        Env.setPropFileName(path + "\\src\\test\\resources\\test.properties");
+        Env.setPropFileName(path + "/src/test/resources/test.properties");
 
         Env.getInstance().setListSize(10);
         Env.getInstance().setMaxTargetLength(3);

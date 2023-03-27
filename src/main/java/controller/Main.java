@@ -32,7 +32,7 @@ public class Main {
         if(1 > arg.length){
             //本番
             String propPath = new File(".").getAbsoluteFile().getParent();
-            Env.setPropFileName(propPath + "\\default.properties");
+            Env.setPropFileName(propPath + "/default.properties");
         }else{
             //TEST
             String path = new File(".").getAbsoluteFile().getParent();
