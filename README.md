@@ -1,92 +1,84 @@
 # Last-Appearance-in-PI
-桁数別に円周率の中で一番遅く出現する数値を探す。
+Find the number that appears the latest in pi by number of digits.  
+桁数毎に円周率の中で一番遅く出現する数値を検索します。
 
-## プロローグ
-3.1415・・・
+## OVERVIEW
+Pi is an irrational number. Find the latest occurrence of a specific number of digits among this infinite number of non-repeating magical numbers.  
+円周率は無理数です。無限の循環しないこの不思議な数の中から、特定の桁数の数値において最も遅く出現する数を探します。
 
-ご存知のとおり、円周率は無理数です。割り切れません。計算すればするほどに、値が次々と生み出されていきます。
+## WHY?
+Why not?  
+え?
 
-このプロジェクトは、延々と続く円周率データから「一番遅く出てくる数値」を検索します。
+## FOR EXAMPLE
+* Case : **One** digit  1桁 
+  * 3.1415926535897932384626433832795 **(0)** 288419716......
+    * The latest number to appear: 0, position: 32
+    * 一番遅く出現する数：0, 少数以下32桁目
+* Case : **Two** digit 2桁
+  * 3.14159....48184676694051320005 **(68)** 1271452635......
+    * The latest number to appear: 68, position: 605
+    * 一番遅く出現する数：68, 少数以下605桁目
+* Case : **Three** digit 3桁
+  * 3.14159..............4697486762655165827658 **(483)** 58845......
+    * The latest number to appear: 483, position: 8553
+    * 一番遅く出現する数：483, 少数以下8553桁目
+* Case : **Fou** digit 4桁 
+  * ????
+* Case : **Five** digit 5桁
+  * ????
+* Case : ..............
+* Case : ..............
+* Case : ..............
+* Case : ..............
 
-例：
-* １桁の場合
-  * 3.1415926535897932384626433832795 **(0)** 288419716・・・
-  * 一番遅く出てくる数：0
-  * 一番遅く出てくる数が出てくる位置：少数以下32桁目
-* 2桁の場合
-    * 3.1415926535897932384626433832795 **(0)** 288419716・・・
-    * 一番遅く出てくる数：0
-    * 一番遅く出てくる数が出てくる位置：少数以下32桁目
+## USAGE
+* Create properties file "default.properties"
+``` default.properties
+# Web server port
+port=8080
 
+# result output path
+outputPath=src/test/
 
+# max digit (何桁まで実行するか)
+maxTargetLength=5
 
+# searches per cycle (1サイクルあたりの検索数)
+listSize=500
 
+# read pi data per cycle (円周率データの１回の読み込み長さ)
+unitLength=1900
 
-円周率とは「円の周りの長さとその直径の比」であり「π」と表記され、**おおむね「3」** です。
+# debug report span
+reportSpan=50000
 
-もう少し精度を上げてみましょう。
-
-πは「3 + **もうちょっと**」です。 この**もうちょっと**の正体は「0.1」です。
-
-π ≒ 3.1
-
-少数第一位が1である事を気にする人は少ないかもしれませんが、実はπは **だいたい「3」** というのはかなり的を射ているのです。
-> 昔のきこりは木の周りにロープをまわして、そのロープを三つに折りたたむとそれが直径になることを知っていました。
-> 精度はそれで十分でした。
-
----
-さらに、もう一桁精度を上げましょう。少数第二位は「4」です。
-
-π ≒ 3.14
-
-また、四捨五入で切り捨てられる4以下の数値でした。さらに一桁精度を上げると
-
-π ≒ 3.141
-
-その次は
-
-π ≒ 3.1415
-
-ようやく、少数第四位で四捨五入されない「5」がでてきました。
-
-
-
-
-
-
-具体的には3.14程度であり、その次も1ですので、
-少数以下には循環しない数字が無限に続くと言われています。
-
-さて、この中から特定の数字を検索するのはどうすればよいでしょうか。
-
-例えば、「ファインマン・ポイント」として有名な 小数点以下762桁目から始まる6個の「9」。
-「999999」は円周率少数以下762桁目に出現し、この特異な数字に名前を付けたものです。
-
-少数以下762桁目という途方もなく深い位置に出現する「999999」。
-そもそも、同じ数字が6個も連続して続くことがあることにびっくりします。
-
-このように、特定の数字を円周率の中から検索するプログラムはオンラインでも多数公開されており、楽しく利用させてもらっています。
-また、私自身も以前に検索アプリを作ったこともありました。
-
-このサイトの製作中、 円周率の深さや綺麗な乱数性に触れ、特定の数値が何桁目に出現するのかを検索するのではなく、一番出てこない数字は何か？が気になりました。
-
-## 何を探すのか
-
-10進数の円周率少数以下の数値の羅列の中で、
-
-
-悪魔の証明。
-困難性
-
-ある数値が出現しないことを証明するにはどうすればよいか。
+# Pi files (ycd Files)
+ycd000=X:/ycdFile/Pi - Dec - Chudnovsky - 0.ycd
+ycd001=X:/ycdFile/Pi - Dec - Chudnovsky - 1.ycd
+ycd002=X:/ycdFile/Pi - Dec - Chudnovsky - 2.ycd
+ycd003=X:/ycdFile/Pi - Dec - Chudnovsky - 3.ycd
+# (and more. Max:9999)
+```
+* Exctute
+  *  java -jar (jarname)
+* View Progress 
+  * your browser "http://localhost:8080" 
 
 
 
-## なぜ探すのか
-
-## どうやって探すのか（パート１ 失敗）
-
-私は、まず、
-
-
-
+## SPECIAL THANKS!
+* [y-cruncher - A Multi-Threaded Pi-Program](http://www.numberworld.org/y-cruncher/)
+  * Alexander J. Yee  - y-cruncher is a program that can compute Pi and other constants to trillions of digits. 
+* [OpenJDK](https://openjdk.org/)
+  * The place to collaborate on an open-source implementation of the Java Platform, Standard Edition, and related projects.
+* [Spark Framework](https://sparkjava.com/)
+  * micro framework for creating web applications in Kotlin and Java 8 with minimal effort
+* [Apatch Maven](https://maven.apache.org/)
+  * software project management and comprehension tool. 
+* [Intellij idea](https://www.jetbrains.com/idea/)
+  * The IDE that makes development a more productive and enjoyable experience
+* [Git Hub](https://github.co.jp/)
+  * development platform
+* [Git](https://git-scm.com/)
+  * free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency.
