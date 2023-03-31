@@ -6,14 +6,14 @@ Find the number that appears the latest in pi by number of digits.
 Pi is an irrational number. Find the latest occurrence of a specific number of digits among this infinite number of non-repeating magical numbers.  
 円周率は無理数です。無限の循環しないこの不思議な数の中から、特定の桁数の数値において最も遅く出現する数を探します。
 
-For example, among the digits of pi, "0" is the digit that appears the latest among the numbers 0 to 9. Surprisingly, the first appearance of "0" is at the 32nd decimal place. This is a remarkably late appearance.
+For example, among the digits of pi, "0" is the digit that appears the latest among the numbers 0 to 9. Surprisingly, the first appearance of "0" is at the 32nd decimal place. This is a remarkably late appearance.  
 例えば円周率の中で「0」は0～9の数値のなかで最も遅く出現する数字です。「0」が初めて出現するのは少数以下32桁目です。これは驚くべき登場の遅さです。
 
 3.
 1415926535897932384626433832795 **(0)** 288419716......
 
 ----
-In that case, what about two-digit numbers? The one that appears the latest is "68". It appears at the 605th decimal place.
+In that case, what about two-digit numbers? The one that appears the latest is "68". It appears at the 605th decimal place.  
 それでは、2桁の場合はどうでしょうか。最も遅く出現するのは「68」です。605桁目に出現します。
 
 3.
@@ -33,23 +33,22 @@ In that case, what about two-digit numbers? The one that appears the latest is "
 
 
 ----
-Next, how about three-digit numbers? What about four-digit numbers?
+Next, how about three-digit numbers? What about four-digit numbers?  
 次に、3桁の場合はどうでしょうか。4桁の場合は？
 
-This project searches for one value that appears the latest among n-digit numbers in the digits of pi.
+This project searches for one value that appears the latest among n-digit numbers in the digits of pi.  
 このプロジェクトは、n桁の数値について、円周率の中で最も遅く出現する一つの値を検索します。
 
 ## WHY?
 Why not?  
 え?
 
-## IMAGE?
+## IMAGE
 ![web](https://user-images.githubusercontent.com/3538386/229020000-79905d0f-f9e7-4521-bd27-d94482eebae9.JPG)
 
 ## USAGE
 * View Progress
 your browser "http://localhost:8080"
-
 * Create properties file "default.properties"
   * Please place the program in the location where it will be executed.
 ``` default.properties
@@ -80,8 +79,8 @@ ycd003=X:/ycdFile/Pi - Dec - Chudnovsky - 3.ycd
 ```
 
 ## PI DATA SOURCE
-In this project, we are using the output of the pi calculation program "[y-cruncher](http://www.numberworld.org/y-cruncher/)" as the target for the search.
-個のプロジェクトでは、円周率計算プログラム「[y-cruncher](http://www.numberworld.org/y-cruncher/)」が出力した計算結果を検索対象としています。
+In this project, we are using the output of the pi calculation program "[y-cruncher](http://www.numberworld.org/y-cruncher/)" as the target for the search.  
+このプロジェクトでは、円周率計算プログラム「[y-cruncher](http://www.numberworld.org/y-cruncher/)」が出力した計算結果を検索対象としています。
 
 
 ## SPECIAL THANKS!
