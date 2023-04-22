@@ -1,6 +1,6 @@
 # Last-Appearance-in-PI
 Find the number that appears the latest in pi by number of digits.  
-桁数毎に円周率の中で一番遅く出現する数値を検索します。
+円周率の中で一番遅く出現する数値を桁数毎に検索します。
 
 ## OVERVIEW
 Pi is an irrational number. Find the latest occurrence of a specific number of digits among this infinite number of non-repeating magical numbers.  
