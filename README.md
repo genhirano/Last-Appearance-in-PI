@@ -59,9 +59,11 @@ Why not?
 
 ## USAGE
 * Entry Point
-  * controller.Main
+  * controller.Main (Java version 11 or higher)
 * View Progress
   * your browser "http://localhost:8080"
+* Maven
+  * Please install external packages that are dependent on using the .pom file of Maven.
 * Create properties file "default.properties"
   * Please place the program in the location where it will be executed.
 ``` default.properties
