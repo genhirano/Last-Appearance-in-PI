@@ -70,11 +70,8 @@ Why not?
 # Web server port
 port=8080
 
-# result output path
+# result output path (結果ファイルの吐き出し先)
 outputPath=./
-
-# max digit (何桁まで実行するか)
-maxTargetLength=5
 
 # searches per cycle (1サイクルあたりの検索数)
 listSize=500

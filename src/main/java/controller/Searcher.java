@@ -1,26 +1,36 @@
 package controller;
 
+import lombok.Getter;
 import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;
 import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 
 public class Searcher extends Thread{
 
-    private List<File> piFileList;
-    private Integer maxTargetLength;
-    private Integer listSize;
-    private Integer unitLength;
-    private Integer reportSpan;
+    private final List<File> piFileList;
+    @Getter
+    private final List<File> um_piFileList;//不変
 
-    public Searcher(List<File> piFileList, Integer maxTargetLength, Integer listSize, Integer unitLength, Integer reportSpan){
+    @Getter
+    private final Integer listSize;
+
+    @Getter
+    private final Integer unitLength;
+
+    @Getter
+    private final Integer reportSpan;
+
+    public Searcher(List<File> piFileList, Integer listSize, Integer unitLength, Integer reportSpan){
         super();
 
         this.piFileList = piFileList;
-        this.maxTargetLength = maxTargetLength;
+        um_piFileList = Collections.unmodifiableList(piFileList); //外部から参照されるための不変オブジェクト
+
         this.listSize = listSize;
         this.unitLength = unitLength;
         this.reportSpan = reportSpan;
@@ -44,9 +54,9 @@ public class Searcher extends Thread{
             //結果保存ファイルの全ロード
             //(非効率ではあるがYCDファイルロードの度に毎回やる。このおかげで容易にリジュームできる)
             StoreController sc = StoreController.getInstance();
-            List<StoreController.StartEndBean> storeDataList = sc.getNextList(listSize, maxTargetLength);
+            List<StoreController.StartEndBean> storeDataList = sc.getNextList(listSize);
 
-            //対象ファイルの決定
+            //対象とする結果保存ファイル（未終了）の決定
             StoreController.StartEndBean targetBean = null;
             for (StoreController.StartEndBean se : storeDataList) {
 

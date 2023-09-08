@@ -12,6 +12,13 @@ import java.util.List;
 
 public class StoreController {
 
+
+    private static final int digitsLength = 3; //3桁。すなわち 001 - 999　桁を対象。
+    private static final String digitsLengthFormat = "%0"+digitsLength+"d";
+    private static final int  maxDigit = Integer.valueOf(StringUtils.repeat("9", digitsLength));
+
+
+
     /**
      * 一回の検索用サバイバルリストの定義.
      *
@@ -70,19 +77,18 @@ public class StoreController {
      * 一度に検索する対象データの定義情報取得.
      *
      * @param listSize いくつの数字を対象とするか
-     * @param MaxLength 対象桁数
      * @return １回の検索対象（サバイバルリスト）開始から終了までの情報
      */
-    public List<StartEndBean> getNextList(Integer listSize, Integer MaxLength) {
+    public List<StartEndBean> getNextList(Integer listSize) {
 
         //結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
 
         List<StartEndBean> retList = new ArrayList();
 
-        for (int i = 1; i <= MaxLength; i++) {
+        for (int i = 1; i <= maxDigit; i++) {
 
-            String filename = String.format("%02d", i) + ".txt";
+            String filename = String.format(digitsLengthFormat, i) + ".txt";
             File file = new File(storeFilePath + "/" + filename);
 
             //次に実行すべき情報を作る
@@ -164,7 +170,7 @@ public class StoreController {
         //結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
 
-        String filename = String.format("%02d", targetLength) + ".txt";
+        String filename = String.format(digitsLengthFormat, targetLength) + ".txt";
 
         // 保存用Fileオブジェクトの生成
         File file = new File(storeFilePath + "/" + filename);
@@ -221,7 +227,7 @@ public class StoreController {
 
             String answer = "";
 
-            String filename = String.format("%02d", i) + ".txt";
+            String filename = String.format(digitsLengthFormat, i) + ".txt";
             File file = new File(storeFilePath + "/" + filename);
 
             //対象ファイルがなければそこで終了
