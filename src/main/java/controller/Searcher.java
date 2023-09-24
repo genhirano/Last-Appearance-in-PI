@@ -1,38 +1,46 @@
 package controller;
 
+import lombok.Getter;
+import model.TargetRange;
 import model.pi.SurvivalList;
-import model.ycd.YCDFileUtil;
 import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 
-public class Searcher extends Thread{
+import org.apache.commons.lang3.StringUtils;
 
-    private List<File> piFileList;
-    private Integer maxTargetLength;
-    private Integer listSize;
-    private Integer unitLength;
-    private Integer reportSpan;
+public class Searcher extends Thread {
 
-    public Searcher(List<File> piFileList, Integer maxTargetLength, Integer listSize, Integer unitLength, Integer reportSpan){
+    private final List<File> piFileList;
+    @Getter
+    private final List<File> um_piFileList;// 不変
+
+    @Getter
+    private final Integer listSize;
+
+    @Getter
+    private final Integer unitLength;
+
+    @Getter
+    private final Integer reportSpan;
+
+    public Searcher(List<File> piFileList, Integer listSize, Integer unitLength, Integer reportSpan) {
         super();
 
         this.piFileList = piFileList;
-        this.maxTargetLength = maxTargetLength;
+        um_piFileList = Collections.unmodifiableList(piFileList); // 外部から参照されるための不変オブジェクト
+
         this.listSize = listSize;
         this.unitLength = unitLength;
         this.reportSpan = reportSpan;
 
     }
 
-
     @Override
-    public void run(){
-
-        //次に実行すべき情報を作る
-        //（すでにある保存データの一番最後の、その次として実行する情報を作る）
+    public void run() {
 
         Integer continueCount = 0;
         while (true) {
@@ -41,102 +49,112 @@ public class Searcher extends Thread{
                 throw new RuntimeException("Fail!  Retry limit exceeded." + continueCount);
             }
 
-            //結果保存ファイルの全ロード
-            //(非効率ではあるがYCDファイルロードの度に毎回やる。このおかげで容易にリジュームできる)
-            StoreController sc = StoreController.getInstance();
-            List<StoreController.StartEndBean> storeDataList = sc.getNextList(listSize, maxTargetLength);
+            // 1サイクルの検索範囲の決定（サバイバルリストの範囲）
+            TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(this.listSize);
 
-            //対象ファイルの決定
-            StoreController.StartEndBean targetBean = null;
-            for (StoreController.StartEndBean se : storeDataList) {
-
-                //終わっていないこと（Startが空文字ならばすでに終了済みである）
-                if ("".equals(se.getStart())) {
-                    continue;
-                }
-
-                //範囲決定
-                targetBean = se;
-
-                break;
-            }
-
-            //次の実行情報が得られなければ終わり
-            if (null == targetBean) {
-                break;
-            }
+            // 今回のサバイバルリストの作成
+            // SurvivalList survivalList = new SurvivalList(targetRange.getLength(),
+            // Integer.valueOf(targetRange.getStart()),
+            // Integer.valueOf(targetRange.getEnd()));
+            SurvivalList survivalSet = new SurvivalList(targetRange.getLength(),
+                    Integer.valueOf(targetRange.getStart()), Integer.valueOf(targetRange.getEnd()));
+            int survivalSetInitialSize = survivalSet.size();
 
             ZonedDateTime startTime = null;
             ZonedDateTime endTime = null;
 
-            //今回のサバイバルリストの作成
-            SurvivalList survivalList = new SurvivalList(targetBean.getTargetLength(), Integer.valueOf(targetBean.getStart()), Integer.valueOf(targetBean.getEnd()));
-
             String lastData = "";
             Long lastFoundPos = -1L;
 
-            //YCDプロバイダを作成
-            try (YCD_SeqProvider p = new YCD_SeqProvider(piFileList, targetBean.getTargetLength(), unitLength);) {
+            // YCDデータプロバイダを作成
+            int overWrapLength = targetRange.getLength(); // 一つ前のケツの部分を今回の先頭に重ねる桁の長さ
+            try (YCD_SeqProvider p = new YCD_SeqProvider(piFileList, overWrapLength, unitLength);) {
 
                 startTime = ZonedDateTime.now();
 
-                //-----
-                // Let's ブルートフォース検索   ユニット ＶＳ サバイバルリスト
-                //-----
+                // YCDプロバイダからパイユニットを順次取り出し
+                for (YCD_SeqProvider.Unit currentPi : p) {
+                    System.out.println("次のユニット" + currentPi.getStartDigit());
 
-                //YCDプロバイダからユニットを順次取り出して
-                for(YCD_SeqProvider.Unit currentPi : p){
+                    if (survivalSet.size() * -2 >= survivalSetInitialSize) {
+                        System.out.println("アルゴリズム：パイの断片からサバイバルリストを検索する contains");
+                        int currentPiStrPos = 0;
+                        String currentPiStr = StringUtils.repeat("0", targetRange.getLength());
 
-                    //サバイバルリストループ
-                    for (int i = survivalList.size() - 1; i >= 0; i--) {
+                        // カレントPiデータから、対象桁長さで文字列を順次取り出し
+                        while (currentPiStr.length() >= targetRange.getLength()) {
 
-                        //カレントユニットから検索
-                        Integer pos = currentPi.getData().indexOf(survivalList.get(i));
+                            int endIndex = currentPiStrPos + targetRange.getLength();
 
-                        //ヒットしたら
-                        if (0 <= pos) {
-
-                            //もしかしたら、これが最後の生き残りなのかもしれないので、ヒットした要素と、発見位置をバックアップする
-                            Long curFindPos = currentPi.getStartDigit() + pos;
-                            if (lastFoundPos < curFindPos) {
-                                lastData = survivalList.get(i);
-                                lastFoundPos = curFindPos;
+                            if (endIndex > currentPi.getData().length()) {
+                                break;
                             }
 
-                            //サバイバルリストからヒットした要素を削除
-                            survivalList.remove(i);
+                            // 読み込んだ長いパイデータから、ターゲットの長さ分の文字列として切り取る
+                            currentPiStr = currentPi.getData().substring(currentPiStrPos,
+                                    currentPiStrPos + targetRange.getLength());
 
+                            // サバイバルセットから検索
+                            // 切り取ったパイ文字列がサバイバルSetにあるかどうか
+                            if (survivalSet.contains(currentPiStr)) {
+
+                                //System.out.println((currentPiStrPos + currentPi.getStartDigit()) + "桁にて" + currentPiStr
+                                //       + "を発見。リスト残り" + survivalSet.size());
+
+                                // もしかしたら、これが最後の生き残りなのかもしれないので、ヒットした要素と、発見位置をバックアップする
+                                if (1 == survivalSet.size()) {
+                                    Long curFindPos = currentPi.getStartDigit() + currentPiStrPos;
+                                    if (lastFoundPos < curFindPos) {
+                                        lastData = currentPiStr;
+                                        lastFoundPos = curFindPos;
+                                    }
+                                }
+                                survivalSet.remove(currentPiStr);
+                            }
+
+                            if (survivalSet.isEmpty()) {
+                                break;
+                            }
+                            currentPiStrPos++;
+                        }
+                    } else {
+                        System.out.println("アルゴリズム：サバイバルリストからパイに検索をかける indexOf");
+
+                        // サバイバルリストループ
+                        for (int i = survivalSet.size() - 1; i >= 0; i--) {
+
+                            // カレントパイユニットから検索
+                            int pos = currentPi.indexOf(survivalSet.get(i));
+
+                            // ヒットしたら
+                            if (0 <= pos) {
+                                //System.out.println((pos + currentPi.getStartDigit()) + " リスト残り" + survivalSet.size());
+
+                                // もしかしたら、これが最後の生き残りなのかもしれないので、ヒットした要素と、発見位置をバックアップする
+                                if (1 == survivalSet.size()) {
+                                    Long curFindPos = currentPi.getStartDigit() + pos;
+                                    if (lastFoundPos < curFindPos) {
+                                        lastData = survivalSet.get(i);
+                                        lastFoundPos = curFindPos;
+                                    }
+                                }
+
+                                // サバイバルリストからヒットした要素を削除
+                                survivalSet.remove(i);
+
+                            }
                         }
                     }
-
-                    // コンソール実況
-                    if (0 == (survivalList.size() % reportSpan)) {
-                        System.out.println(
-                                "targetLength: " + targetBean.getTargetLength()
-                                        + " PiFILE_INDEX:" + currentPi.getFileInfo().get(YCDFileUtil.FileInfo.BLOCK_INDEX)
-                                        + " SearchingDepth: " + currentPi.getStartDigit()
-                                        + " targetLenge: " +targetBean.getStart() + "-" + targetBean.getEnd()
-                                        + " remaining: " + survivalList.size());
-                    }
-
-
-                    //サバイバルリストが空になったら、このユニットの処理終了。次のユニットへ
-                    if (0 >= survivalList.size()) {
+                    
+                    if (survivalSet.isEmpty()) {
                         break;
                     }
 
                 }
 
-                // 全てのファイル、全てのユニットが終わったのに、サバイバルリストが空出ない場合は探しきれなかった、とする。
-                if (!survivalList.isEmpty()) {
-                    throw new RuntimeException("The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)");
-                }
-
-                endTime = ZonedDateTime.now();
-
             } catch (Throwable t) {
 
-                //仮に何かしらのエラーが発生した場合でも、ちょっと時間をおいて再起動してみる
+                // 仮に何かしらのエラーが発生した場合でも、ちょっと時間をおいて再起動してみる
                 continueCount++;
                 RuntimeException ee = new RuntimeException("ERROR!  start over. count: " + continueCount, t);
                 ee.printStackTrace();
@@ -145,13 +163,25 @@ public class Searcher extends Thread{
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
                 }
-                continue; //再起動
+                continue; // 再起動
             }
 
-            //結果保存
-            sc.saveFile(targetBean.getTargetLength(), targetBean.getStart(), targetBean.getEnd(), lastData, lastFoundPos, startTime, endTime);
+            // 検索終了。サバイバルリストが空になっているはず。
+
+            // サバイバルリストが空でない場合は探しきれなかった、とする。
+            if (!survivalSet.isEmpty()) {
+                throw new RuntimeException(
+                        "The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)");
+            }
+
+            endTime = ZonedDateTime.now();
+
+            // 結果保存
+            StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
+                    targetRange.getEnd(), lastData, lastFoundPos, startTime, endTime);
 
         }
+
     }
 
 }

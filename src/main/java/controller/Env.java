@@ -1,9 +1,11 @@
 package controller;
 
+import lombok.Getter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -11,10 +13,9 @@ import java.util.Properties;
 
 public class Env {
 
-    static enum PropKey {
+    enum PropKey {
 
         outputPath(),
-        maxTargetLength(),
         listSize(),
         unitLength(),
         reportSpan(),
@@ -40,14 +41,8 @@ public class Env {
 
     private final Properties prop;
 
-
-
-    public Integer getMaxTargetLength() {
-        return Integer.valueOf(prop.getProperty(Env.PropKey.maxTargetLength.toString()));
-    }
-    public void setMaxTargetLength(Integer value ) {
-        this.prop.setProperty(Env.PropKey.maxTargetLength.toString(), value.toString());
-    }
+    @Getter
+    private final static ZonedDateTime startTime = ZonedDateTime.now();
 
     public Integer getListSize(){
         return Integer.valueOf(prop.getProperty(Env.PropKey.listSize.toString()));
@@ -162,6 +157,35 @@ public class Env {
         }
 
         return fileList;
+    }
+
+
+    /**
+     * プロパティーファイルの内容をコンソール出力.
+     *
+     */
+    public void printProp(){
+        System.out.println("--- Property File : " + PROP_FILE_NAME + " ");
+        for (Object key : this.getProp().keySet()) {
+            if(0 <= key.toString().indexOf("ycd")){
+                continue;
+            }
+            String value = this.getProp().getProperty(key.toString());
+            System.out.println(key + ": " + value);
+        }
+
+        int i = 0;
+        while(true) {
+            String value = this.getProp().getProperty("ycd" + String.format("%03d", i));
+            if(null == value){
+                break;
+            }
+            System.out.println("ycd" + String.format("%03d", i) + ": " + value);
+            i++;
+        }
+
+        System.out.println("--- end");
+
     }
 
 

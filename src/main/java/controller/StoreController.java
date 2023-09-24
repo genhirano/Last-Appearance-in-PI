@@ -9,44 +9,13 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import model.TargetRange;
 
 public class StoreController {
 
-    /**
-     * 一回の検索用サバイバルリストの定義.
-     *
-     */
-    public class StartEndBean {
-
-        public Integer getTargetLength() {
-            return targetLength;
-        }
-
-        Integer targetLength;
-        String start;
-        String end;
-
-        public String getStart() {
-            return start;
-        }
-
-        public String getEnd() {
-            return end;
-        }
-
-        public StartEndBean() {
-            this.start = "";
-            this.end = "";
-        }
-
-        public StartEndBean(Integer targetLength, String start, String end) {
-            this();
-            this.targetLength = targetLength;
-            this.start = start;
-            this.end = end;
-        }
-
-    }
+    private static final int digitsLength = 3; //3桁を対象。すなわち 001 - 999　桁を対象。
+    private static final String digitsLengthFormat = "%0"+digitsLength+"d";
+    private static final int  maxDigit = Integer.valueOf(StringUtils.repeat("9", digitsLength));
 
     private static StoreController instance;
 
@@ -63,26 +32,25 @@ public class StoreController {
     }
 
     private StoreController() {
-        this.instance = this;
+        instance = this;
     }
 
     /**
      * 一度に検索する対象データの定義情報取得.
      *
      * @param listSize いくつの数字を対象とするか
-     * @param MaxLength 対象桁数
      * @return １回の検索対象（サバイバルリスト）開始から終了までの情報
      */
-    public List<StartEndBean> getNextList(Integer listSize, Integer MaxLength) {
+    public List<TargetRange> getNextList(Integer listSize) {
 
         //結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
 
-        List<StartEndBean> retList = new ArrayList();
+        List<TargetRange> retList = new ArrayList<>();
 
-        for (int i = 1; i <= MaxLength; i++) {
+        for (int i = 1; i <= maxDigit; i++) {
 
-            String filename = String.format("%02d", i) + ".txt";
+            String filename = String.format(digitsLengthFormat, i) + ".txt";
             File file = new File(storeFilePath + "/" + filename);
 
             //次に実行すべき情報を作る
@@ -122,7 +90,7 @@ public class StoreController {
 
                     //終了条件(対象桁数分だけ全部9だったらすでに終端に達している)
                     if (prevEndStr.equals(StringUtils.repeat("9", i))) {
-                        retList.add(new StartEndBean(i, "", ""));
+                        retList.add(new TargetRange(i, "", ""));
                         continue;
                     }
 
@@ -141,11 +109,45 @@ public class StoreController {
                 }
             }
 
-            retList.add(new StartEndBean(i, nextMin, nextMax));
+            retList.add(new TargetRange(i, nextMin, nextMax));
         }
 
         return retList;
     }
+
+    public TargetRange getCurrentTargetStartEnd(Integer listSize){
+        //次に実行すべき情報を作る
+        //（すでにある保存データの一番最後の、その次として実行する情報を作る）
+
+        //結果保存ファイルの全ロード
+        //(非効率ではあるがYCDファイルロードの度に毎回やる。このおかげで容易にリジュームできる)
+        StoreController sc = StoreController.getInstance();
+        List<TargetRange> storeDataList = sc.getNextList(listSize);
+
+        //対象とする結果保存ファイル（未終了）の決定
+        TargetRange targetStartEnd = null;
+        for (TargetRange se : storeDataList) {
+
+            //終わっていないこと（Startが空文字ならばすでに終了済みである）
+            if ("".equals(se.getStart())) {
+                continue;
+            }
+
+            //範囲決定
+            targetStartEnd = se;
+
+            break;
+        }
+
+        //次の実行情報が得られなければ終わり
+        if (null == targetStartEnd) {
+            return null;
+        }
+
+        return targetStartEnd;
+
+}
+
 
     /**
      * 検索結果をファイル保存する.
@@ -164,7 +166,7 @@ public class StoreController {
         //結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
 
-        String filename = String.format("%02d", targetLength) + ".txt";
+        String filename = String.format(digitsLengthFormat, targetLength) + ".txt";
 
         // 保存用Fileオブジェクトの生成
         File file = new File(storeFilePath + "/" + filename);
@@ -221,7 +223,7 @@ public class StoreController {
 
             String answer = "";
 
-            String filename = String.format("%02d", i) + ".txt";
+            String filename = String.format(digitsLengthFormat, i) + ".txt";
             File file = new File(storeFilePath + "/" + filename);
 
             //対象ファイルがなければそこで終了
