@@ -7,13 +7,12 @@ public class Main {
 
     private final static String propFileName = "/default.properties";
 
+    //CPUの使用状況を表示する
+
+
     public static void main(String[] arg) {
 
-        //バブルソートのスニペット
-
-
-
-        //プロパティーファイルの読み込み。
+        //プロパティーファイルロード
         if(0 >= arg.length){
             //プログラム引数がない場合はデフォルトのプロパティーファイル名で読み込みを試行。
             String propPath = new File(".").getAbsoluteFile().getParent();
@@ -24,17 +23,20 @@ public class Main {
             //Env.setPropFileName(path + "\\src\\test\\resources\\test.properties");
         }
 
-        //読み込んだEnvファイルの内容表示
-        Env.getInstance().printProp();
+        //Envクラスのインスタンスを取得 (シングルトン)
+        Env env = Env.getInstance();
 
-        //プロパティーフィアルから読み込み円周率ファイルリスト作成
-        List<File> piFileList = Env.getInstance().createFileListByProp();
+        //Envの内容表示
+        env.printProp();
 
-        //バックグラウンド処理開始-------------------------------------
-        Searcher searcher = new Searcher(piFileList, Env.getInstance().getListSize(), Env.getInstance().getUnitLength(), Env.getInstance().getReportSpan());
+        //検索対象の円周率ファイルリスト作成
+        List<File> piFileList = env.createFileListByProp();
+
+        //バックグラウンドで検索処理開始
+        Searcher searcher = new Searcher(piFileList, env.getListSize(), env.getUnitLength(), env.getReportSpan());
         searcher.start();
 
-        //WEB　Start
+        //WEB Start
         Web.init();
 
     }

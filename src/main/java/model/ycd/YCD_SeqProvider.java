@@ -3,6 +3,7 @@ package model.ycd;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import lombok.Getter;
 
 import static model.ycd.YCDFileUtil.createFileInfo;
 
@@ -18,17 +19,11 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
 
     public class Unit {
 
-        private Long startDigit;
+        @Getter
+        private final Long startDigit;
 
-        public Long getStartDigit() {
-            return this.startDigit;
-        }
-
-        private String data;
-
-        public String getData() {
-            return data;
-        }
+        @Getter
+        private final String data;
 
         private Map<YCDFileUtil.FileInfo, String> fileInfo;
 
@@ -41,6 +36,10 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
             this.fileInfo = fileInfo;
             this.startDigit = startDigit;
             this.data = data;
+        }
+
+        public int indexOf(String targetString) {
+            return this.data.indexOf(targetString);
         }
 
     }
