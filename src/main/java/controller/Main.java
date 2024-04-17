@@ -12,15 +12,23 @@ public class Main {
     public static void main(String[] arg) {
 
         // プロパティーファイルロード
-        if (null == arg || 0 >= arg.length) {
+        if (0 >= arg.length) {
             // プログラム引数がない場合はデフォルトのプロパティーファイル名で読み込みを試行。
-            String propPath = new File(".").getAbsoluteFile().getParent();
-            Env.setPropFileName(propPath + propFileName);
+            // （ただし、すでにEnvクラスにプロパティーファイル名がセットされている場合は、それをそのまま使う）
+            if (Env.getPropFileName().isEmpty()) {
+                String propPath = new File(".").getAbsoluteFile().getParent();
+                Env.setPropFileName(propPath + propFileName);
+            }
         } else {
             // プログラム引数がある場合はarg[0]をファイル名として、それをプロパティーファイルとして読み込みを試行
             Env.setPropFileName(arg[0]);
             // Env.setPropFileName(path + "\\src\\test\\resources\\test.properties");
         }
+            
+        //todo: これは消す
+        //String propPath = new File(".").getAbsoluteFile().getParent();
+        //Env.setPropFileName(propPath + "\\src\\test\\resources\\test.properties");
+
 
         // Envクラスのインスタンスを取得 (シングルトン)
         Env env = Env.getInstance();
