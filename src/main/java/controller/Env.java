@@ -73,8 +73,7 @@ public class Env {
     }
 
     private Env() {
-
-        try {
+       try {
             if (PROP_FILE_NAME.isEmpty()) {
                 throw new FileNotFoundException("プロパティーファイル名がセットされていません。");
             }
@@ -99,9 +98,21 @@ public class Env {
      * @param propFileName プロパティーファイル名
      */
     public static void setPropFileName(String propFileName) {
-        PROP_FILE_NAME = propFileName;
+
+        if(null != propFileName){
+            PROP_FILE_NAME = propFileName;
+        }else{
+            PROP_FILE_NAME = "";
+        }
     }
 
+    /**
+     * プロパティーファイル名を取得.
+     * @return プロパティーファイル名
+     */
+    public static String getPropFileName() {
+        return PROP_FILE_NAME;
+    }
 
     public static Env getInstance() {
 
@@ -121,8 +132,9 @@ public class Env {
      * プロパティ―ファイルに定義されている対象YCDファイル情報から、ファイルオブジェクトの一覧を作成して返す.
      *
      * @return ファイルリスト
+     * @throws FileNotFoundException 
      */
-    public  List<File> createFileListByProp() {
+    public  List<File> createFileListByProp() throws FileNotFoundException {
         List<File> fileList = new ArrayList<>();
 
         final String notfound = "NOTFOUND";
@@ -139,7 +151,7 @@ public class Env {
                 File f = new File(fullPath);
                 if (!f.exists()) {
                     if (i == 0) {
-                        throw new RuntimeException("piFile is not found: " + f);
+                        throw new FileNotFoundException("piFile is not found: " + f);
                     } else {
                         break;
                     }
