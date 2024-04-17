@@ -10,8 +10,6 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 public class Searcher extends Thread {
 
     private final List<File> piFileList;
@@ -52,13 +50,10 @@ public class Searcher extends Thread {
             // 1サイクルの検索範囲の決定（サバイバルリストの範囲）
             TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(this.listSize);
 
+
             // 今回のサバイバルリストの作成
-            // SurvivalList survivalList = new SurvivalList(targetRange.getLength(),
-            // Integer.valueOf(targetRange.getStart()),
-            // Integer.valueOf(targetRange.getEnd()));
             SurvivalList survivalSet = new SurvivalList(targetRange.getLength(),
                     Integer.valueOf(targetRange.getStart()), Integer.valueOf(targetRange.getEnd()));
-            int survivalSetInitialSize = survivalSet.size();
 
             ZonedDateTime startTime = null;
             ZonedDateTime endTime = null;
@@ -74,78 +69,30 @@ public class Searcher extends Thread {
 
                 // YCDプロバイダからパイユニットを順次取り出し
                 for (YCD_SeqProvider.Unit currentPi : p) {
-                    System.out.println("次のユニット" + currentPi.getStartDigit());
+                    // サバイバルリストループ
+                    for (int i = survivalSet.size() - 1; i >= 0; i--) {
 
-                    if (survivalSet.size() * -2 >= survivalSetInitialSize) {
-                        System.out.println("アルゴリズム：パイの断片からサバイバルリストを検索する contains");
-                        int currentPiStrPos = 0;
-                        String currentPiStr = StringUtils.repeat("0", targetRange.getLength());
+                        // カレントパイユニットから検索
+                        int pos = currentPi.indexOf(survivalSet.get(i));
 
-                        // カレントPiデータから、対象桁長さで文字列を順次取り出し
-                        while (currentPiStr.length() >= targetRange.getLength()) {
+                        // ヒットしたら
+                        if (0 <= pos) {
+                            //System.out.println((pos + currentPi.getStartDigit()) + " リスト残り" + survivalSet.size());
 
-                            int endIndex = currentPiStrPos + targetRange.getLength();
-
-                            if (endIndex > currentPi.getData().length()) {
-                                break;
+                            // もしかしたら、これが最後の生き残りなのかもしれないので、ヒットした要素と、発見位置をバックアップする
+                            Long curFindPos = currentPi.getStartDigit() + pos;
+                            if (lastFoundPos < curFindPos) {
+                                lastData = survivalSet.get(i);
+                                lastFoundPos = curFindPos;
+                                System.out.println("記録更新" + survivalSet.get(i) + " " + curFindPos + "  残り" + survivalSet.size());
                             }
 
-                            // 読み込んだ長いパイデータから、ターゲットの長さ分の文字列として切り取る
-                            currentPiStr = currentPi.getData().substring(currentPiStrPos,
-                                    currentPiStrPos + targetRange.getLength());
+                            // サバイバルリストからヒットした要素を削除
+                            survivalSet.remove(i);
 
-                            // サバイバルセットから検索
-                            // 切り取ったパイ文字列がサバイバルSetにあるかどうか
-                            if (survivalSet.contains(currentPiStr)) {
-
-                                //System.out.println((currentPiStrPos + currentPi.getStartDigit()) + "桁にて" + currentPiStr
-                                //       + "を発見。リスト残り" + survivalSet.size());
-
-                                // もしかしたら、これが最後の生き残りなのかもしれないので、ヒットした要素と、発見位置をバックアップする
-                                if (1 == survivalSet.size()) {
-                                    Long curFindPos = currentPi.getStartDigit() + currentPiStrPos;
-                                    if (lastFoundPos < curFindPos) {
-                                        lastData = currentPiStr;
-                                        lastFoundPos = curFindPos;
-                                    }
-                                }
-                                survivalSet.remove(currentPiStr);
-                            }
-
-                            if (survivalSet.isEmpty()) {
-                                break;
-                            }
-                            currentPiStrPos++;
-                        }
-                    } else {
-                        System.out.println("アルゴリズム：サバイバルリストからパイに検索をかける indexOf");
-
-                        // サバイバルリストループ
-                        for (int i = survivalSet.size() - 1; i >= 0; i--) {
-
-                            // カレントパイユニットから検索
-                            int pos = currentPi.indexOf(survivalSet.get(i));
-
-                            // ヒットしたら
-                            if (0 <= pos) {
-                                //System.out.println((pos + currentPi.getStartDigit()) + " リスト残り" + survivalSet.size());
-
-                                // もしかしたら、これが最後の生き残りなのかもしれないので、ヒットした要素と、発見位置をバックアップする
-                                if (1 == survivalSet.size()) {
-                                    Long curFindPos = currentPi.getStartDigit() + pos;
-                                    if (lastFoundPos < curFindPos) {
-                                        lastData = survivalSet.get(i);
-                                        lastFoundPos = curFindPos;
-                                    }
-                                }
-
-                                // サバイバルリストからヒットした要素を削除
-                                survivalSet.remove(i);
-
-                            }
                         }
                     }
-                    
+
                     if (survivalSet.isEmpty()) {
                         break;
                     }
@@ -170,6 +117,7 @@ public class Searcher extends Thread {
 
             // サバイバルリストが空でない場合は探しきれなかった、とする。
             if (!survivalSet.isEmpty()) {
+                System.out.println(survivalSet);
                 throw new RuntimeException(
                         "The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)");
             }
