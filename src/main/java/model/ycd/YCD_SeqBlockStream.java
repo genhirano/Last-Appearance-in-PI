@@ -152,6 +152,7 @@ public class YCD_SeqBlockStream implements AutoCloseable {
             Integer headerSize = YCDFileUtil.getHeaderSize(this.filePath);
 
             //対象ファイルアサイン
+            @SuppressWarnings("resource") //try-with-resourcesでcloseされるため
             FileInputStream fi = new FileInputStream(filePath);
             this.fileStream = new BufferedInputStream((InputStream) fi);
 

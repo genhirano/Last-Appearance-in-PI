@@ -25,7 +25,6 @@ public class Searcher extends Thread {
         }
     }
 
-
     private final List<File> piFileList;
     @Getter
     private final List<File> um_piFileList;// 不変
@@ -53,7 +52,7 @@ public class Searcher extends Thread {
 
     @Override
     public void run() {
-        
+
         // 検索処理のメインループ
         while (true) {
             ZonedDateTime startTime = ZonedDateTime.now();
@@ -63,14 +62,16 @@ public class Searcher extends Thread {
 
             // 1サイクルのサバイバル実行
             SurvivalResult sr = survive(targetRange);
+            ZonedDateTime endTime = ZonedDateTime.now();
 
             // 結果保存
             StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
-                    targetRange.getEnd(), sr.target, sr.findPos, startTime, ZonedDateTime.now());
+                    targetRange.getEnd(), sr.target, sr.findPos, startTime, endTime);
+
+
         }
 
     }
-
 
     private SurvivalResult survive(TargetRange targetRange) {
 
@@ -94,7 +95,7 @@ public class Searcher extends Thread {
             int overWrapLength = targetRange.getLength(); // 一つ前のケツの部分を今回の先頭に重ねる桁の長さ
             try (YCD_SeqProvider p = new YCD_SeqProvider(this.piFileList, overWrapLength, this.unitLength);) {
 
-                //YCDプロバイダの作成に成功したらリトライカウントをリセット
+                // YCDプロバイダの作成に成功したらリトライカウントをリセット
                 continueCount = 0;
 
                 // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）

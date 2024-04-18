@@ -33,13 +33,13 @@ public class YCDFileUtil {
              BufferedInputStream inputStream = new BufferedInputStream(fi);) {
 
             byte[] charArr = new byte[300];
-            int check = inputStream.read(charArr);
+            inputStream.read(charArr);
             String header = new String(charArr);
 
             final String CRLF = "" + (char) 0x0D + (char) 0x0A;
             headerSize = header.lastIndexOf(CRLF) + CRLF.length() - 1;
 
-            //CRLFの次になんか、最後に1バイトついてるのでそれを加える。
+            //CRLFの次になんか、よくわからないが最後に1バイトついてるので、その分の「１」加える。
             headerSize++;
 
         } catch (IOException e) {

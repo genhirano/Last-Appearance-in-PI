@@ -6,9 +6,6 @@ public class YCDProcessUnit {
     private Long startDigit;
     private String value;
 
-    private YCDProcessUnit(){
-        this(-1L,-1L,"");
-    }
 
     public YCDProcessUnit(Long processNo, Long startDigit, String value){
         super();

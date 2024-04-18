@@ -1,14 +1,14 @@
 import controller.Env;
-import controller.Main;
 import controller.Searcher;
 import org.junit.jupiter.api.TestInfo;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 public class SearcherTest extends TestBase{
 
     @org.junit.jupiter.api.Test
-    void 一般テスト(TestInfo testInfo)  {
+    void 一般テスト(TestInfo testInfo) throws FileNotFoundException  {
 
         String path = new File(".").getAbsoluteFile().getParent();
         Env.setPropFileName(path + "/src/test/resources/test.properties");
