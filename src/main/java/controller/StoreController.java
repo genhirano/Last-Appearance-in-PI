@@ -165,7 +165,7 @@ public class StoreController {
         // 結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
 
-        //記録するファイル名を生成
+        // 記録するファイル名を生成
         String filename = String.format(digitsLengthFormat, targetLength) + ".txt";
 
         // 保存用Fileオブジェクトの生成
@@ -182,8 +182,7 @@ public class StoreController {
         }
 
         // 保存対象ファイルをアペンドモードで
-        try (
-                PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath(), true)));) {
+        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath(), true)));) {
 
             // 処理開始と処理終了の時間差（実行時間）を計算
             Duration summerVacationDuration = Duration.between(startTime, endTime);

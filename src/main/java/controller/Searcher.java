@@ -6,6 +6,7 @@ import model.pi.SurvivalList;
 import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -53,12 +54,16 @@ public class Searcher extends Thread {
     @Override
     public void run() {
 
+        Integer survaivalListSize = 100000; // サバイバルリストの初期サイズ
+
         // 検索処理のメインループ
         while (true) {
             ZonedDateTime startTime = ZonedDateTime.now();
 
+
+
             // 処理範囲の決定（次に記録する１行を定義）
-            TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(this.listSize);
+            TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(survaivalListSize);
 
             // 1サイクルのサバイバル実行
             SurvivalResult sr = survive(targetRange);
@@ -68,7 +73,16 @@ public class Searcher extends Thread {
             StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
                     targetRange.getEnd(), sr.target, sr.findPos, startTime, endTime);
 
-
+            // 処理開始と処理終了の時間差（実行時間）を計算
+            long processSeconds = Duration.between(startTime, endTime).getSeconds();
+            
+            // 処理秒数により次回のサバイバルリスト初期サイズを調整
+            if(4 < processSeconds){
+                System.out.println("サバイバルリストサイズを減らします");
+            }else{
+                System.out.println("サバイバルリストサイズを増やします");
+            }
+ 
         }
 
     }
