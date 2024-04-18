@@ -12,6 +12,19 @@ import java.util.List;
 
 public class Searcher extends Thread {
 
+    /**
+     * サバイバル結果を保持するクラス(メソッド戻り値として使用)
+     */
+    private class SurvivalResult {
+        public final String target;
+        public final Long findPos;
+
+        public SurvivalResult(String target, Long findPos) {
+            this.target = target;
+            this.findPos = findPos;
+        }
+    }
+
     private final List<File> piFileList;
     @Getter
     private final List<File> um_piFileList;// 不変
@@ -40,51 +53,71 @@ public class Searcher extends Thread {
     @Override
     public void run() {
 
+        // 検索処理のメインループ
+        while (true) {
+            ZonedDateTime startTime = ZonedDateTime.now();
+
+            // 処理範囲の決定（次に記録する１行を定義）
+            TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(this.listSize);
+
+            // 1サイクルのサバイバル実行
+            SurvivalResult sr = survive(targetRange);
+            ZonedDateTime endTime = ZonedDateTime.now();
+
+            // 結果保存
+            StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
+                    targetRange.getEnd(), sr.target, sr.findPos, startTime, endTime);
+
+
+        }
+
+    }
+
+    private SurvivalResult survive(TargetRange targetRange) {
+
+        // YCDファイル読み込みに失敗することがある。その場合はリトライするがリトライ回数に制限を設ける
         Integer continueCount = 0;
+
+        String lastFoundTarget = "";
+        Long lastFoundPos = -1L;
+
         while (true) {
 
             if (5 < continueCount) {
                 throw new RuntimeException("Fail!  Retry limit exceeded." + continueCount);
             }
 
-            // 1サイクルの検索範囲の決定（サバイバルリストの範囲）
-            TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(this.listSize);
-
-
             // 今回のサバイバルリストの作成
             SurvivalList survivalSet = new SurvivalList(targetRange.getLength(),
                     Integer.valueOf(targetRange.getStart()), Integer.valueOf(targetRange.getEnd()));
 
-            ZonedDateTime startTime = null;
-            ZonedDateTime endTime = null;
-
-            String lastData = "";
-            Long lastFoundPos = -1L;
-
             // YCDデータプロバイダを作成
             int overWrapLength = targetRange.getLength(); // 一つ前のケツの部分を今回の先頭に重ねる桁の長さ
-            try (YCD_SeqProvider p = new YCD_SeqProvider(piFileList, overWrapLength, unitLength);) {
+            try (YCD_SeqProvider p = new YCD_SeqProvider(this.piFileList, overWrapLength, this.unitLength);) {
 
-                startTime = ZonedDateTime.now();
+                // YCDプロバイダの作成に成功したらリトライカウントをリセット
+                continueCount = 0;
 
-                // YCDプロバイダからパイユニットを順次取り出し
+                // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
                 for (YCD_SeqProvider.Unit currentPi : p) {
-                    // サバイバルリストループ
+
+                    // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
                     for (int i = survivalSet.size() - 1; i >= 0; i--) {
 
-                        // カレントパイユニットから検索
-                        int pos = currentPi.indexOf(survivalSet.get(i));
+                        String target = survivalSet.get(i);
 
-                        // ヒットしたら
+                        int pos = currentPi.indexOf(target);
                         if (0 <= pos) {
-                            //System.out.println((pos + currentPi.getStartDigit()) + " リスト残り" + survivalSet.size());
+                            // ヒット
+                            // ヒットしたら基本的にはサバイバルリストから削除する
 
-                            // もしかしたら、これが最後の生き残りなのかもしれないので、ヒットした要素と、発見位置をバックアップする
+                            // カレントパイ文字列の中での発見位置を、全体位置に変換
                             Long curFindPos = currentPi.getStartDigit() + pos;
+
+                            // 発見位置が今までで一番後ろだったらメモ記録
                             if (lastFoundPos < curFindPos) {
-                                lastData = survivalSet.get(i);
-                                lastFoundPos = curFindPos;
-                                System.out.println("記録更新" + survivalSet.get(i) + " " + curFindPos + "  残り" + survivalSet.size());
+                                lastFoundTarget = target; // 発見した対象
+                                lastFoundPos = curFindPos; // 発見位置
                             }
 
                             // サバイバルリストからヒットした要素を削除
@@ -93,6 +126,7 @@ public class Searcher extends Thread {
                         }
                     }
 
+                    // サバイバルリストが空になったら終了
                     if (survivalSet.isEmpty()) {
                         break;
                     }
@@ -101,12 +135,12 @@ public class Searcher extends Thread {
 
             } catch (Throwable t) {
 
-                // 仮に何かしらのエラーが発生した場合でも、ちょっと時間をおいて再起動してみる
+                // YCDファイルの読み込みなど、仮に何かしらのエラーが発生した場合でも、ちょっと時間をおいて再起動してみる
                 continueCount++;
                 RuntimeException ee = new RuntimeException("ERROR!  start over. count: " + continueCount, t);
                 ee.printStackTrace();
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(5000);
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
                 }
@@ -114,19 +148,13 @@ public class Searcher extends Thread {
             }
 
             // 検索終了。サバイバルリストが空になっているはず。
-
             // サバイバルリストが空でない場合は探しきれなかった、とする。
             if (!survivalSet.isEmpty()) {
-                System.out.println(survivalSet);
                 throw new RuntimeException(
                         "The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)");
             }
 
-            endTime = ZonedDateTime.now();
-
-            // 結果保存
-            StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
-                    targetRange.getEnd(), lastData, lastFoundPos, startTime, endTime);
+            return new SurvivalResult(lastFoundTarget, lastFoundPos);
 
         }
 
