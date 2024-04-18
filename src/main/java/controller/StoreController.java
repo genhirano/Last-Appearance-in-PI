@@ -3,6 +3,10 @@ package controller;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
@@ -42,6 +46,11 @@ public class StoreController {
      * @return １回の検索対象（サバイバルリスト）開始から終了までの情報
      */
     public List<TargetRange> getNextList(Integer listSize) {
+
+        //param check
+        if (listSize < 1) {
+            throw new IllegalArgumentException("listSize must be 1 or more.");
+        }
 
         // 結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
@@ -116,6 +125,7 @@ public class StoreController {
     }
 
     public TargetRange getCurrentTargetStartEnd(Integer listSize) {
+        
         // 次に実行すべき情報を作る
         // （すでにある保存データの一番最後の、その次として実行する情報を作る）
 
@@ -165,7 +175,7 @@ public class StoreController {
         // 結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
 
-        //記録するファイル名を生成
+        // 記録するファイル名を生成
         String filename = String.format(digitsLengthFormat, targetLength) + ".txt";
 
         // 保存用Fileオブジェクトの生成
@@ -182,8 +192,7 @@ public class StoreController {
         }
 
         // 保存対象ファイルをアペンドモードで
-        try (
-                PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath(), true)));) {
+        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath(), true)));) {
 
             // 処理開始と処理終了の時間差（実行時間）を計算
             Duration summerVacationDuration = Duration.between(startTime, endTime);
@@ -302,5 +311,30 @@ public class StoreController {
         return retList;
 
     }
+    
+    
+    public void saveHTML() {
+        // HttpClient インスタンスを作成
+        HttpClient httpClient = HttpClient.newHttpClient();
+
+        // URI を指定して HTTP リクエストを作成
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:8080"))
+                .build();
+
+        try {
+            // HTTP リクエストを送信してレスポンスを取得
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+            // レスポンスコードを取得
+            int statusCode = response.statusCode();
+            System.out.println("Response Code: " + statusCode);
+        
+        } catch (Exception e) {
+            // エラーが発生した場合の処理
+            e.printStackTrace();
+        }
+    }
+
 
 }

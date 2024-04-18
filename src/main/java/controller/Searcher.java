@@ -6,6 +6,11 @@ import model.pi.SurvivalList;
 import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -53,23 +58,71 @@ public class Searcher extends Thread {
     @Override
     public void run() {
 
+        final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 100; // サバイバルリストの初期サイズ
+
+        Integer survaivalListSize = SURVAIVAL_LIST_DEFAULT_SIZE; // サバイバルリストの初期サイズ
+
+        Integer mokuhyouSeconds = 20; // 処理目標時間 秒（早くても遅くてもいまいち。この時間に近づける）
+
         // 検索処理のメインループ
         while (true) {
+
+            // １サイクルの開始時間
             ZonedDateTime startTime = ZonedDateTime.now();
 
             // 処理範囲の決定（次に記録する１行を定義）
-            TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(this.listSize);
+            // この桁数の初めての時は、サバイバルリストの初期サイズをデフォルトに戻す
+            TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(survaivalListSize);
+            if (targetRange.getStart().replaceAll("0", "").isEmpty()) {
+
+                // サバイバルリストを初期サイズとする
+                survaivalListSize = SURVAIVAL_LIST_DEFAULT_SIZE;
+
+                // 対象レンジをデフォルトのサイズで再計算
+                targetRange = StoreController.getInstance().getCurrentTargetStartEnd(survaivalListSize);
+            }
 
             // 1サイクルのサバイバル実行
             SurvivalResult sr = survive(targetRange);
+
+            // １サイクルの終了時間
             ZonedDateTime endTime = ZonedDateTime.now();
 
-            // 結果保存
+            // １サイクルの結果保存
             StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
                     targetRange.getEnd(), sr.target, sr.findPos, startTime, endTime);
 
+            // Httpで強制アクセス（静的HTMLを作成するため）
+            StoreController.getInstance().saveHTML();
 
+            // 次回のサバイバルリストのサイズを計算
+            survaivalListSize = calcSurvivalListSize(mokuhyouSeconds, survaivalListSize, startTime, endTime);
         }
+
+    }
+
+    private Integer calcSurvivalListSize(Integer mokuhyouSeconds, Integer currentSrvivalListSize,
+            ZonedDateTime startTime, ZonedDateTime endTime) {
+
+        final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 100; // サバイバルリストの初期サイズ
+
+        // 処理開始と処理終了の時間差（実行時間）を計算
+        long processSeconds = Duration.between(startTime, endTime).getSeconds();
+
+        // 目標値に対してどのくらい差があるかを計算
+        Long diff = mokuhyouSeconds - processSeconds;
+        Double d = (double) diff / (double) mokuhyouSeconds;
+
+        // 次回のサバイバルリストサイズを調整。
+        // 処理目標時間より長くかかった場合はリストを短く、早く終わった場合はリストを長くする
+        Integer newListSize = currentSrvivalListSize + (int) (currentSrvivalListSize * d);
+
+        // サバイバルリストのサイズが小さすぎる場合はデフォルトに戻す
+        if (SURVAIVAL_LIST_DEFAULT_SIZE > newListSize) {
+            newListSize = SURVAIVAL_LIST_DEFAULT_SIZE;
+        }
+
+        return newListSize;
 
     }
 
