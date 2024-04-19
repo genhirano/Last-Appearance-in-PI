@@ -110,3 +110,6 @@ In this project, we are using the output of the pi calculation program "[y-crunc
   * development platform
 * [Git](https://git-scm.com/)
   * free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency.
+* [Gitlab, Gitlab Pages] 
+  * https://docs.gitlab.com/ee/user/project/pages/
+  * https://www.kageori.com/2023/06/gitlabgitlab-pages2023.html
