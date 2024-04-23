@@ -1,20 +1,20 @@
 # Last-Appearance-in-PI
 Find the number that appears the latest in pi by number of digits.  
-円周率の中で一番遅く出現する数値を桁数毎に検索します。
+円周率で最も遅く出現する数値とその出現桁数を、桁数毎に検索する
 
 ## OVERVIEW
 Pi is an irrational number. Find the latest occurrence of a specific number of digits among this infinite number of non-repeating magical numbers.  
-円周率は無理数です。無限の循環しないこの不思議な数の中から、特定の桁数の数値において最も遅く出現する数を探します。
+無限に循環しない無理数「円周率」の中から、桁数毎に最も遅く出現する数を探します。
 
 For example, among the digits of pi, "0" is the digit that appears the latest among the numbers 0 to 9. Surprisingly, the first appearance of "0" is at the 32nd decimal place. This is a remarkably late appearance.  
-例えば円周率の中で「0」は0～9の数値のなかで最も遅く出現する数字です。「0」が初めて出現するのは少数以下32桁目です。これは驚くべき登場の遅さです。
+例えば「0」は0-9の数値のなかで最も遅く出現する数字です。「0」が初めて出現するのは少数以下32桁目です。1-9は13桁目までに少なくとも1回以上出現するので、ゼロの登場の遅さは驚くべきものです。
 
 3.
 1415926535897932384626433832795 **(0)** 288419716......
 
 ----
 In that case, what about two-digit numbers? The one that appears the latest is "68". It appears at the 605th decimal place.  
-それでは、2桁の場合はどうでしょうか。最も遅く出現するのは「68」です。605桁目に出現します。
+それでは、2桁の場合はどうでしょうか。最も遅く出現するのは「68」です。探してみると、605桁目に出現します。
 
 3.
 1415926535 8979323846 2643383279 5028841971 6939937510
@@ -37,7 +37,7 @@ Next, how about three-digit numbers? What about four-digit numbers?
 次に、3桁の場合はどうでしょうか。4桁の場合は？
 
 This project searches for one value that appears the latest among n-digit numbers in the digits of pi.  
-このプロジェクトは、n桁の数値について、円周率の中で最も遅く出現する一つの値を検索します。
+このプロジェクトは、n桁の数値について、円周率の中で最も遅く出現する一つの値検索し、出現位置を特定します。
 
 ## WHY?
 Why not?  
@@ -110,6 +110,9 @@ In this project, we are using the output of the pi calculation program "[y-crunc
   * development platform
 * [Git](https://git-scm.com/)
   * free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency.
+* [Jenkins] (https://www.jenkins.io/)
+  * The leading open source automation server,
 * [Gitlab, Gitlab Pages] 
   * https://docs.gitlab.com/ee/user/project/pages/
   * https://www.kageori.com/2023/06/gitlabgitlab-pages2023.html
+  * （* Pagesを利用していましたが、400分/月のパイプラインの利用制限により要件と見合わなくなったため現在未使用）
