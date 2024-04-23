@@ -6,10 +6,6 @@ import model.pi.SurvivalList;
 import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -141,7 +137,7 @@ public class Searcher extends Thread {
             }
 
             // 今回のサバイバルリストの作成
-            SurvivalList survivalSet = new SurvivalList(targetRange.getLength(),
+            SurvivalList survivalList = new SurvivalList(targetRange.getLength(),
                     Integer.valueOf(targetRange.getStart()), Integer.valueOf(targetRange.getEnd()));
 
             // YCDデータプロバイダを作成
@@ -153,11 +149,10 @@ public class Searcher extends Thread {
 
                 // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
                 for (YCD_SeqProvider.Unit currentPi : p) {
-
                     // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
-                    for (int i = survivalSet.size() - 1; i >= 0; i--) {
+                    for (int i = survivalList.size() - 1; i >= 0; i--) {
 
-                        String target = survivalSet.get(i);
+                        String target = survivalList.get(i);
 
                         int pos = currentPi.indexOf(target);
                         if (0 <= pos) {
@@ -174,18 +169,21 @@ public class Searcher extends Thread {
                             }
 
                             // サバイバルリストからヒットした要素を削除
-                            survivalSet.remove(i);
+                            survivalList.remove(i);
+
+                            System.out.print(" " + survivalList.size());
 
                         }
                     }
 
+                    
                     // サバイバルリストが空になったら終了
-                    if (survivalSet.isEmpty()) {
+                    if (survivalList.isEmpty()) {
                         break;
                     }
 
                 }
-
+                
             } catch (Throwable t) {
 
                 // YCDファイルの読み込みなど、仮に何かしらのエラーが発生した場合でも、ちょっと時間をおいて再起動してみる
@@ -202,11 +200,15 @@ public class Searcher extends Thread {
 
             // 検索終了。サバイバルリストが空になっているはず。
             // サバイバルリストが空でない場合は探しきれなかった、とする。
-            if (!survivalSet.isEmpty()) {
-                throw new RuntimeException(
-                        "The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)");
+            if (!survivalList.isEmpty()) {
+                System.out.println(                
+                        "The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)"
+                        + "  検索できなかったもの: " + survivalList.toString()
+                        );
+                        Runtime.getRuntime().exit(-1);
             }
 
+            System.out.println(" .end Last Appearance : [" + lastFoundTarget + "] Pos : " + lastFoundPos);
             return new SurvivalResult(lastFoundTarget, lastFoundPos);
 
         }
