@@ -1,20 +1,21 @@
 # Last-Appearance-in-PI
-Find the number that appears the latest in pi by number of digits.  
-円周率を検索し、最も遅く出現する数値とその出現桁数を桁数毎に検索する
+円周率の中で最も遅く出現する数値の探索
 
 ## OVERVIEW
-Pi is an irrational number. Find the latest occurrence of a specific number of digits among this infinite number of non-repeating magical numbers.  
-無限に循環しない無理数「円周率」の中から、桁数毎に最も遅く出現する数を探します。
+このプロジェクトは、膨大な桁の「円周率データ」から、最も遅く出現する数を、桁数毎に探索します。
 
-For example, among the digits of pi, "0" is the digit that appears the latest among the numbers 0 to 9. Surprisingly, the first appearance of "0" is at the 32nd decimal place. This is a remarkably late appearance.  
-例えば「0」は0-9の数値のなかで最も遅く出現する数字です。「0」が初めて出現するのは少数以下32桁目です。1-9は13桁目までに少なくとも1回以上出現するので、ゼロの登場の遅さは驚くべきものです。
+例えば「0」は0-9の数値のなかで最も遅く出現する数字です。「0」が初めて出現するのは少数以下32桁目です。0以外の1-9は13桁目までに1回以上出現するので、32桁目に初めて出現する”0”は驚くべき出現の遅さです。
 
 3.
 1415926535897932384626433832795 **(0)** 288419716......
 
+対象が1桁の場合は、このプロジェクトの結果は
+「1桁の場合は、最も遅く出現するのは0で、出現桁数は32桁目」
+となります。
+
 ----
-In that case, what about two-digit numbers? The one that appears the latest is "68". It appears at the 605th decimal place.  
-それでは、2桁の場合はどうでしょうか。最も遅く出現するのは「68」です。探してみると、605桁目に出現します。
+それでは、2桁の場合はどうでしょうか。
+最も遅く出現するのは"68"でした。605桁目に出現します。2桁の数字で、"68"以外はそれより前にすべて出現済みです。
 
 3.
 1415926535 8979323846 2643383279 5028841971 6939937510
@@ -31,13 +32,14 @@ In that case, what about two-digit numbers? The one that appears the latest is "
 6094370277 0539217176 2931767523 8467481846 7669405132
 0005 **(68)** 1271 4526356082 7785771342 7
 
+従って、対象が2桁の場合の結果は、
+「2桁の場合は、最も遅く出現するのは"68"で、出現桁数は605桁目」
+となります。
 
 ----
-Next, how about three-digit numbers? What about four-digit numbers?  
 次に、3桁の場合はどうでしょうか。4桁の場合は？
 
-This project searches for one value that appears the latest among n-digit numbers in the digits of pi.  
-このプロジェクトは、n桁の数値について、円周率の中で最も遅く出現する一つの値検索し、出現位置を特定します。
+このプロジェクトは、円周率の中で最も遅く出現する一つの数字を桁数毎にそれぞれ探索し、出現位置を特定します。
 
 ## Project Story
 円周率は無理数（循環せず無限に続く数）であるため、奥深くまで検索すればすべての数字が含まれている、と言われています。
