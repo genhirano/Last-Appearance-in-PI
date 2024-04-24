@@ -90,16 +90,20 @@
 
 ## 検索結果
 > [!NOTE]
-> このプロジェクトと同様の探索は、偉大な先人によって検索済みです。   
+> このプロジェクトと同様の探索は、偉大な先人によって既に実施されています。   
 >
-> **[オンライン整数列大辞典](https://oeis.org/)**  
-> The On-Line Encyclopedia of Integer Sequences® (OEIS®)  
+>**[オンライン整数列大辞典](https://oeis.org/)**  
+>The On-Line Encyclopedia of Integer Sequences® (OEIS®)  
+>[A032510](https://oeis.org/A032510) 桁数毎の最後に出現する整数  
+>[A036903](https://oeis.org/A036903) 桁数毎に全てが出現する事を確認するためにスキャンする必要のある桁数  
 >
->* **[A032510](https://oeis.org/A032510)** 桁数毎の最後に出現する整数  
->  * Scan decimal expansion of Pi until all n-digit strings have been seen; a(n) is last string seen.  
->
->* **[A080597](https://oeis.org/A080597)** 桁数毎の最後に出現する桁数  
->  * Number of terms from the decimal expansion of Pi (A000796) which include every combination of n digits as consecutive subsequences.  
+>**[Sequence Machine](https://sequencedb.net/)**  
+>[A032510](https://sequencedb.net/s/A032510)  
+>0, 68, 483, 6716, 33394, 569540, 1075656, 36432643, 172484538, 5918289042, 56377726040,...
+>[A036903](https://sequencedb.net/s/A036903)  
+>32, 606, 8555, 99849, 1369564, 14118312, 166100506, 1816743912, 22445207406, 241641121048, 2512258603207,...  
+
+
 
 ## WHY?
 Why not?  
