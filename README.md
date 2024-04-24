@@ -86,6 +86,27 @@
 
 このプロジェクトは、つまり特殊な数字を桁数毎に発見することを目的としています。
 
+
+
+## 検索結果
+> [!NOTE]
+> このプロジェクトと同様の探索は、偉大な先人によって検索済みです。   
+> **オンライン整数列大辞典**
+> The On-Line Encyclopedia of Integer Sequences® (OEIS®)  
+>
+>**A032510** 桁数毎の最後に出現する整数 
+>Scan decimal expansion of Pi until all n-digit strings have been seen; a(n) is last string seen.  
+>[A032510]https://oeis.org/A032510
+>
+>**A080597**  
+>Number of terms from the decimal expansion of Pi (A000796) which include every combination of n digits as consecutive subsequences.
+>
+>[A080597]https://oeis.org/A080597
+
+
+
+
+
 ## WHY?
 Why not?  
 え?
