@@ -94,13 +94,11 @@
 > **オンライン整数列大辞典**  
 > The On-Line Encyclopedia of Integer Sequences® (OEIS®)  
 >
->**A032510** 桁数毎の最後に出現する整数  
+>**[A032510](https://oeis.org/A032510)** 桁数毎の最後に出現する整数  
 >Scan decimal expansion of Pi until all n-digit strings have been seen; a(n) is last string seen.  
->[A032510]https://oeis.org/A032510
 >
->**A080597** 桁数毎の最後に出現する桁数  
+>**[A080597](https://oeis.org/A080597)** 桁数毎の最後に出現する桁数  
 >Number of terms from the decimal expansion of Pi (A000796) which include every combination of n digits as consecutive subsequences.  
->[A080597]https://oeis.org/A080597  
 >※この結果は、検索対象の桁数の末尾までをカウントするため、当プロジェクトの結果とズレがあります。
 
 
