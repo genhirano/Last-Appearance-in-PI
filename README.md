@@ -59,7 +59,7 @@
 
 このように、特殊な数字（の並び）であっても円周率が無理数ならばどこかに存在しているはずです。
 
-----
+## 「特殊な数字」の定義
 
 さて、ここで「特殊な数字」とは何でしょうか。
 
@@ -71,8 +71,6 @@
 同じ数字が連続したり、順番に並んでいたりする特殊で珍しい数字も、円周率から検索深度を深めて探索すれば見つかるようです。
 また、自分の生年月日、電話番号、マイナンバー、クレジットカード番号など、自分にとっての特別な番号というのも同様に円周率の中に見つかるでしょう。
 
-----
-
 再度、「特殊な数字」とは何でしょうか。  
 私たちの感覚では、特殊な数字とは、同じ数字が続いたり、等差や等比、連続性があるなど、何らかのルールが認識できるものであったり、自分に偶然に割り当てられたような数字や、自分以外だれにも知られていない内緒の数字だったりします。
 
@@ -83,43 +81,6 @@
 つまり、1桁であれば”0”、2桁であれば”68”が最も特殊な数字です。
 
 さらには、4桁の場合、5桁の場合、6桁の...と探索の桁数を伸ばし、最も遅く出現する数字、つまり特殊な数字を桁数毎に発見することを目的としています。
-
-
-
-
-https://introcs.cs.princeton.edu/java/data/
-
-
-
-
-
-
-円周率の無限に続く小数点以下の羅列にはあらゆる有限の数字列が出現しうる
-
-
-
-https://introcs.cs.princeton.edu/java/data/
-
-
-
-
-
-
-
-円周率の中で最も遅く出現する1桁の数字は“0”であり、出現は少数以下32桁目です。
-これは、1桁の数値(0-9の10種類の数字)の全てについて、その数字が円周率に存在するすることを証明するために、最低でも32桁目まで円周率をスキャンする必要があるということです。
-
-円周率を605桁目までスキャンすると、それまで出現しなかった“68”を発見できます。つまり、円周率を605桁目までスキャンするとすべての2桁の整数が出現したことを確認できます。
-
-同じく8553桁目までスキャンすると、3桁の数字の中で最後に“483”が出現することが確認できます。
-
-
-
-
-
-## 
-
-
 
 ## WHY?
 Why not?  
@@ -194,7 +155,9 @@ In this project, we are using the output of the pi calculation program "[y-crunc
   * free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency.
 * [Jenkins] (https://www.jenkins.io/)
   * The leading open source automation server,
-* [Gitlab, Gitlab Pages] 
-  * https://docs.gitlab.com/ee/user/project/pages/
-  * https://www.kageori.com/2023/06/gitlabgitlab-pages2023.html
-  * （* Pagesを利用していましたが、400分/月のパイプラインの利用制限により要件と見合わなくなったため現在未使用）
+* ~~[Gitlab, Gitlab Pages]~~ 
+  * ~~https://docs.gitlab.com/ee/user/project/pages/~~
+  * ~~https://www.kageori.com/2023/06/gitlabgitlab-pages2023.html~~
+  * ~~（結果公開用にGitLabPagesを利用していましたが、400分/月のパイプラインの利用制限により要件と見合わなくなったため現在未使用）~~
+* [Real-World Data Sets](https://introcs.cs.princeton.edu/java/data/)
+  * list of real-world data sets collected from the web. 
