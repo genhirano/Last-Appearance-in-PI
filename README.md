@@ -175,7 +175,7 @@ In this project, we are using the output of the pi calculation program "[y-crunc
   * development platform
 * [Git](https://git-scm.com/)
   * free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency.
-* [Jenkins] (https://www.jenkins.io/)
+* [Jenkins](https://www.jenkins.io/)
   * The leading open source automation server,
 * ~~[Gitlab, Gitlab Pages]~~ 
   * ~~https://docs.gitlab.com/ee/user/project/pages/~~
