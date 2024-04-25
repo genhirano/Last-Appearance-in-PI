@@ -48,6 +48,10 @@ public class Web {
         //HTMLテンプレートエンジン作成(ThymeLeaf)
         templateEngine = new ThymeleafTemplateEngine(resolver);
 
+
+        ycdMaxDepth = StoreController.getInstance().getPidataMaxDepth();;
+
+
         //WEB-------------------------------------
         port(Env.getInstance().getPortNo());
         staticFiles.location("/public/");
@@ -63,6 +67,8 @@ public class Web {
                 StoreController sc = StoreController.getInstance();
                 List<String> sum = sc.getSummary();
                 Collections.reverse(sum);
+
+               
 
                 //ビューに渡すデータ作成
                 Map<String, Object> model = new HashMap<>();

@@ -1,5 +1,6 @@
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -16,14 +17,13 @@ import org.junit.jupiter.api.TestInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 
-
 import controller.Env;
 import controller.StoreController;
 
 public class StoreControllerTest extends TestBase {
 
     @org.junit.jupiter.api.Test
-    void 一般テスト(TestInfo testInfo) {
+    void basic(TestInfo testInfo) {
 
         String path = new File(".").getAbsoluteFile().getParent();
         Env.setPropFileName(path + "\\src\\test\\resources\\test.properties");
@@ -36,39 +36,35 @@ public class StoreControllerTest extends TestBase {
             System.out.println(s);
         }
 
-
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         Map<String, String> systemProperties = runtimeMXBean.getSystemProperties();
 
-            System.out.println("os.name" + " : " + systemProperties.get("os.name"));
-            System.out.println("os.arch" + " : " + systemProperties.get("os.arch"));
-            System.out.println("java.vendor" + " : " + systemProperties.get("java.vendor"));
-            System.out.println("java.version" + " : " + systemProperties.get("java.version"));
-            System.out.println("java.vendor.version" + " : " + systemProperties.get("java.vendor.version"));
+        System.out.println("os.name" + " : " + systemProperties.get("os.name"));
+        System.out.println("os.arch" + " : " + systemProperties.get("os.arch"));
+        System.out.println("java.vendor" + " : " + systemProperties.get("java.vendor"));
+        System.out.println("java.version" + " : " + systemProperties.get("java.version"));
+        System.out.println("java.vendor.version" + " : " + systemProperties.get("java.vendor.version"));
 
+
+        System.out.println("os.name" + " : " + SystemUtils.OS_NAME);
+
+        for (String key : systemProperties.keySet()) {
+            System.out.println(key + " : " + systemProperties.get(key));
         }
 
 
-        MBeanServer server = MBeanServerFactory.createMBeanServer();
-        
+/* 
         try {
-            RuntimeMXBean mbean = ManagementFactory.getRuntimeMXBean();
-            server.registerMBean(mbean, new ObjectName(ManagementFactory.RUNTIME_MXBEAN_NAME));
-            
-            System.out.println("Creating an HTML protocol adaptor..");
-            HtmlAdaptorServer adaptor = new HtmlAdaptorServer();
-            ObjectName adaptorName = new ObjectName("Adaptor:name=adaptor,port=8082");
-            server.registerMBean(adaptor, adaptorName);
-            adaptor.start();
-        } catch (InstanceAlreadyExistsException ex) {
-            ex.printStackTrace();
-        } catch (MBeanRegistrationException ex) {
-            ex.printStackTrace();
-        } catch (NotCompliantMBeanException ex) {
-            ex.printStackTrace();
-        } catch (MalformedObjectNameException ex) {
-            ex.printStackTrace();
-        }
-        
+            JVMCPUUsage jvmCPUUsage = new JVMCPUUsage();
+            jvmCPUUsage.openMBeanServerConnection();
+            jvmCPUUsage.getMXBeanProxyConnections();
+            Float f = jvmCPUUsage.getJvmCpuUsage();
 
+            System.out.println(f);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+*/
+    }
 }

@@ -2,6 +2,9 @@ package controller;
 
 import org.apache.commons.lang3.StringUtils;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.*;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -13,6 +16,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import model.ProgressReportBean;
 import model.TargetRange;
 
 public class StoreController {
@@ -20,6 +25,10 @@ public class StoreController {
     private static final int digitsLength = 3; // 対象は3桁まで。すなわち 001 - 999 桁を対象。ファイル名のゼロパティング等に使う
     private static final String digitsLengthFormat = "%0" + digitsLength + "d";
     private static final int maxDigit = Integer.valueOf(StringUtils.repeat("9", digitsLength));
+
+
+    @Getter @Setter
+    private Long allPiDataLength = 0L;
 
     private static StoreController instance;
 
@@ -213,6 +222,39 @@ public class StoreController {
 
     }
 
+
+
+    public ProgressReportBean getProgressReport(){
+        ProgressReportBean prb = new ProgressReportBean();
+
+        
+        prb.setServerTime(System.currentTimeMillis());//サーバーの現在時刻
+
+
+        //private Long serverCUPSpec;//サーバーのCPUスペック
+    
+        prb.setAllPiDataLength(this.allPiDataLength); //検索対象のPIデータ全桁数
+        
+        private Integer currentTargetLength; //現在の検索対象の桁数
+        
+        private Long currentDiscoveredCount;//発見された数
+        
+        private Long currentUndiscoveredCount;  //未発見の数
+        
+        private Long currentDeepestFindPosition;   //現在までに発見されたものの一番深い位置
+        
+        private Long curenntElapsedTimeInSeconds; //開始からの経過時間（秒）
+
+        
+        prb.setResult(getSummary());
+
+
+
+
+
+        return prb;
+        
+    }
     /**
      * 全ての結果保存ファイルからサマリーを取得.
      *

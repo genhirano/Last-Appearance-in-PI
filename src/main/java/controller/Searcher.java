@@ -3,9 +3,11 @@ package controller;
 import lombok.Getter;
 import model.TargetRange;
 import model.pi.SurvivalList;
+import model.ycd.YCDFileUtil;
 import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -28,7 +30,6 @@ public class Searcher extends Thread {
         }
     }
 
-    private final List<File> piFileList;
     @Getter
     private final List<File> um_piFileList;// 不変
 
@@ -41,15 +42,20 @@ public class Searcher extends Thread {
     @Getter
     private final Integer reportSpan;
 
-    public Searcher(List<File> piFileList, Integer listSize, Integer unitLength, Integer reportSpan) {
+
+
+
+    public Searcher(List<File> piFileList, Integer listSize, Integer unitLength, Integer reportSpan) throws IOException {
         super();
 
-        this.piFileList = piFileList;
         um_piFileList = Collections.unmodifiableList(piFileList); // 外部から参照されるための不変オブジェクト
 
         this.listSize = listSize;
         this.unitLength = unitLength;
         this.reportSpan = reportSpan;
+
+        
+        StoreController.getInstance().setAllPiDataLength(YCDFileUtil.getMaxDepth(um_piFileList));
 
     }
 
@@ -146,7 +152,7 @@ public class Searcher extends Thread {
 
             // YCDデータプロバイダを作成
             int overWrapLength = targetRange.getLength(); // 一つ前のケツの部分を今回の先頭に重ねる桁の長さ
-            try (YCD_SeqProvider p = new YCD_SeqProvider(this.piFileList, overWrapLength, this.unitLength);) {
+            try (YCD_SeqProvider p = new YCD_SeqProvider(this.um_piFileList, overWrapLength, this.unitLength);) {
 
                 // YCDプロバイダの作成に成功したらリトライカウントをリセット
                 continueCount = 0;
