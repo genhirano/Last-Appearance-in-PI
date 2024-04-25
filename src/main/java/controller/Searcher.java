@@ -13,6 +13,8 @@ import java.util.List;
 
 public class Searcher extends Thread {
 
+    final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 100; // サバイバルリストの初期サイズ
+
     /**
      * サバイバル結果を保持するクラス(メソッド戻り値として使用)
      */
@@ -54,7 +56,6 @@ public class Searcher extends Thread {
     @Override
     public void run() {
 
-        final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 100; // サバイバルリストの初期サイズ
 
         Integer survaivalListSize = SURVAIVAL_LIST_DEFAULT_SIZE; // サバイバルリストの初期サイズ
 
@@ -99,8 +100,6 @@ public class Searcher extends Thread {
 
     private Integer calcSurvivalListSize(Integer mokuhyouSeconds, Integer currentSrvivalListSize,
             ZonedDateTime startTime, ZonedDateTime endTime) {
-
-        final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 10; // サバイバルリストの初期サイズ
 
         // 処理開始と処理終了の時間差（実行時間）を計算
         long processSeconds = Duration.between(startTime, endTime).getSeconds();
