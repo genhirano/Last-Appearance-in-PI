@@ -15,7 +15,9 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import model.ProgressReportBean;
 import model.TargetRange;
@@ -26,9 +28,11 @@ public class StoreController {
     private static final String digitsLengthFormat = "%0" + digitsLength + "d";
     private static final int maxDigit = Integer.valueOf(StringUtils.repeat("9", digitsLength));
 
+    public static Map<String, Object> survivalProgressMap = new HashMap<>();
 
-    @Getter @Setter
-    private Long allPiDataLength = 0L;
+    @Getter
+    @Setter
+    private static Long allPiDataLength = 0L;
 
     private static StoreController instance;
 
@@ -56,7 +60,7 @@ public class StoreController {
      */
     public List<TargetRange> getNextList(Integer listSize) {
 
-        //param check
+        // param check
         if (listSize < 1) {
             throw new IllegalArgumentException("listSize must be 1 or more.");
         }
@@ -134,7 +138,7 @@ public class StoreController {
     }
 
     public TargetRange getCurrentTargetStartEnd(Integer listSize) {
-        
+
         // 次に実行すべき情報を作る
         // （すでにある保存データの一番最後の、その次として実行する情報を作る）
 
@@ -222,39 +226,153 @@ public class StoreController {
 
     }
 
-
-
-    public ProgressReportBean getProgressReport(){
+    public static ProgressReportBean getProgressReport() {
         ProgressReportBean prb = new ProgressReportBean();
+        prb.setServerTime(System.currentTimeMillis());// サーバーの現在時刻
+        prb.setAllPiDataLength(allPiDataLength); // 検索対象のPIデータ全桁数
+        for (Map<String, String> map : getSummary2()) {
+            if (map.get("Finished").equals("false")) {
 
-        
-        prb.setServerTime(System.currentTimeMillis());//サーバーの現在時刻
+                // 現在の検索対象の桁数
+                prb.setCurrentTargetLength(
+                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
 
+                // 現在までに発見されたものの一番深い位置
+                prb.setCurrentDeepestFindPosition(Long.valueOf(map.get("Depth")));
 
-        //private Long serverCUPSpec;//サーバーのCPUスペック
-    
-        prb.setAllPiDataLength(this.allPiDataLength); //検索対象のPIデータ全桁数
-        
-        private Integer currentTargetLength; //現在の検索対象の桁数
-        
-        private Long currentDiscoveredCount;//発見された数
-        
-        private Long currentUndiscoveredCount;  //未発見の数
-        
-        private Long currentDeepestFindPosition;   //現在までに発見されたものの一番深い位置
-        
-        private Long curenntElapsedTimeInSeconds; //開始からの経過時間（秒）
+                prb.setCurrentTargetLength(
+                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
 
-        
-        prb.setResult(getSummary());
+                // すでに発見された数
+                Integer initialSurviavalListSize = Integer
+                        .valueOf(survivalProgressMap.get("SURVIVAL_INITIAL_LIST_SIZE").toString());
+                Integer currentSurviavalListSize = Integer
+                        .valueOf(survivalProgressMap.get("SURVIVAL_CURRENT_LIST_SIZE").toString());
+                Long discoverCount = Long.valueOf(map.get("DiscoveredCount"))
+                        + (initialSurviavalListSize - currentSurviavalListSize);
+                prb.setCurrentDiscoveredCount(discoverCount);
 
+                // 未発見の数
+                Integer allMax = Integer.valueOf(StringUtils.repeat("9",
+                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString())));
+                Long undiscoverCount = allMax - discoverCount;
+                prb.setCurrentUndiscoveredCount(undiscoverCount);
 
+                // 進捗率
+                prb.setCurrentProgressRate(Float.valueOf(map.get("Progress")));
 
+                // 開始からの経過時間（秒）
 
+                // 処理開始と処理終了の時間差（実行時間）を計算
+                ZonedDateTime startTime = (ZonedDateTime) StoreController.survivalProgressMap
+                        .get("SURVIVAL_CURRENT_START_TIME");
+                ZonedDateTime endTime = ZonedDateTime.now();
+                prb.setCurenntElapsedTimeInSeconds(Duration.between(startTime, endTime).getSeconds()
+                        + ((ZonedDateTime) StoreController.survivalProgressMap.get("SURVIVAL_CURRENT_START_TIME")).getSecond());
 
+            } else {
+                prb.getResult().add(map);
+            }
+        }
         return prb;
-        
     }
+
+    public static List<Map<String, String>> getSummary2() {
+
+        // 結果保存先パスを取得
+        String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
+
+        List<Map<String, String>> retList = new ArrayList<>();
+
+        // 全保存ファイルを対象。小さい順に処理。
+        for (int i = 1; i <= Integer.MAX_VALUE; i++) {
+
+            Map<String, String> map = new HashMap<>();
+
+            String filename = String.format(digitsLengthFormat, i) + ".txt";
+            File file = new File(storeFilePath + "/" + filename);
+
+            // 対象ファイルがなければそこで終了
+            if (!file.exists()) {
+                break;
+            }
+
+            // サマリ文字列作成開始
+            // タイトル
+            map.put("digits", String.valueOf(i));
+
+            // 保存用ファイルから全データ読み込み
+            List<String> lines = null;
+            try {
+                lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+
+                String maxDepthStr = "";
+                Long maxDepth = Long.MIN_VALUE;
+                Long allSec = 0L;
+
+                // 保存レコードループ
+                for (String s : lines) {
+
+                    String[] splited = s.split(",");
+                    Long depth = Long.valueOf(splited[3]);
+
+                    // かかった時間(秒)の積算
+                    allSec = allSec + Long.valueOf(splited[4]);
+
+                    // これまでで最大深度であれば一番遅い可能性あり。メモ更新
+                    if (depth > maxDepth) {
+                        maxDepth = depth;
+                        maxDepthStr = splited[2];
+                    }
+
+                }
+
+                // 最終行を取得（終わっているかの判断 および 現在進捗情報を取得する）
+                String lastLine = lines.get(lines.size() - 1);
+
+                if (lastLine.isEmpty()) {
+                    // ファイルに一行もない場合は、単純に「初期化中」としておこう。。
+                    retList.add(map);
+                    break;
+                }
+
+                // 最終行の分析
+                String[] lastSplited = lastLine.split(",");
+
+                // 進捗状況
+                Integer allMax = Integer.valueOf(StringUtils.repeat("9", i));
+                if (allMax.equals(Integer.valueOf(lastSplited[1]))) {
+                    // 最後まで到達していたら進捗100％とする
+                    map.put("Finished", "true");
+                    map.put("Appearing", maxDepthStr);
+                    map.put("Depth", String.valueOf(maxDepth));
+                    map.put("ProcessTimeSec", String.valueOf(allSec));
+                    map.put("Progress", "100");
+
+                } else {
+                    // 処理中の進捗取得
+                    double d = (Double.valueOf(lastSplited[1]) / allMax) * 100;
+                    double progress = ((double) Math.round(d * 100000)) / 100000;
+                    map.put("Finished", "false");
+                    map.put("DiscoveredCount", lastSplited[1]);
+                    map.put("Depth", String.valueOf(maxDepth));
+                    map.put("ProcessTimeSec", String.valueOf(allSec));
+                    map.put("Progress", String.valueOf(progress));
+                }
+
+                // このファイルのサマリ（画面表示などで使える文字列）をリストに追加
+                retList.add(map);
+
+            } catch (IOException e) {
+                throw new RuntimeException("fatal file read! " + file.getName(), e);
+            }
+
+        }
+
+        return retList;
+
+    }
+
     /**
      * 全ての結果保存ファイルからサマリーを取得.
      *
@@ -353,8 +471,7 @@ public class StoreController {
         return retList;
 
     }
-    
-    
+
     public void saveHTML() {
         // HttpClient インスタンスを作成
         HttpClient httpClient = HttpClient.newHttpClient();
@@ -371,12 +488,11 @@ public class StoreController {
             // レスポンスコードを取得
             int statusCode = response.statusCode();
             System.out.println("Response Code: " + statusCode);
-        
+
         } catch (Exception e) {
             // エラーが発生した場合の処理
             e.printStackTrace();
         }
     }
-
 
 }
