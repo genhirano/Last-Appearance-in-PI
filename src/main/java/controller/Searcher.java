@@ -100,7 +100,7 @@ public class Searcher extends Thread {
     private Integer calcSurvivalListSize(Integer mokuhyouSeconds, Integer currentSrvivalListSize,
             ZonedDateTime startTime, ZonedDateTime endTime) {
 
-        final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 100; // サバイバルリストの初期サイズ
+        final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 10; // サバイバルリストの初期サイズ
 
         // 処理開始と処理終了の時間差（実行時間）を計算
         long processSeconds = Duration.between(startTime, endTime).getSeconds();
@@ -111,14 +111,19 @@ public class Searcher extends Thread {
 
         // 次回のサバイバルリストサイズを調整。
         // 処理目標時間より長くかかった場合はリストを短く、早く終わった場合はリストを長くする
-        Integer newListSize = currentSrvivalListSize + (int) (currentSrvivalListSize * d);
+        Integer nextListSize = currentSrvivalListSize + (int) (currentSrvivalListSize * d);
 
         // サバイバルリストのサイズが小さすぎる場合はデフォルトに戻す
-        if (SURVAIVAL_LIST_DEFAULT_SIZE > newListSize) {
-            newListSize = SURVAIVAL_LIST_DEFAULT_SIZE;
+        if (SURVAIVAL_LIST_DEFAULT_SIZE > nextListSize) {
+            nextListSize = SURVAIVAL_LIST_DEFAULT_SIZE;
         }
+        
+        System.out.println("Current Survival List Size: " + currentSrvivalListSize + "  Next Survival List Size: "
+                + nextListSize + "  Process Time: " + processSeconds + "  Diff: " + diff + "  rate: " + d);
 
-        return newListSize;
+
+
+        return nextListSize;
 
     }
 
@@ -149,6 +154,7 @@ public class Searcher extends Thread {
 
                 // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
                 for (YCD_SeqProvider.Unit currentPi : p) {
+                    System.out.print("|");
                     // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
                     for (int i = survivalList.size() - 1; i >= 0; i--) {
 
