@@ -17,7 +17,7 @@ import model.TargetRange;
 
 public class StoreController {
 
-    private static final int digitsLength = 3; // 3桁を対象。すなわち 001 - 999 桁を対象。
+    private static final int digitsLength = 3; // 対象は3桁まで。すなわち 001 - 999 桁を対象。ファイル名のゼロパティング等に使う
     private static final String digitsLengthFormat = "%0" + digitsLength + "d";
     private static final int maxDigit = Integer.valueOf(StringUtils.repeat("9", digitsLength));
 
