@@ -74,9 +74,9 @@ public class Web {
                 System.out.println(pr.getResult());
 
                 // 保存ファイルコントローラーからサマリーを取得
-                StoreController sc = StoreController.getInstance();
-                List<String> sum = sc.getSummary();
-                Collections.reverse(sum);
+                //StoreController sc = StoreController.getInstance();
+                //List<String> sum = sc.getSummary();
+                //Collections.reverse(sum);
 
                 // ビューに渡すデータ作成
                 Map<String, Object> model = new HashMap<>();
@@ -92,6 +92,16 @@ public class Web {
                 model.put("YCD_MAX_DEPTH", pr.getAllPiDataLength());
                 model.put("SYSTEMSTART", startTime);
                 model.put("RUNNING_TIME", pr.getCurenntElapsedTimeInSeconds());
+
+
+                model.put("CURRENT_DIGITS", pr.getCurrentTargetLength());
+                model.put("CURRENT_PROGRESS_RATE", pr.getCurrentProgressRate());
+                model.put("CURRENT_DISCOVERD_COUNT", pr.getCurrentDiscoveredCount());
+                model.put("CURRENT_UNDISCOVERD_COUNT", pr.getCurrentUndiscoveredCount());
+                model.put("CURRENT_ELAPSED_TIME", pr.getCurenntElapsedTimeInSeconds());
+                model.put("CURRENT_DEEPEST_FIND_POSITION", pr.getCurrentDeepestFindPosition());
+                model.put("SERVER_TIME", pr.getServerTime());
+
 
                 ModelAndView modelAndView = new ModelAndView(model, "index");
 

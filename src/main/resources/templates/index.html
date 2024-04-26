@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.w3.org/1999/xhtml">
+
 <head>
-    <meta charset="utf-8"/>
-    <title >Last Appearance in PI Project</title>
+    <meta charset="utf-8" />
+    <title>Last Appearance in PI Project</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="google" content="notranslate">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.css">
@@ -25,54 +26,71 @@
 </header>
 
 <!-- ボディ -->
+
 <body>
 
-<!-- メインコンテンツ -->
-<div class="column">
-    <!-- 本文 -->
-    <article class="box media">
-        <div class="media-content">
-            <div class="content">
+    <!-- メインコンテンツ -->
+    <div class="column">
+        <!-- 本文 -->
+        <article class="box media">
+            <div class="media-content">
+                <div class="content">
 
-                <table border="1" class="table is-narrow"  style="table-layout:fixed;">
-                    <tr>
-                        <th width="50px">progress and result (please reload!)</th>
-                    </tr>
 
-                    <tr th:each="line : ${DATA}">
-                        <td width="50px">
-                            <p th:text="${line}"></p>
-                        </td>
-                    </tr>
 
-                </table>
+                    <p th:text="'YCD_MAX_DEPTH:' + ${YCD_MAX_DEPTH}" />
+                    <p th:text="'CURRENT_DIGITS:' + ${CURRENT_DIGITS}" />
+                    <p th:text="'CURRENT_PROGRESS_RATE:' + ${CURRENT_PROGRESS_RATE}" />
+                    <p th:text="'CURRENT_DISCOVERD_COUNT:' + ${CURRENT_DISCOVERD_COUNT}" />
+                    <p th:text="'CURRENT_UNDISCOVERD_COUNT:' + ${CURRENT_UNDISCOVERD_COUNT}" />
+                    <p th:text="'CURRENT_ELAPSED_TIME:' + ${CURRENT_ELAPSED_TIME}" />
+                    <p th:text="'CURRENT_DEEPEST_FIND_POSITION:' + ${CURRENT_DEEPEST_FIND_POSITION}" />
+                    <p th:text="'SERVER_TIME:' + ${SERVER_TIME}" />
+
+
+
+
+                    <table border="1" class="table is-narrow" style="table-layout:fixed;">
+                        <tr>
+                            <th width="50px">progress and result (please reload!)</th>
+                        </tr>
+
+                        <tr th:each="line : ${DATA}">
+                            <td width="50px">
+                                <p th:text="${line}"></p>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+                <p th:text="'Max Pi Depth:' + ${YCD_MAX_DEPTH}" />
+                <p
+                    th:text="'system is ' + ${RUNNING_TIME} + 'sec running.   since ' + ${#temporals.format(SYSTEMSTART, 'yyyy/MM/dd HH:mm:ss')}" />
             </div>
-            <p th:text="'Max Pi Depth:' + ${YCD_MAX_DEPTH}"/>
-            <p th:text="'system is ' + ${RUNNING_TIME} + 'sec running.   since ' + ${#temporals.format(SYSTEMSTART, 'yyyy/MM/dd HH:mm:ss')}"/>
-        </div>
-    </article>
+        </article>
 
-</div>
+    </div>
 
 
 
-<!-- フッター -->
-<footer class="footer has-background-primary-dark has-text-white">
-    <p class="has-text-centered">
-        Copyright © 2022-2024 genhirano
-    </p>
-    <p class="has-text-centered">
-        All Rights Reserved
-    </p>
-    <p align="center">
-        <a class="button is-link" href="https://www.facebook.com/genhirano" target="_blank">
-            contact : <span class="icon"><i class="fab fa-facebook"></i></span>
-        </a>
-        <a class="button is-black" href="https://github.com/genhirano" target="_blank">
-            contact : <span class="icon"><i class="fab fa-github"></i></span>
-        </a>
-    </p>
-</footer>
+    <!-- フッター -->
+    <footer class="footer has-background-primary-dark has-text-white">
+        <p class="has-text-centered">
+            Copyright © 2022-2024 genhirano
+        </p>
+        <p class="has-text-centered">
+            All Rights Reserved
+        </p>
+        <p align="center">
+            <a class="button is-link" href="https://www.facebook.com/genhirano" target="_blank">
+                contact : <span class="icon"><i class="fab fa-facebook"></i></span>
+            </a>
+            <a class="button is-black" href="https://github.com/genhirano" target="_blank">
+                contact : <span class="icon"><i class="fab fa-github"></i></span>
+            </a>
+        </p>
+    </footer>
 
 </body>
+
 </html>
