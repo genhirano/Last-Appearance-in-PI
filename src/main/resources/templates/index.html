@@ -21,6 +21,9 @@
             <h2 class="subtitle">
                 Search for the latest appearing number in pi.
             </h2>
+            ServerTime
+            <span th:text="(please reload!) ${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
+            (please reload!)
         </div>
     </section>
 </header>
@@ -35,37 +38,111 @@
         <article class="box media">
             <div class="media-content">
                 <div class="content">
+                    Now Progress
+                    <table border="1" class="table is-narrow">
+                        <tr >
+                            <td style="width:0; white-space:nowrap;">
+                                DIGITS:
+                            </td>
+                            <td style="width:0; white-space:nowrap;">
+                                <div th:text="${CURRENT_DIGITS}">9999999</div>
+                            </td>
+                            <td>
+                                現在探索中の桁数
+                            </td>
+                        </tr>
 
 
+                        <tr>
+                            <td style="width:0; white-space:nowrap;">
+                                PROGRESS_RATE:
+                            </td>
+                            <td style="width:0; white-space:nowrap;">
+                                <div th:text="${CURRENT_PROGRESS_RATE}">9999999</div>
+                            </td>
+                            <td>
+                                進捗率
+                            </td>
 
-                    <p th:text="'YCD_MAX_DEPTH:' + ${YCD_MAX_DEPTH}" />
-                    <p th:text="'CURRENT_DIGITS:' + ${CURRENT_DIGITS}" />
-                    <p th:text="'CURRENT_PROGRESS_RATE:' + ${CURRENT_PROGRESS_RATE}" />
-                    <p th:text="'CURRENT_DISCOVERD_COUNT:' + ${CURRENT_DISCOVERD_COUNT}" />
-                    <p th:text="'CURRENT_UNDISCOVERD_COUNT:' + ${CURRENT_UNDISCOVERD_COUNT}" />
-                    <p th:text="'CURRENT_ELAPSED_TIME:' + ${CURRENT_ELAPSED_TIME}" />
-                    <p th:text="'CURRENT_DEEPEST_FIND_POSITION:' + ${CURRENT_DEEPEST_FIND_POSITION}" />
-                    <p th:text="'SERVER_TIME:' + ${SERVER_TIME}" />
+                        </tr>
 
+                        <tr>
+                            <td style="width:0; white-space:nowrap;">
+                                DISCOVERD_COUNT:
+                            </td>
+                            <td style="width:0; white-space:nowrap;">
+                                <div th:text="${CURRENT_DISCOVERD_COUNT}">9999999</div>
+                            </td>
+                            <td>
+                                発見済み数
+                            </td>
+                        </tr>
 
+                        <tr>
+                            <td style="width:0; white-space:nowrap;">
+                                UNDISCOVERD_COUNT:
+                            </td>
+                            <td style="width:0; white-space:nowrap;">
+                                <div th:text="${CURRENT_UNDISCOVERD_COUNT}">9999999</div>
+                            </td>
+                            <td>
+                                未発見の数
+                            </td>
+                        </tr>
 
+                        <tr>
+                            <td style="width:0; white-space:nowrap;">
+                                ELAPSED_TIME:
+                            </td>
+                            <td style="width:0; white-space:nowrap;">
+                                <div th:text="${CURRENT_ELAPSED_TIME}">9999999</div>
+                            </td>
+                            <td>
+                                この桁の探索処理時間
+                            </td>
+                        </tr>
 
+                        <tr>
+                            <td style="width:0; white-space:nowrap;">
+                                DEEPEST_FIND_POSITION:
+                            </td>
+                            <td style="width:0; white-space:nowrap;">
+                                <div th:text="${CURRENT_DEEPEST_FIND_POSITION}">9999999</div>
+                            </td>
+                            <td>
+                                この桁の最深部の発見位置
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="width:0; white-space:nowrap;">
+                                MAX_DEPTH:
+                            </td>
+                            <td style="width:0; white-space:nowrap;">
+                                <div th:text="${YCD_MAX_DEPTH}">9999999</div>
+                            </td>
+                            <td>
+                                最大探索深度
+                            </td>
+
+                    </table>
+                </div>
+
+                <div class="content">
+                    Finished Result
                     <table border="1" class="table is-narrow" style="table-layout:fixed;">
                         <tr>
-                            <th width="50px">progress and result (please reload!)</th>
+                            <th width="50px">finished result</th>
                         </tr>
 
                         <tr th:each="line : ${DATA}">
                             <td width="50px">
-                                <p th:text="${line}"></p>
+                                <p th:text="${line}">LINE 1</p>
                             </td>
                         </tr>
 
                     </table>
                 </div>
-                <p th:text="'Max Pi Depth:' + ${YCD_MAX_DEPTH}" />
-                <p
-                    th:text="'system is ' + ${RUNNING_TIME} + 'sec running.   since ' + ${#temporals.format(SYSTEMSTART, 'yyyy/MM/dd HH:mm:ss')}" />
             </div>
         </article>
 
