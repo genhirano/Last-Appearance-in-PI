@@ -4,14 +4,13 @@ import spark.*;
 import spark.template.thymeleaf.ThymeleafTemplateEngine;
 
 import java.io.File;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import model.ProgressReportBean;
@@ -20,8 +19,6 @@ import static spark.Spark.*;
 import static spark.debug.DebugScreen.enableDebugScreen;
 
 public class Web {
-
-    private static Long ycdMaxDepth = 0l;
 
     // ThymeleafTemplateEngine
     private static TemplateEngine templateEngine;
@@ -56,51 +53,27 @@ public class Web {
             @Override
             public ModelAndView handle(Request req, Response resp) throws Exception {
 
-                // 現在時刻取得
-                ZonedDateTime nowTime = ZonedDateTime.now();
-                Duration summerVacationDuration = Duration.between(startTime, nowTime);
-
-                // test
-                ProgressReportBean pr = StoreController.getProgressReport();
-                System.out.println(pr.getAllPiDataLength());
-
-                System.out.println("ALL PI DATA LENGTH : " + pr.getAllPiDataLength()); // 検索対象のPIデータ全桁数
-                System.out.println("SERVER TIME : " + pr.getServerTime());// サーバーの現在時刻
-                System.out.println("CURRENT DIGITS : " + pr.getCurrentTargetLength());
-                System.out.println("DISCOVER COUNT : " + pr.getCurrentDiscoveredCount());
-                System.out.println("NOT DISCOVER COUNT : " + pr.getCurrentUndiscoveredCount());
-                System.out.println("Progress : " + pr.getCurrentProgressRate());
-                System.out.println("TIME : " + pr.getCurenntElapsedTimeInSeconds());
-                System.out.println(pr.getResult());
-
-                // 保存ファイルコントローラーからサマリーを取得
-                //StoreController sc = StoreController.getInstance();
-                //List<String> sum = sc.getSummary();
-                //Collections.reverse(sum);
-
                 // ビューに渡すデータ作成
+                ProgressReportBean pr = StoreController.getProgressReport();
                 Map<String, Object> model = new HashMap<>();
-                /*
-                 * model.put("DATA", sum);
-                 * model.put("YCD_MAX_DEPTH", ycdMaxDepth);
-                 * model.put("SYSTEMSTART", startTime);
-                 * model.put("RUNNING_TIME", summerVacationDuration.getSeconds());
-                 */
-
                 Collections.reverse(pr.getResult());
                 model.put("DATA", pr.getResult());
                 model.put("YCD_MAX_DEPTH", pr.getAllPiDataLength());
                 model.put("SYSTEMSTART", startTime);
                 model.put("RUNNING_TIME", pr.getCurenntElapsedTimeInSeconds());
 
-
                 model.put("CURRENT_DIGITS", pr.getCurrentTargetLength());
-                model.put("CURRENT_PROGRESS_RATE", pr.getCurrentProgressRate());
                 model.put("CURRENT_DISCOVERD_COUNT", pr.getCurrentDiscoveredCount());
                 model.put("CURRENT_UNDISCOVERD_COUNT", pr.getCurrentUndiscoveredCount());
                 model.put("CURRENT_ELAPSED_TIME", pr.getCurenntElapsedTimeInSeconds());
                 model.put("CURRENT_DEEPEST_FIND_POSITION", pr.getCurrentDeepestFindPosition());
                 model.put("SERVER_TIME", pr.getServerTime());
+
+                Integer allMax = Integer.valueOf(StringUtils.repeat("9", pr.getCurrentTargetLength()));
+                
+                double d = (pr.getCurrentDiscoveredCount() / (double)allMax) * 100;
+                double progress = ((double) Math.round(d * 100000)) / 100000;
+                model.put("CURRENT_PROGRESS_RATE", progress);
 
 
                 ModelAndView modelAndView = new ModelAndView(model, "index");

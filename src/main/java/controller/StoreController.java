@@ -12,6 +12,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -228,9 +229,11 @@ public class StoreController {
 
     public static ProgressReportBean getProgressReport() {
         ProgressReportBean prb = new ProgressReportBean();
-        prb.setServerTime(System.currentTimeMillis());// サーバーの現在時刻
+        
+        prb.setServerTime(new Timestamp(System.currentTimeMillis()));// サーバーの現在時刻
+
         prb.setAllPiDataLength(allPiDataLength); // 検索対象のPIデータ全桁数
-        for (Map<String, String> map : getSummary2()) {
+        for (Map<String, String> map : getSummary()) {
             if (map.get("Finished").equals("false")) {
 
                 // 現在の検索対象の桁数
@@ -258,17 +261,14 @@ public class StoreController {
                 Long undiscoverCount = allMax - discoverCount;
                 prb.setCurrentUndiscoveredCount(undiscoverCount);
 
-                // 進捗率
-                prb.setCurrentProgressRate(Float.valueOf(map.get("Progress")));
-
                 // 開始からの経過時間（秒）
-
                 // 処理開始と処理終了の時間差（実行時間）を計算
+                Long allSec = Long.valueOf(map.get("ProcessTimeSec")); 
                 ZonedDateTime startTime = (ZonedDateTime) StoreController.survivalProgressMap
                         .get("SURVIVAL_CURRENT_START_TIME");
                 ZonedDateTime endTime = ZonedDateTime.now();
-                prb.setCurenntElapsedTimeInSeconds(Duration.between(startTime, endTime).getSeconds()
-                        + ((ZonedDateTime) StoreController.survivalProgressMap.get("SURVIVAL_CURRENT_START_TIME")).getSecond());
+                Long survivalSec = Duration.between(startTime, endTime).getSeconds();
+                prb.setCurenntElapsedTimeInSeconds(allSec + survivalSec);
 
             } else {
                 prb.getResult().add(map);
@@ -277,7 +277,12 @@ public class StoreController {
         return prb;
     }
 
-    public static List<Map<String, String>> getSummary2() {
+    /**
+     * 全ての結果保存ファイルからサマリーを取得.
+     *
+     * @return サマリー表現文字列リスト(画面表示用にフォーマットされた文字列リスト)
+     */
+    public static List<Map<String, String>> getSummary() {
 
         // 結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
@@ -342,125 +347,20 @@ public class StoreController {
                 // 進捗状況
                 Integer allMax = Integer.valueOf(StringUtils.repeat("9", i));
                 if (allMax.equals(Integer.valueOf(lastSplited[1]))) {
-                    // 最後まで到達していたら進捗100％とする
+                    // 最後まで到達しているもの
                     map.put("Finished", "true");
                     map.put("Appearing", maxDepthStr);
-                    map.put("Depth", String.valueOf(maxDepth));
-                    map.put("ProcessTimeSec", String.valueOf(allSec));
-                    map.put("Progress", "100");
 
                 } else {
-                    // 処理中の進捗取得
-                    double d = (Double.valueOf(lastSplited[1]) / allMax) * 100;
-                    double progress = ((double) Math.round(d * 100000)) / 100000;
+                    // 処理中
                     map.put("Finished", "false");
                     map.put("DiscoveredCount", lastSplited[1]);
-                    map.put("Depth", String.valueOf(maxDepth));
-                    map.put("ProcessTimeSec", String.valueOf(allSec));
-                    map.put("Progress", String.valueOf(progress));
                 }
+                map.put("Depth", String.valueOf(maxDepth));
+                map.put("ProcessTimeSec", String.valueOf(allSec));
 
                 // このファイルのサマリ（画面表示などで使える文字列）をリストに追加
                 retList.add(map);
-
-            } catch (IOException e) {
-                throw new RuntimeException("fatal file read! " + file.getName(), e);
-            }
-
-        }
-
-        return retList;
-
-    }
-
-    /**
-     * 全ての結果保存ファイルからサマリーを取得.
-     *
-     * @return サマリー表現文字列リスト(画面表示用にフォーマットされた文字列リスト)
-     */
-    public List<String> getSummary() {
-
-        // 結果保存先パスを取得
-        String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
-
-        List<String> retList = new ArrayList<>();
-
-        // 全保存ファイルを対象。小さい順に処理。
-        for (int i = 1; i <= Integer.MAX_VALUE; i++) {
-
-            String answer = "";
-
-            String filename = String.format(digitsLengthFormat, i) + ".txt";
-            File file = new File(storeFilePath + "/" + filename);
-
-            // 対象ファイルがなければそこで終了
-            if (!file.exists()) {
-                break;
-            }
-
-            // サマリ文字列作成開始
-            // タイトル
-            answer = answer + "digits:" + i;
-
-            // 保存用ファイルから全データ読み込み
-            List<String> lines = null;
-            try {
-                lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
-
-                String maxDepthStr = "";
-                Long maxDepth = Long.MIN_VALUE;
-                Long allSec = 0L;
-
-                // 保存レコードループ
-                for (String s : lines) {
-
-                    String[] splited = s.split(",");
-                    Long depth = Long.valueOf(splited[3]);
-
-                    // かかった時間(秒)の積算
-                    allSec = allSec + Long.valueOf(splited[4]);
-
-                    // これまでで最大深度であれば一番遅い可能性あり。メモ更新
-                    if (depth > maxDepth) {
-                        maxDepth = depth;
-                        maxDepthStr = splited[2];
-                    }
-
-                }
-
-                // 最終行を取得（終わっているかの判断 および 現在進捗情報を取得する）
-                String lastLine = lines.get(lines.size() - 1);
-
-                if (lastLine.isEmpty()) {
-                    // ファイルに一行もない場合は、単純に「初期化中」としておこう。。
-                    answer = answer + " initializeing progress...";
-                    retList.add(answer);
-                    break;
-                }
-
-                // 最終行の分析
-                String[] lastSplited = lastLine.split(",");
-
-                // 進捗状況
-                Integer allMax = Integer.valueOf(StringUtils.repeat("9", i));
-                if (allMax.equals(Integer.valueOf(lastSplited[1]))) {
-                    // 最後まで到達していたら進捗100％とする
-                    answer = answer + "     the last appearing: \"" + maxDepthStr + "\".";
-                    answer = answer + " depth: " + maxDepth + ".";
-                    answer = answer + " process time: " + allSec + "sec.";
-                } else {
-                    // 処理中の進捗取得
-                    double d = (Double.valueOf(lastSplited[1]) / allMax) * 100;
-                    double progress = ((double) Math.round(d * 1000)) / 1000;
-
-                    answer = answer + "  brute forced depth:" + maxDepthStr;
-                    answer = answer + "  (not appear:" + (allMax - Integer.valueOf(lastSplited[2])) + ")";
-                    answer = answer + " Progress: " + progress + "%";
-                    answer = answer + " processing time: " + allSec + "sec.";
-                }
-
-                // このファイルのサマリ（画面表示などで使える文字列）をリストに追加
-                retList.add(answer);
 
             } catch (IOException e) {
                 throw new RuntimeException("fatal file read! " + file.getName(), e);

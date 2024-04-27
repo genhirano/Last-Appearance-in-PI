@@ -1,5 +1,6 @@
 package model;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,7 @@ public class ProgressReportBean {
 
 
     @Getter @Setter
-    private Long serverTime;//サーバーの現在時刻
+    private Timestamp serverTime;//サーバーの現在時刻
 
     @Getter @Setter
     private Long allPiDataLength; //検索対象のPIデータ全桁数

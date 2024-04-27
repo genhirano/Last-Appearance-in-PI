@@ -1,7 +1,6 @@
 package controller;
 
 import lombok.Getter;
-import model.ProgressReportBean;
 import model.TargetRange;
 import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;

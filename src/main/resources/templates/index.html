@@ -21,9 +21,9 @@
             <h2 class="subtitle">
                 Search for the latest appearing number in pi.
             </h2>
-            ServerTime
-            <span th:text="(please reload!) ${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
-            (please reload!)
+            ServerTime : 
+            <span th:text="${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
+            (please reload)
         </div>
     </section>
 </header>
@@ -52,7 +52,6 @@
                             </td>
                         </tr>
 
-
                         <tr>
                             <td style="width:0; white-space:nowrap;">
                                 PROGRESS_RATE:
@@ -68,37 +67,13 @@
 
                         <tr>
                             <td style="width:0; white-space:nowrap;">
-                                DISCOVERD_COUNT:
-                            </td>
-                            <td style="width:0; white-space:nowrap;">
-                                <div th:text="${CURRENT_DISCOVERD_COUNT}">9999999</div>
-                            </td>
-                            <td>
-                                発見済み数
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td style="width:0; white-space:nowrap;">
-                                UNDISCOVERD_COUNT:
-                            </td>
-                            <td style="width:0; white-space:nowrap;">
-                                <div th:text="${CURRENT_UNDISCOVERD_COUNT}">9999999</div>
-                            </td>
-                            <td>
-                                未発見の数
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td style="width:0; white-space:nowrap;">
-                                ELAPSED_TIME:
+                                ELAPSED_TIME(sec):
                             </td>
                             <td style="width:0; white-space:nowrap;">
                                 <div th:text="${CURRENT_ELAPSED_TIME}">9999999</div>
                             </td>
                             <td>
-                                この桁の探索処理時間
+                                この桁の探索処理時間(秒)
                             </td>
                         </tr>
 
