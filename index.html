@@ -21,8 +21,8 @@
             <h2 class="subtitle">
                 Search for the latest appearing number in pi.
             </h2>
-            ServerTime : 
-            <span>2024-04-28 00:38:58.215</span>
+            ServerTime :
+            <span>2024-04-28 09:36:55.022</span>
             (please reload)
         </div>
     </section>
@@ -39,8 +39,8 @@
             <div class="media-content">
                 <div class="content">
                     Now Progress
-                    <table border="1" class="table is-narrow">
-                        <tr >
+                    <table class="table is-narrow">
+                        <tr>
                             <td style="width:0; white-space:nowrap;">
                                 DIGITS:
                             </td>
@@ -57,7 +57,7 @@
                                 PROGRESS_RATE:
                             </td>
                             <td style="width:0; white-space:nowrap;">
-                                <div>9.9165</div>
+                                <div>9.91888%</div>
                             </td>
                             <td>
                                 進捗率
@@ -70,7 +70,7 @@
                                 ELAPSED_TIME(sec):
                             </td>
                             <td style="width:0; white-space:nowrap;">
-                                <div>692038</div>
+                                <div>718511</div>
                             </td>
                             <td>
                                 この桁の探索処理時間(秒)
@@ -79,13 +79,24 @@
 
                         <tr>
                             <td style="width:0; white-space:nowrap;">
-                                DEEPEST_FIND_POSITION:
+                                NOW_DEEPEST:
                             </td>
                             <td style="width:0; white-space:nowrap;">
-                                <div>1593327447</div>
+                                "<span>01793962</span>"<br />
                             </td>
                             <td>
-                                この桁の最深部の発見位置
+                                現在候補
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:0; white-space:nowrap;">
+                                NOW_DEEPEST_POS:
+                            </td>
+                            <td style="width:0; white-space:nowrap;">
+                                <span>1593327447</span>
+                            </td>
+                            <td>
+                                候補の発見場所
                             </td>
                         </tr>
 
@@ -105,54 +116,61 @@
 
                 <div class="content">
                     Finished Result
-                    <table border="1" class="table is-narrow" style="table-layout:fixed;">
-                        <tr>
-                            <th width="50px">finished result</th>
-                        </tr>
+                    <table bclass="table is-narrow">
+                        <thead>
+                            <th>digits</th>
+                            <th>Appearing</th>
+                            <th>Depth</th>
+                            <th>ProcessTime(Sec)</th>
+                    </thead>
 
-                        <tr>
-                            <td width="50px">
-                                <p>{ProcessTimeSec=57358, Finished=true, digits=7, Appearing=1075656, Depth=166100500}</p>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td width="50px">
-                                <p>{ProcessTimeSec=252, Finished=true, digits=6, Appearing=569540, Depth=14118307}</p>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td width="50px">
-                                <p>{ProcessTimeSec=9, Finished=true, digits=5, Appearing=33394, Depth=1369560}</p>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td width="50px">
-                                <p>{ProcessTimeSec=8, Finished=true, digits=4, Appearing=6716, Depth=99846}</p>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td width="50px">
-                                <p>{ProcessTimeSec=8, Finished=true, digits=3, Appearing=483, Depth=8553}</p>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td width="50px">
-                                <p>{ProcessTimeSec=8, Finished=true, digits=2, Appearing=68, Depth=605}</p>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td width="50px">
-                                <p>{ProcessTimeSec=8, Finished=true, digits=1, Appearing=0, Depth=32}</p>
-                            </td>
-                        </tr>
-
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>0</td>
+                                <td>32</td>
+                                <td>8</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>68</td>
+                                <td>605</td>
+                                <td>8</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>483</td>
+                                <td>8553</td>
+                                <td>8</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>6716</td>
+                                <td>99846</td>
+                                <td>8</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>33394</td>
+                                <td>1369560</td>
+                                <td>9</td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td>569540</td>
+                                <td>14118307</td>
+                                <td>252</td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td>1075656</td>
+                                <td>166100500</td>
+                                <td>57358</td>
+                            </tr>
+                        </tbody>
                     </table>
+
+
                 </div>
             </div>
         </article>

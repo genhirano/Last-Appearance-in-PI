@@ -240,8 +240,9 @@ public class StoreController {
                 prb.setCurrentTargetLength(
                         Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
 
-                // 現在までに発見されたものの一番深い位置
+                // 現在までに発見されたもののうち一番深いものとその位置
                 prb.setCurrentDeepestFindPosition(Long.valueOf(map.get("Depth")));
+                prb.setCurrentDeepestFind(map.get("Appearing"));
 
                 prb.setCurrentTargetLength(
                         Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
@@ -311,8 +312,8 @@ public class StoreController {
             try {
                 lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
 
-                String maxDepthStr = "";
-                Long maxDepth = Long.MIN_VALUE;
+                String deepestStr = "";
+                Long deepestDepth = Long.MIN_VALUE;
                 Long allSec = 0L;
 
                 // 保存レコードループ
@@ -325,9 +326,9 @@ public class StoreController {
                     allSec = allSec + Long.valueOf(splited[4]);
 
                     // これまでで最大深度であれば一番遅い可能性あり。メモ更新
-                    if (depth > maxDepth) {
-                        maxDepth = depth;
-                        maxDepthStr = splited[2];
+                    if (depth > deepestDepth) {
+                        deepestDepth = depth;
+                        deepestStr = splited[2];
                     }
 
                 }
@@ -349,14 +350,13 @@ public class StoreController {
                 if (allMax.equals(Integer.valueOf(lastSplited[1]))) {
                     // 最後まで到達しているもの
                     map.put("Finished", "true");
-                    map.put("Appearing", maxDepthStr);
-
                 } else {
                     // 処理中
                     map.put("Finished", "false");
-                    map.put("DiscoveredCount", lastSplited[1]);
                 }
-                map.put("Depth", String.valueOf(maxDepth));
+                map.put("Appearing", deepestStr);
+                map.put("Depth", String.valueOf(deepestDepth));
+                map.put("DiscoveredCount", lastSplited[1]);
                 map.put("ProcessTimeSec", String.valueOf(allSec));
 
                 // このファイルのサマリ（画面表示などで使える文字列）をリストに追加

@@ -56,8 +56,15 @@ public class Web {
                 // ビューに渡すデータ作成
                 ProgressReportBean pr = StoreController.getProgressReport();
                 Map<String, Object> model = new HashMap<>();
-                Collections.reverse(pr.getResult());
-                model.put("DATA", pr.getResult());
+                //Collections.reverse(pr.getResult());
+                
+                
+                model.put("DATA", pr.getResult());//検索終了
+                
+
+
+                
+                
                 model.put("YCD_MAX_DEPTH", pr.getAllPiDataLength());
                 model.put("SYSTEMSTART", startTime);
                 model.put("RUNNING_TIME", pr.getCurenntElapsedTimeInSeconds());
@@ -67,6 +74,9 @@ public class Web {
                 model.put("CURRENT_UNDISCOVERD_COUNT", pr.getCurrentUndiscoveredCount());
                 model.put("CURRENT_ELAPSED_TIME", pr.getCurenntElapsedTimeInSeconds());
                 model.put("CURRENT_DEEPEST_FIND_POSITION", pr.getCurrentDeepestFindPosition());
+                model.put("CURRENT_DEEPEST_FIND", pr.getCurrentDeepestFind());
+                
+
                 model.put("SERVER_TIME", pr.getServerTime());
 
                 Integer allMax = Integer.valueOf(StringUtils.repeat("9", pr.getCurrentTargetLength()));

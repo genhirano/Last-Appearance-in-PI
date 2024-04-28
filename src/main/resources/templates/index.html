@@ -21,7 +21,7 @@
             <h2 class="subtitle">
                 Search for the latest appearing number in pi.
             </h2>
-            ServerTime : 
+            ServerTime :
             <span th:text="${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
             (please reload)
         </div>
@@ -39,8 +39,8 @@
             <div class="media-content">
                 <div class="content">
                     Now Progress
-                    <table border="1" class="table is-narrow">
-                        <tr >
+                    <table class="table is-narrow">
+                        <tr>
                             <td style="width:0; white-space:nowrap;">
                                 DIGITS:
                             </td>
@@ -57,7 +57,7 @@
                                 PROGRESS_RATE:
                             </td>
                             <td style="width:0; white-space:nowrap;">
-                                <div th:text="${CURRENT_PROGRESS_RATE}">9999999</div>
+                                <div th:text="${CURRENT_PROGRESS_RATE}+'%'">9999999</div>
                             </td>
                             <td>
                                 進捗率
@@ -79,13 +79,24 @@
 
                         <tr>
                             <td style="width:0; white-space:nowrap;">
-                                DEEPEST_FIND_POSITION:
+                                NOW_DEEPEST:
                             </td>
                             <td style="width:0; white-space:nowrap;">
-                                <div th:text="${CURRENT_DEEPEST_FIND_POSITION}">9999999</div>
+                                "<span th:text="'' + ${CURRENT_DEEPEST_FIND}">9999999</span>"<br />
                             </td>
                             <td>
-                                この桁の最深部の発見位置
+                                現在候補
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:0; white-space:nowrap;">
+                                NOW_DEEPEST_POS:
+                            </td>
+                            <td style="width:0; white-space:nowrap;">
+                                <span th:text="${CURRENT_DEEPEST_FIND_POSITION}">9999999</span>
+                            </td>
+                            <td>
+                                候補の発見場所
                             </td>
                         </tr>
 
@@ -105,18 +116,25 @@
 
                 <div class="content">
                     Finished Result
-                    <table border="1" class="table is-narrow" style="table-layout:fixed;">
-                        <tr>
-                            <th width="50px">finished result</th>
-                        </tr>
+                    <table bclass="table is-narrow">
+                        <thead>
+                            <th>digits</th>
+                            <th>Appearing</th>
+                            <th>Depth</th>
+                            <th>ProcessTime(Sec)</th>
+                    </thead>
 
-                        <tr th:each="line : ${DATA}">
-                            <td width="50px">
-                                <p th:text="${line}">LINE 1</p>
-                            </td>
-                        </tr>
-
+                        <tbody>
+                            <tr th:each="map : ${DATA}">
+                                <td th:text="${map.get('digits')}"></td>
+                                <td th:text="${map.get('Appearing')}"></td>
+                                <td th:text="${map.get('Depth')}"></td>
+                                <td th:text="${map.get('ProcessTimeSec')}"></td>
+                            </tr>
+                        </tbody>
                     </table>
+
+
                 </div>
             </div>
         </article>

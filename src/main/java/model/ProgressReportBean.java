@@ -31,6 +31,9 @@ public class ProgressReportBean {
     private Float currentProgressRate;  //進捗率
     
     @Getter @Setter
+    private String currentDeepestFind;   //現在までに発見されたもののうち、一番深いもの
+
+    @Getter @Setter
     private Long currentDeepestFindPosition;   //現在までに発見されたものの一番深い位置
     
     @Getter @Setter
