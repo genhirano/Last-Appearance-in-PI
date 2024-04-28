@@ -18,12 +18,8 @@
             <h1 class="title">
                 Last Appearance in PI
             </h1>
-            <h2 class="subtitle">
-                Search for the latest appearing number in pi.
-            </h2>
-            ServerTime :
-            <span th:text="${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
-            (please reload)
+            Search for the latest appearing number in pi.<br>
+            円周率の中で最も遅く出現する数値の探索
         </div>
     </section>
 </header>
@@ -38,7 +34,11 @@
         <article class="box media">
             <div class="media-content">
                 <div class="content">
-                    Now Progress
+                    ServerTime :
+                    <span th:text="${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span></br>
+                    (please reload)
+
+                    <h2>Now Progress</h2>
                     <table class="table is-narrow">
                         <tr>
                             <td style="width:0; white-space:nowrap;">
@@ -48,7 +48,7 @@
                                 <div th:text="${CURRENT_DIGITS}">9999999</div>
                             </td>
                             <td>
-                                現在探索中の桁数
+                                探索中の桁
                             </td>
                         </tr>
 
@@ -96,7 +96,7 @@
                                 <span th:text="${CURRENT_DEEPEST_FIND_POSITION}">9999999</span>
                             </td>
                             <td>
-                                候補の発見場所
+                                現在候補の出現場所
                             </td>
                         </tr>
 
@@ -114,34 +114,42 @@
                     </table>
                 </div>
 
+            </div>
+        </article>
+
+        <article class="box media">
+            <div class="media-content">
                 <div class="content">
-                    Finished Result
-                    <table bclass="table is-narrow">
-                        <thead>
-                            <th>digits</th>
-                            <th>Appearing</th>
-                            <th>Depth</th>
-                            <th>ProcessTime(Sec)</th>
-                    </thead>
+                    <h2>Finished Result</h1>
+                        <table bclass="table is-narrow">
+                            <thead>
+                                <th>digits<br/>桁</th>
+                                <th>Appearing<br/>最終出現</th>
+                                <th>Depth<br/>出現桁</th>
+                                <th>ProcessTime(Sec)<br/>処理時間(秒)</th>
+                            </thead>
 
-                        <tbody>
-                            <tr th:each="map : ${DATA}">
-                                <td th:text="${map.get('digits')}"></td>
-                                <td th:text="${map.get('Appearing')}"></td>
-                                <td th:text="${map.get('Depth')}"></td>
-                                <td th:text="${map.get('ProcessTimeSec')}"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-
+                            <tbody>
+                                <tr th:each="map : ${DATA}">
+                                    <td th:text="${map.get('digits')}"></td>
+                                    <td th:text="${map.get('Appearing')}"></td>
+                                    <td th:text="${map.get('Depth')}"></td>
+                                    <td th:text="${map.get('ProcessTimeSec')}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
                 </div>
             </div>
         </article>
 
+        <article class="box media">
+            <div class="media-content">
+                <a class="button is-black" href="https://github.com/genhirano/Last-Appearance-in-PI" target="_blank">
+                    project github : <span class="icon"><i class="fab fa-github"></i></span>
+                </a>
+            </div>
+        </article>
     </div>
-
-
 
     <!-- フッター -->
     <footer class="footer has-background-primary-dark has-text-white">
