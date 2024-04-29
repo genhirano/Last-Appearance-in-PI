@@ -65,15 +65,15 @@ public class Web {
 
                 
                 
-                model.put("YCD_MAX_DEPTH", pr.getAllPiDataLength());
+                model.put("YCD_MAX_DEPTH", String.format("%,d", pr.getAllPiDataLength()));
                 model.put("SYSTEMSTART", startTime);
                 model.put("RUNNING_TIME", pr.getCurenntElapsedTimeInSeconds());
 
                 model.put("CURRENT_DIGITS", pr.getCurrentTargetLength());
                 model.put("CURRENT_DISCOVERD_COUNT", pr.getCurrentDiscoveredCount());
                 model.put("CURRENT_UNDISCOVERD_COUNT", pr.getCurrentUndiscoveredCount());
-                model.put("CURRENT_ELAPSED_TIME", pr.getCurenntElapsedTimeInSeconds());
-                model.put("CURRENT_DEEPEST_FIND_POSITION", pr.getCurrentDeepestFindPosition());
+                model.put("CURRENT_ELAPSED_TIME", String.format("%,d", pr.getCurenntElapsedTimeInSeconds()));
+                model.put("CURRENT_DEEPEST_FIND_POSITION", String.format("%,d", pr.getCurrentDeepestFindPosition()));
                 model.put("CURRENT_DEEPEST_FIND", pr.getCurrentDeepestFind());
                 
 

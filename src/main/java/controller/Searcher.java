@@ -15,7 +15,7 @@ import java.util.List;
 
 public class Searcher extends Thread {
 
-    final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 100; // サバイバルリストの初期サイズ
+    final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 1000; // サバイバルリストの初期サイズ
 
     /**
      * サバイバル結果を保持するクラス(メソッド戻り値として使用)
