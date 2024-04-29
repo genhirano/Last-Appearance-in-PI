@@ -3,9 +3,11 @@ package controller;
 import lombok.Getter;
 import model.TargetRange;
 import model.pi.SurvivalList;
+import model.ycd.YCDFileUtil;
 import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -13,7 +15,7 @@ import java.util.List;
 
 public class Searcher extends Thread {
 
-    final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 100; // サバイバルリストの初期サイズ
+    final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 1000; // サバイバルリストの初期サイズ
 
     /**
      * サバイバル結果を保持するクラス(メソッド戻り値として使用)
@@ -28,7 +30,6 @@ public class Searcher extends Thread {
         }
     }
 
-    private final List<File> piFileList;
     @Getter
     private final List<File> um_piFileList;// 不変
 
@@ -41,21 +42,22 @@ public class Searcher extends Thread {
     @Getter
     private final Integer reportSpan;
 
-    public Searcher(List<File> piFileList, Integer listSize, Integer unitLength, Integer reportSpan) {
+    public Searcher(List<File> piFileList, Integer listSize, Integer unitLength, Integer reportSpan)
+            throws IOException {
         super();
 
-        this.piFileList = piFileList;
         um_piFileList = Collections.unmodifiableList(piFileList); // 外部から参照されるための不変オブジェクト
 
         this.listSize = listSize;
         this.unitLength = unitLength;
         this.reportSpan = reportSpan;
 
+        StoreController.setAllPiDataLength(YCDFileUtil.getMaxDepth(um_piFileList));
+
     }
 
     @Override
     public void run() {
-
 
         Integer survaivalListSize = SURVAIVAL_LIST_DEFAULT_SIZE; // サバイバルリストの初期サイズ
 
@@ -66,6 +68,7 @@ public class Searcher extends Thread {
 
             // １サイクルの開始時間
             ZonedDateTime startTime = ZonedDateTime.now();
+            StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", startTime);
 
             // 処理範囲の決定（次に記録する１行を定義）
             // この桁数の初めての時は、サバイバルリストの初期サイズをデフォルトに戻す
@@ -78,6 +81,10 @@ public class Searcher extends Thread {
                 // 対象レンジをデフォルトのサイズで再計算
                 targetRange = StoreController.getInstance().getCurrentTargetStartEnd(survaivalListSize);
             }
+
+            StoreController.survivalProgressMap.put("SURVIVAL_DIGIT_LENGTH", String.valueOf(targetRange.getLength()));
+
+            System.out.println("Current Digits: " + targetRange.getLength());
 
             // 1サイクルのサバイバル実行
             SurvivalResult sr = survive(targetRange);
@@ -94,6 +101,7 @@ public class Searcher extends Thread {
 
             // 次回のサバイバルリストのサイズを計算
             survaivalListSize = calcSurvivalListSize(mokuhyouSeconds, survaivalListSize, startTime, endTime);
+
         }
 
     }
@@ -116,11 +124,9 @@ public class Searcher extends Thread {
         if (SURVAIVAL_LIST_DEFAULT_SIZE > nextListSize) {
             nextListSize = SURVAIVAL_LIST_DEFAULT_SIZE;
         }
-        
+
         System.out.println("Current Survival List Size: " + currentSrvivalListSize + "  Next Survival List Size: "
                 + nextListSize + "  Process Time: " + processSeconds + "  Diff: " + diff + "  rate: " + d);
-
-
 
         return nextListSize;
 
@@ -144,9 +150,11 @@ public class Searcher extends Thread {
             SurvivalList survivalList = new SurvivalList(targetRange.getLength(),
                     Integer.valueOf(targetRange.getStart()), Integer.valueOf(targetRange.getEnd()));
 
+            StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_LIST_SIZE", String.valueOf(survivalList.size()));
+
             // YCDデータプロバイダを作成
             int overWrapLength = targetRange.getLength(); // 一つ前のケツの部分を今回の先頭に重ねる桁の長さ
-            try (YCD_SeqProvider p = new YCD_SeqProvider(this.piFileList, overWrapLength, this.unitLength);) {
+            try (YCD_SeqProvider p = new YCD_SeqProvider(this.um_piFileList, overWrapLength, this.unitLength);) {
 
                 // YCDプロバイダの作成に成功したらリトライカウントをリセット
                 continueCount = 0;
@@ -154,6 +162,9 @@ public class Searcher extends Thread {
                 // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
                 for (YCD_SeqProvider.Unit currentPi : p) {
                     System.out.print("|");
+                    
+                    Env.getInstance().getReportSpan();
+                    
                     // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
                     for (int i = survivalList.size() - 1; i >= 0; i--) {
 
@@ -181,14 +192,16 @@ public class Searcher extends Thread {
                         }
                     }
 
-                    
                     // サバイバルリストが空になったら終了
                     if (survivalList.isEmpty()) {
                         break;
                     }
 
+                    StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_LIST_SIZE",
+                            String.valueOf(survivalList.size()));
+
                 }
-                
+
             } catch (Throwable t) {
 
                 // YCDファイルの読み込みなど、仮に何かしらのエラーが発生した場合でも、ちょっと時間をおいて再起動してみる
@@ -206,11 +219,10 @@ public class Searcher extends Thread {
             // 検索終了。サバイバルリストが空になっているはず。
             // サバイバルリストが空でない場合は探しきれなかった、とする。
             if (!survivalList.isEmpty()) {
-                System.out.println(                
+                System.out.println(
                         "The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)"
-                        + "  検索できなかったもの: " + survivalList.toString()
-                        );
-                        Runtime.getRuntime().exit(-1);
+                                + "  検索できなかったもの: " + survivalList.toString());
+                Runtime.getRuntime().exit(-1);
             }
 
             System.out.println(" .end Last Appearance : [" + lastFoundTarget + "] Pos : " + lastFoundPos);

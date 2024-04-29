@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="utf-8"/>
-    <title >Last Appearance in PI Project</title>
+    <meta charset="utf-8" />
+    <title>Last Appearance in PI Project</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="google" content="notranslate">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.css">
@@ -12,106 +13,198 @@
 <!-- ヘッダー -->
 <header>
     <!-- タイトル・サブタイトル -->
-    <section class="hero is-small is-primary">
+    <section class="hero is-small is-primary has-background-primary-dark">
         <div class="hero-body">
             <h1 class="title">
-                Last Appearance in PI (PI Search Project)
+                Last Appearance in PI
             </h1>
-            <h2 class="subtitle">
-                Search for the latest appearing number in pi.
-            </h2>
+            Search for the latest appearing number in pi.<br>
+            円周率の中で最も遅く出現する数値の探索
         </div>
     </section>
 </header>
 
 <!-- ボディ -->
+
 <body>
 
-<!-- メインコンテンツ -->
-<div class="column">
-    <!-- 本文 -->
-    <article class="box media">
-        <div class="media-content">
-            <div class="content">
+    <!-- メインコンテンツ -->
+    <div class="column">
+        <!-- 本文 -->
+        <article class="box media">
+            <div class="media-content">
+                <div class="content">
+                    ServerTime :
+                    <span>2024-04-29 22:10:24.046</span></br>
+                    (please reload)
 
-                <table class="table is-narrow"  style="table-layout:fixed;">
-                    <tr>
-                        <th width="50px">progress and result (please reload!)</th>
-                    </tr>
+                    <h2>Now Progress</h2>
+                    <table class="table is-narrow">
+                        <tr>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                DIGITS:
+                            </td>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                <div>8</div>
+                            </td>
+                            <td>
+                                探索中の桁
+                            </td>
+                        </tr>
 
-                    <tr>
-                        <td width="50px">
-                            <p>digits:8  brute forced depth:01793962  (not appear:90102979) Progress: 9.897% processing time: 493326sec.</p>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                PROGRESS_RATE:
+                            </td>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                <div>10.29967%</div>
+                            </td>
+                            <td>
+                                進捗率
+                            </td>
 
-                    <tr>
-                        <td width="50px">
-                            <p>digits:7     the last appearing: &quot;1075656&quot;. depth: 166100500. process time: 57358sec.</p>
-                        </td>
-                    </tr>
+                        </tr>
 
-                    <tr>
-                        <td width="50px">
-                            <p>digits:6     the last appearing: &quot;569540&quot;. depth: 14118307. process time: 252sec.</p>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                ELAPSED_TIME(sec):
+                            </td>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                <div>846,868</div>
+                            </td>
+                            <td>
+                                この桁の探索処理時間(秒)
+                            </td>
+                        </tr>
 
-                    <tr>
-                        <td width="50px">
-                            <p>digits:5     the last appearing: &quot;33394&quot;. depth: 1369560. process time: 9sec.</p>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                NOW_DEEPEST:
+                            </td>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                "<span>01793962</span>"<br />
+                            </td>
+                            <td>
+                                現在候補
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                NOW_DEEPEST_POS:
+                            </td>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                <span>1,593,327,447</span>
+                            </td>
+                            <td>
+                                現在候補の出現場所
+                            </td>
+                        </tr>
 
-                    <tr>
-                        <td width="50px">
-                            <p>digits:4     the last appearing: &quot;6716&quot;. depth: 99846. process time: 8sec.</p>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                MAX_DEPTH:
+                            </td>
+                            <td align="right" style="width:0; white-space:nowrap;">
+                                <div>9,000,000,000,000</div>
+                            </td>
+                            <td>
+                                最大探索深度
+                            </td>
 
-                    <tr>
-                        <td width="50px">
-                            <p>digits:3     the last appearing: &quot;483&quot;. depth: 8553. process time: 8sec.</p>
-                        </td>
-                    </tr>
+                    </table>
+                </div>
 
-                    <tr>
-                        <td width="50px">
-                            <p>digits:2     the last appearing: &quot;68&quot;. depth: 605. process time: 8sec.</p>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td width="50px">
-                            <p>digits:1     the last appearing: &quot;0&quot;. depth: 32. process time: 8sec.</p>
-                        </td>
-                    </tr>
-
-                </table>
             </div>
-            <p>Max Pi Depth:0</p>
-            <p>system is 51037sec running.   since 2024/04/24 18:53:07</p>
-        </div>
-    </article>
+        </article>
 
-</div>
+        <article class="box media">
+            <div class="media-content">
+                <div class="content">
+                    <h2>Finished Result</h1>
+                        <table bclass="table is-narrow">
+                            <thead>
+                                <th>digits<br/>桁</th>
+                                <th>Appearing<br/>最終出現</th>
+                                <th>Depth<br/>出現桁</th>
+                                <th>ProcessTime(Sec)<br/>処理時間(秒)</th>
+                            </thead>
 
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>0</td>
+                                    <td>32</td>
+                                    <td>8</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>68</td>
+                                    <td>605</td>
+                                    <td>8</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>483</td>
+                                    <td>8553</td>
+                                    <td>8</td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>6716</td>
+                                    <td>99846</td>
+                                    <td>8</td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>33394</td>
+                                    <td>1369560</td>
+                                    <td>9</td>
+                                </tr>
+                                <tr>
+                                    <td>6</td>
+                                    <td>569540</td>
+                                    <td>14118307</td>
+                                    <td>252</td>
+                                </tr>
+                                <tr>
+                                    <td>7</td>
+                                    <td>1075656</td>
+                                    <td>166100500</td>
+                                    <td>57358</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                </div>
+            </div>
+        </article>
 
+        <article class="box media">
+            <div class="media-content">
+                <a class="button is-black" href="https://github.com/genhirano/Last-Appearance-in-PI" target="_blank">
+                    project github : <span class="icon"><i class="fab fa-github"></i></span>
+                </a>
+            </div>
+        </article>
+    </div>
 
-<!-- フッター -->
-<footer class="footer has-background-primary-dark has-text-white">
-    <p class="has-text-centered">
-        Copyright © 2022-2023 GENHIRANO
-    </p>
-    <p class="has-text-centered">
-        All Rights Reserved
-    </p>
-    <p align="center">
-        <a class="button is-link" href="https://www.facebook.com/genhirano" target="_blank">
-            contact : <span class="icon"><i class="fab fa-facebook"></i></span>
-        </a>
-    </p>
-</footer>
+    <!-- フッター -->
+    <footer class="footer has-background-primary-dark has-text-white">
+        <p class="has-text-centered">
+            Copyright © 2022-2024 genhirano
+        </p>
+        <p class="has-text-centered">
+            All Rights Reserved
+        </p>
+        <p align="center">
+            <a class="button is-link" href="https://www.facebook.com/genhirano" target="_blank">
+                contact : <span class="icon"><i class="fab fa-facebook"></i></span>
+            </a>
+            <a class="button is-black" href="https://github.com/genhirano" target="_blank">
+                contact : <span class="icon"><i class="fab fa-github"></i></span>
+            </a>
+        </p>
+    </footer>
 
 </body>
+
 </html>

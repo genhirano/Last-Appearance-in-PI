@@ -2,6 +2,9 @@ package controller;
 
 import org.apache.commons.lang3.StringUtils;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.*;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,17 +12,28 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import model.ProgressReportBean;
 import model.TargetRange;
 
 public class StoreController {
 
-    private static final int digitsLength = 3; // 3桁を対象。すなわち 001 - 999 桁を対象。
+    private static final int digitsLength = 3; // 対象は3桁まで。すなわち 001 - 999 桁を対象。ファイル名のゼロパティング等に使う
     private static final String digitsLengthFormat = "%0" + digitsLength + "d";
     private static final int maxDigit = Integer.valueOf(StringUtils.repeat("9", digitsLength));
+
+    public static Map<String, Object> survivalProgressMap = new HashMap<>();
+
+    @Getter
+    @Setter
+    private static Long allPiDataLength = 0L;
 
     private static StoreController instance;
 
@@ -47,7 +61,7 @@ public class StoreController {
      */
     public List<TargetRange> getNextList(Integer listSize) {
 
-        //param check
+        // param check
         if (listSize < 1) {
             throw new IllegalArgumentException("listSize must be 1 or more.");
         }
@@ -125,7 +139,7 @@ public class StoreController {
     }
 
     public TargetRange getCurrentTargetStartEnd(Integer listSize) {
-        
+
         // 次に実行すべき情報を作る
         // （すでにある保存データの一番最後の、その次として実行する情報を作る）
 
@@ -213,22 +227,73 @@ public class StoreController {
 
     }
 
+    public static ProgressReportBean getProgressReport() {
+        ProgressReportBean prb = new ProgressReportBean();
+        
+        prb.setServerTime(new Timestamp(System.currentTimeMillis()));// サーバーの現在時刻
+
+        prb.setAllPiDataLength(allPiDataLength); // 検索対象のPIデータ全桁数
+        for (Map<String, String> map : getSummary()) {
+            if (map.get("Finished").equals("false")) {
+
+                // 現在の検索対象の桁数
+                prb.setCurrentTargetLength(
+                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
+
+                // 現在までに発見されたもののうち一番深いものとその位置
+                prb.setCurrentDeepestFindPosition(Long.valueOf(map.get("Depth")));
+                prb.setCurrentDeepestFind(map.get("Appearing"));
+
+                prb.setCurrentTargetLength(
+                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
+
+                // すでに発見された数
+                Integer initialSurviavalListSize = Integer
+                        .valueOf(survivalProgressMap.get("SURVIVAL_INITIAL_LIST_SIZE").toString());
+                Integer currentSurviavalListSize = Integer
+                        .valueOf(survivalProgressMap.get("SURVIVAL_CURRENT_LIST_SIZE").toString());
+                Long discoverCount = Long.valueOf(map.get("DiscoveredCount"))
+                        + (initialSurviavalListSize - currentSurviavalListSize);
+                prb.setCurrentDiscoveredCount(discoverCount);
+
+                // 未発見の数
+                Integer allMax = Integer.valueOf(StringUtils.repeat("9",
+                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString())));
+                Long undiscoverCount = allMax - discoverCount;
+                prb.setCurrentUndiscoveredCount(undiscoverCount);
+
+                // 開始からの経過時間（秒）
+                // 処理開始と処理終了の時間差（実行時間）を計算
+                Long allSec = Long.valueOf(map.get("ProcessTimeSec")); 
+                ZonedDateTime startTime = (ZonedDateTime) StoreController.survivalProgressMap
+                        .get("SURVIVAL_CURRENT_START_TIME");
+                ZonedDateTime endTime = ZonedDateTime.now();
+                Long survivalSec = Duration.between(startTime, endTime).getSeconds();
+                prb.setCurenntElapsedTimeInSeconds(allSec + survivalSec);
+
+            } else {
+                prb.getResult().add(map);
+            }
+        }
+        return prb;
+    }
+
     /**
      * 全ての結果保存ファイルからサマリーを取得.
      *
      * @return サマリー表現文字列リスト(画面表示用にフォーマットされた文字列リスト)
      */
-    public List<String> getSummary() {
+    public static List<Map<String, String>> getSummary() {
 
         // 結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
 
-        List<String> retList = new ArrayList<>();
+        List<Map<String, String>> retList = new ArrayList<>();
 
         // 全保存ファイルを対象。小さい順に処理。
         for (int i = 1; i <= Integer.MAX_VALUE; i++) {
 
-            String answer = "";
+            Map<String, String> map = new HashMap<>();
 
             String filename = String.format(digitsLengthFormat, i) + ".txt";
             File file = new File(storeFilePath + "/" + filename);
@@ -240,15 +305,15 @@ public class StoreController {
 
             // サマリ文字列作成開始
             // タイトル
-            answer = answer + "digits:" + i;
+            map.put("digits", String.valueOf(i));
 
             // 保存用ファイルから全データ読み込み
             List<String> lines = null;
             try {
                 lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
 
-                String maxDepthStr = "";
-                Long maxDepth = Long.MIN_VALUE;
+                String deepestStr = "";
+                Long deepestDepth = Long.MIN_VALUE;
                 Long allSec = 0L;
 
                 // 保存レコードループ
@@ -261,9 +326,9 @@ public class StoreController {
                     allSec = allSec + Long.valueOf(splited[4]);
 
                     // これまでで最大深度であれば一番遅い可能性あり。メモ更新
-                    if (depth > maxDepth) {
-                        maxDepth = depth;
-                        maxDepthStr = splited[2];
+                    if (depth > deepestDepth) {
+                        deepestDepth = depth;
+                        deepestStr = splited[2];
                     }
 
                 }
@@ -273,8 +338,7 @@ public class StoreController {
 
                 if (lastLine.isEmpty()) {
                     // ファイルに一行もない場合は、単純に「初期化中」としておこう。。
-                    answer = answer + " initializeing progress...";
-                    retList.add(answer);
+                    retList.add(map);
                     break;
                 }
 
@@ -284,23 +348,19 @@ public class StoreController {
                 // 進捗状況
                 Integer allMax = Integer.valueOf(StringUtils.repeat("9", i));
                 if (allMax.equals(Integer.valueOf(lastSplited[1]))) {
-                    // 最後まで到達していたら進捗100％とする
-                    answer = answer + "     the last appearing: \"" + maxDepthStr + "\".";
-                    answer = answer + " depth: " + maxDepth + ".";
-                    answer = answer + " process time: " + allSec + "sec.";
+                    // 最後まで到達しているもの
+                    map.put("Finished", "true");
                 } else {
-                    // 処理中の進捗取得
-                    double d = (Double.valueOf(lastSplited[1]) / allMax) * 100;
-                    double progress = ((double) Math.round(d * 1000)) / 1000;
-
-                    answer = answer + "  brute forced depth:" + maxDepthStr;
-                    answer = answer + "  (not appear:" + (allMax - Integer.valueOf(lastSplited[2])) + ")";
-                    answer = answer + " Progress: " + progress + "%";
-                    answer = answer + " processing time: " + allSec + "sec.";
+                    // 処理中
+                    map.put("Finished", "false");
                 }
+                map.put("Appearing", deepestStr);
+                map.put("Depth", String.valueOf(deepestDepth));
+                map.put("DiscoveredCount", lastSplited[1]);
+                map.put("ProcessTimeSec", String.valueOf(allSec));
 
                 // このファイルのサマリ（画面表示などで使える文字列）をリストに追加
-                retList.add(answer);
+                retList.add(map);
 
             } catch (IOException e) {
                 throw new RuntimeException("fatal file read! " + file.getName(), e);
@@ -311,8 +371,7 @@ public class StoreController {
         return retList;
 
     }
-    
-    
+
     public void saveHTML() {
         // HttpClient インスタンスを作成
         HttpClient httpClient = HttpClient.newHttpClient();
@@ -329,12 +388,11 @@ public class StoreController {
             // レスポンスコードを取得
             int statusCode = response.statusCode();
             System.out.println("Response Code: " + statusCode);
-        
+
         } catch (Exception e) {
             // エラーが発生した場合の処理
             e.printStackTrace();
         }
     }
-
 
 }
