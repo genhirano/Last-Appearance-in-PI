@@ -40,7 +40,7 @@ public class Main {
             List<File> piFileList = env.createFileListByProp();
 
             // バックグラウンドで検索処理開始
-            Searcher searcher = new Searcher(piFileList, env.getListSize(), env.getUnitLength(), env.getReportSpan());
+            Searcher searcher = new Searcher(piFileList, env.getListSize(), env.getUnitLength());
             searcher.start();
 
         } catch (Exception e) {

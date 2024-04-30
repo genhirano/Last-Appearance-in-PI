@@ -18,7 +18,6 @@ public class Env {
         outputPath(),
         listSize(),
         unitLength(),
-        reportSpan(),
         port(),
         ;
 
@@ -56,13 +55,6 @@ public class Env {
     }
     public void setUnitLength(Integer value){
         this.prop.setProperty(Env.PropKey.unitLength.toString(), value.toString());
-    }
-
-    public Integer getReportSpan(){
-        return Integer.valueOf(prop.getProperty(Env.PropKey.reportSpan.toString()));
-    }
-    public void setReportSpan(Integer value){
-        this.prop.setProperty(Env.PropKey.reportSpan.toString(), value.toString());
     }
 
     public Integer getPortNo(){
