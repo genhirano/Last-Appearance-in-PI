@@ -38,7 +38,6 @@ public class Searcher extends Thread {
     @Getter
     private final Integer unitLength;
 
-
     public Searcher(List<File> piFileList, Integer listSize, Integer unitLength)
             throws IOException {
         super();
@@ -56,8 +55,6 @@ public class Searcher extends Thread {
     public void run() {
 
         Integer survaivalListSize = Env.getInstance().getListSize(); // サバイバルリストの初期サイズ
-        
-
 
         // 検索処理のメインループ
         while (true) {
@@ -108,8 +105,8 @@ public class Searcher extends Thread {
         Long lastFoundPos = -1L;
 
         SurvivalList survivalList = null;
-      
-        //サバイバルリストの作成フラグ
+
+        // サバイバルリストの作成フラグ
         Boolean goSurvivalListRemake = true;
 
         while (true) {
@@ -120,13 +117,13 @@ public class Searcher extends Thread {
 
             // 今回のサバイバルリストの作成フラグがONの場合はサバイバルリストを作成
             // IOエラーなどで再度読み込みする場合は再作成しない
-            if(goSurvivalListRemake){
-                survivalList = new SurvivalList(targetRange.getLength(),
-                Integer.valueOf(targetRange.getStart()), Integer.valueOf(targetRange.getEnd()));
+            if (goSurvivalListRemake) {
+                survivalList = new SurvivalList(targetRange.getLength(), Integer.valueOf(targetRange.getStart()),
+                        Integer.valueOf(targetRange.getEnd()));
+                StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_LIST_SIZE",
+                        String.valueOf(survivalList.size()));
             }
             goSurvivalListRemake = true; // サバイバルリストの再作成フラグをON
-
-            StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_LIST_SIZE", String.valueOf(survivalList.size()));
 
             // YCDデータプロバイダを作成
             int overWrapLength = targetRange.getLength(); // 一つ前のケツの部分を今回の先頭に重ねる桁の長さ
@@ -137,8 +134,9 @@ public class Searcher extends Thread {
 
                 // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
                 for (YCD_SeqProvider.Unit currentPi : p) {
-                    System.out.println("[NEXT UNIT] CurenntSurvivalCount: " + survivalList.size() + ", LastFindPos: " + lastFoundPos + " CurrentPos: " + currentPi.getStartDigit());
-                    
+                    System.out.println("[NEXT UNIT] CurenntSurvivalCount: " + survivalList.size() + ", LastFindPos: "
+                            + lastFoundPos + " CurrentPos: " + currentPi.getStartDigit());
+
                     // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
                     for (int i = survivalList.size() - 1; i >= 0; i--) {
 
@@ -162,12 +160,12 @@ public class Searcher extends Thread {
                             survivalList.remove(i);
 
                             StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_LIST_SIZE",
-                            String.valueOf(survivalList.size()));
+                                    String.valueOf(survivalList.size()));
 
-                            if(survivalList.size() % 100 == 0){
+                            if (survivalList.size() % 100 == 0) {
                                 System.out.print(".");
                             }
-                            
+
                         }
                     }
 
@@ -175,7 +173,6 @@ public class Searcher extends Thread {
                     if (survivalList.isEmpty()) {
                         break;
                     }
-
 
                 }
 
