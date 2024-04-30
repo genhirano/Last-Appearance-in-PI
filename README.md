@@ -138,17 +138,15 @@ Why not?
 # Web server port
 port=8080
 
-# result output path (結果ファイルの吐き出し先)
+# result output path (結果ファイルの吐き出し先パス)
 outputPath=./
 
 # searches per cycle (1サイクルあたりの検索数)
 listSize=500
 
 # read pi data per cycle (円周率データの１回の読み込み長さ)
+# Multiples of 19 are desirable (19の倍数が望ましい)
 unitLength=1900
-
-# debug console report span
-reportSpan=50000
 
 # Pi files (ycd Files)
 ycd000=X:/ycdFile/Pi - Dec - Chudnovsky - 0.ycd
