@@ -14,8 +14,6 @@ import java.util.List;
 
 public class Searcher extends Thread {
 
-    final Integer SURVAIVAL_LIST_DEFAULT_SIZE = 1000; // サバイバルリストの初期サイズ
-
     /**
      * サバイバル結果を保持するクラス(メソッド戻り値として使用)
      */
@@ -69,7 +67,7 @@ public class Searcher extends Thread {
             if (targetRange.getStart().replaceAll("0", "").isEmpty()) {
 
                 // サバイバルリストを初期サイズとする
-                survaivalListSize = SURVAIVAL_LIST_DEFAULT_SIZE;
+                survaivalListSize = Env.getInstance().getListSize();
 
                 // 対象レンジをデフォルトのサイズで再計算
                 targetRange = StoreController.getInstance().getCurrentTargetStartEnd(survaivalListSize);
@@ -196,7 +194,7 @@ public class Searcher extends Thread {
             if (!survivalList.isEmpty()) {
                 System.out.println(
                         "The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)"
-                                + "  検索できなかったもの: " + survivalList.toString());
+                                + "  検索できなかったものの一例: " + survivalList.get(0));
                 Runtime.getRuntime().exit(-1);
             }
 
