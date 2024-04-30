@@ -3,12 +3,12 @@ import controller.Searcher;
 import org.junit.jupiter.api.TestInfo;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class SearcherTest extends TestBase{
 
     @org.junit.jupiter.api.Test
-    void 一般テスト(TestInfo testInfo) throws FileNotFoundException  {
+    void 一般テスト(TestInfo testInfo) throws IOException  {
 
         String path = new File(".").getAbsoluteFile().getParent();
         Env.setPropFileName(path + "/src/test/resources/test.properties");
@@ -16,7 +16,7 @@ public class SearcherTest extends TestBase{
         Env.getInstance().setListSize(10);
         Env.getInstance().setUnitLength(1900);
 
-        Searcher searcher = new Searcher(Env.getInstance().createFileListByProp(), Env.getInstance().getListSize(), Env.getInstance().getUnitLength(), Env.getInstance().getReportSpan());
+        Searcher searcher = new Searcher(Env.getInstance().createFileListByProp(), Env.getInstance().getListSize(), Env.getInstance().getUnitLength());
         searcher.start();
 
         //検索スレッドの終了まち。なくても良いが、テストしやすい。
