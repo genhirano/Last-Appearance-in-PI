@@ -15,7 +15,6 @@ public class SearcherTest extends TestBase{
 
         Env.getInstance().setListSize(10);
         Env.getInstance().setUnitLength(1900);
-        Env.getInstance().setReportSpan(100);
 
         Searcher searcher = new Searcher(Env.getInstance().createFileListByProp(), Env.getInstance().getListSize(), Env.getInstance().getUnitLength(), Env.getInstance().getReportSpan());
         searcher.start();

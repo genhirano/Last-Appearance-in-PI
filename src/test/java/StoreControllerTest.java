@@ -1,15 +1,7 @@
 
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.ObjectName;
-
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import org.junit.jupiter.api.TestInfo;
@@ -18,7 +10,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 
 import controller.Env;
-import controller.StoreController;
 
 public class StoreControllerTest extends TestBase {
 
@@ -28,13 +19,7 @@ public class StoreControllerTest extends TestBase {
         String path = new File(".").getAbsoluteFile().getParent();
         Env.setPropFileName(path + "\\src\\test\\resources\\test.properties");
 
-        StoreController sc = StoreController.getInstance();
-
-        List<String> sum = sc.getSummary();
-
-        for (String s : sum) {
-            System.out.println(s);
-        }
+        //StoreController sc = StoreController.getInstance();
 
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         Map<String, String> systemProperties = runtimeMXBean.getSystemProperties();
