@@ -78,10 +78,18 @@ public class Web {
 
                 model.put("SERVER_TIME", pr.getServerTime());
 
-                Integer allMax = Integer.valueOf(StringUtils.repeat("9", pr.getCurrentTargetLength()));
+
+                Integer allMax = -1;
+                if(null != pr.getCurrentTargetLength()){
+                    allMax = Integer.valueOf(StringUtils.repeat("9", pr.getCurrentTargetLength()));
+                }
                 
-                double d = (pr.getCurrentDiscoveredCount() / (double)allMax) * 100;
-                double progress = ((double) Math.round(d * 100000)) / 100000;
+
+                double progress = 0.0;
+                if(null != pr.getCurrentDiscoveredCount()){
+                    double d = (pr.getCurrentDiscoveredCount() / (double)allMax) * 100;
+                    progress = ((double) Math.round(d * 100000)) / 100000;
+                }
                 model.put("CURRENT_PROGRESS_RATE", progress);
 
 
