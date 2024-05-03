@@ -76,7 +76,7 @@ Why not?
 え?
 
 ## IMAGE
-![web](https://user-images.githubusercontent.com/3538386/229020000-79905d0f-f9e7-4521-bd27-d94482eebae9.JPG)
+![image](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/bca89ca7-f0df-49ab-98df-bdd8591b3b27)
 
 ## このプロジェクトのポイント
 * Just as a hobby（あくまでも趣味）
