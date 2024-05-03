@@ -1,4 +1,4 @@
-**現在のリアルタイム進捗**  → [https://genhirano.coresv.com/](https://genhirano.coresv.com/)
+**【リアルタイム進捗はこちら】→**   [https://genhirano.coresv.com/](https://genhirano.coresv.com/)
 
 ---
 
