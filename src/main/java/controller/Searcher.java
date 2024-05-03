@@ -45,7 +45,7 @@ public class Searcher extends Thread {
         this.listSize = listSize;
         this.unitLength = unitLength;
 
-        StoreController.setAllPiDataLength(YCDFileUtil.getMaxDepth(um_piFileList));
+        StoreController.setAllPiDataLength(YCDFileUtil.getAllDigitsCount(um_piFileList));
 
     }
 

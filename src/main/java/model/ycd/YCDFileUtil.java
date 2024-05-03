@@ -190,19 +190,17 @@ public class YCDFileUtil {
 
     }
 
-    //ファイルリストの最終桁を返す
-    public static Long getMaxDepth(List<File> fileList) throws IOException {
+    //ファイルリストの総桁数を返す
+    public static Long getAllDigitsCount(List<File> fileList) throws IOException {
 
-        Long maxDepth = 0L;
+        Long maxDigit = 0L;
         for(File f : fileList){
             Map<YCDHeaderInfoElem, String> fileInfoMap = getYCDHeader(f.getPath());
-
-            Integer blockID = Integer.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_ID));
             Long blockSize = Long.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_SIZE));
-            maxDepth = maxDepth + ((blockID + 1L) * blockSize);
+            maxDigit = maxDigit + blockSize;
         }
 
-        return maxDepth;
+        return maxDigit;
     }
 
 
