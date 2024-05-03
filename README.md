@@ -1,8 +1,9 @@
+リアルタイム探索状況 → [https://genhirano.coresv.com/](https://genhirano.coresv.com/)
+
+---
+
 # Last-Appearance-in-PI
 円周率の中で最も遅く出現する数値の探索
-
-### 探索状況（リアルタイム）
-[https://genhirano.coresv.com/](https://genhirano.coresv.com/)
 
 ## PROJECT OVERVIEW
 「円周率の中には、この世の中のあらゆるすべての数列が含まれている」と言われていますが本当でしょうか。  
