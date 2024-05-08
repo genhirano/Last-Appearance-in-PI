@@ -5,6 +5,7 @@ import spark.template.thymeleaf.ThymeleafTemplateEngine;
 
 import java.io.File;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,6 +54,9 @@ public class Web {
             @Override
             public ModelAndView handle(Request req, Response resp) throws Exception {
 
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                
                 // ビューに渡すデータ作成
                 ProgressReportBean pr = StoreController.getProgressReport();
                 Map<String, Object> model = new HashMap<>();
@@ -65,18 +69,24 @@ public class Web {
                 model.put("RUNNING_TIME", pr.getCurenntElapsedTimeInSeconds());
 
                 model.put("CURRENT_DIGITS", pr.getCurrentTargetLength());
+
+                model.put("CURRENT_DIGITS_MIN", StringUtils.repeat("0", pr.getCurrentTargetLength()));
+                model.put("CURRENT_DIGITS_MAX", StringUtils.repeat("9", pr.getCurrentTargetLength()));
+
                 model.put("CURRENT_UNDISCOVERD_COUNT", pr.getCurrentUndiscoveredCount());
                 model.put("CURRENT_ELAPSED_TIME", String.format("%,d", pr.getCurenntElapsedTimeInSeconds()));
 
                 model.put("CURRENT_DEEPEST_FIND", pr.getCurrentDeepestFind());
                 model.put("CURRENT_DEEPEST_FIND_POSITION", String.format("%,d", pr.getCurrentDeepestFindPosition()));
 
-                model.put("SERVER_TIME", pr.getServerTime());
+                model.put("SERVER_TIME", pr.getServerTime().format(formatter));
 
                 Integer allMax = -1;
                 if (null != pr.getCurrentTargetLength()) {
                     allMax = Integer.valueOf(StringUtils.repeat("9", pr.getCurrentTargetLength()));
                 }
+
+
 
                 model.put("CURRENT_DISCOVERD_COUNT", pr.getCurrentDiscoveredCount());
                 model.put("CURRENT_UNDISCOVERD_COUNT", (allMax + 1) - pr.getCurrentDiscoveredCount());
@@ -86,6 +96,10 @@ public class Web {
                     progress = ((double) Math.round(d * 100000)) / 100000;
                 }
                 model.put("CURRENT_PROGRESS_RATE", progress);
+
+                Double speed = (double) pr.getCurrentDiscoveredCount() / (double) pr.getCurenntElapsedTimeInSeconds();
+
+                model.put("CURRENT_SPEED", ((double) Math.round(speed * 1000)) / 1000);
 
                 // サバイバルリストの初期サイズ
                 Integer SurvivalListInitialSize = 1 + Integer.valueOf(pr.getInitSurvivalInfo().getEnd())
@@ -105,12 +119,12 @@ public class Web {
                 model.put("CURRENT_SURVIVAL_START", pr.getInitSurvivalInfo().getStart());
                 model.put("CURRENT_SURVIVAL_END", pr.getInitSurvivalInfo().getEnd());
 
+                String formattedString = pr.getCurenntSurvivalStartTime().format(formatter);
+
+                model.put("CURRENT_SURVIVAL_START_DATETIME", formattedString);
+                model.put("CURRENT_SURVIVAL_ELAPSED_TIME", pr.getCurrentSurvivalElapsedSeconds());
 
                 model.put("CURRENT_SURVIVAL_DEPTH", String.format("%,d", pr.getCurenntSurvivalDepth()));
-                
-
-                
-
 
                 ModelAndView modelAndView = new ModelAndView(model, "index");
 

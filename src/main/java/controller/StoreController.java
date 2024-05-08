@@ -230,7 +230,8 @@ public class StoreController {
     public static ProgressReportBean getProgressReport() {
         ProgressReportBean prb = new ProgressReportBean();
 
-        prb.setServerTime(new Timestamp(System.currentTimeMillis()));// サーバーの現在時刻
+        prb.setServerTime(ZonedDateTime.now());// サーバーの現在時刻
+
 
         prb.setAllPiDataLength(allPiDataLength); // 検索対象のPIデータ全桁数
         for (Map<String, String> map : getSummary()) {
@@ -262,6 +263,12 @@ public class StoreController {
 
                 prb.setCurenntSurvivalDepth((Long)survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
 
+
+                ZonedDateTime survivalStartTime = (ZonedDateTime)survivalProgressMap.get("SURVIVAL_CURRENT_START_TIME");
+                prb.setCurenntSurvivalStartTime(survivalStartTime);
+                Long survivalSec = Duration.between(survivalStartTime, ZonedDateTime.now()).getSeconds();
+                prb.setCurrentSurvivalElapsedSeconds(survivalSec);
+                
                 // [全体]すでに発見された数
                 Integer nowDiscoverCount = discoverdCount + initialSurviavalListSize - currentSurviavalListSize;
                 prb.setCurrentDiscoveredCount(nowDiscoverCount);
@@ -284,11 +291,9 @@ public class StoreController {
                 // 開始からの経過時間（秒）
                 // 処理開始と処理終了の時間差（実行時間）を計算
                 Long allSec = Long.valueOf(map.get("ProcessTimeSec"));
-                ZonedDateTime startTime = (ZonedDateTime) StoreController.survivalProgressMap
-                        .get("SURVIVAL_CURRENT_START_TIME");
                 ZonedDateTime endTime = ZonedDateTime.now();
-                Long survivalSec = Duration.between(startTime, endTime).getSeconds();
-                prb.setCurenntElapsedTimeInSeconds(allSec + survivalSec);
+                Long elapsedSec = Duration.between(survivalStartTime, endTime).getSeconds();
+                prb.setCurenntElapsedTimeInSeconds(allSec + elapsedSec);
 
             } else {
                 prb.getResult().add(map);

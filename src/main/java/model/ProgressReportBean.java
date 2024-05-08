@@ -1,6 +1,7 @@
 package model;
 
 import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,7 @@ public class ProgressReportBean {
 
     @Getter
     @Setter
-    private Timestamp serverTime;// サーバーの現在時刻
+    private ZonedDateTime serverTime;// サーバーの現在時刻
 
     @Getter
     @Setter
@@ -62,6 +63,17 @@ public class ProgressReportBean {
     @Setter
     private Long curenntSurvivalDepth; // カレントユニットの現在探索深さ
 
+
+    @Getter
+    @Setter
+    ZonedDateTime curenntSurvivalStartTime; // カレントサバイバルの開始時間
+
+    @Getter
+    @Setter
+    Long currentSurvivalElapsedSeconds;// カレントサバイバルの処理時間(Sec)
+ 
+
+    
     public ProgressReportBean() {
         this.result = new ArrayList<>();
     }

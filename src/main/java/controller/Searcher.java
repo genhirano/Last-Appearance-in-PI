@@ -107,6 +107,9 @@ public class Searcher extends Thread {
         // サバイバルリストの作成フラグ
         Boolean goSurvivalListRemake = true;
 
+        // このサバイバルのスタート時間を記録
+        StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
+
         while (true) {
 
             if (5 < continueCount) {
@@ -123,6 +126,7 @@ public class Searcher extends Thread {
 
                 // 進捗情報用サバイバルリスト初期情報の登録
                 StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
+
             }
             goSurvivalListRemake = true; // サバイバルリストの再作成フラグをON
 
@@ -138,8 +142,9 @@ public class Searcher extends Thread {
                     System.out.println("[NEXT UNIT] CurenntSurvivalCount: " + survivalList.size() + ", LastFindPos: "
                             + lastFoundPos + " CurrentPos: " + currentPi.getStartDigit());
 
-                    //現在の検索深さを記録
-                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",currentPi.getStartDigit() + currentPi.getData().length());
+                    // 現在の検索深さを記録
+                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
+                            currentPi.getStartDigit() + currentPi.getData().length());
 
                     // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
                     for (int i = survivalList.size() - 1; i >= 0; i--) {
@@ -163,7 +168,7 @@ public class Searcher extends Thread {
                             // サバイバルリストからヒットした要素を削除
                             survivalList.remove(i);
 
-                            StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE",survivalList.size());
+                            StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
 
                             if (survivalList.size() % 100 == 0) {
                                 System.out.print(".");

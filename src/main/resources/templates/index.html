@@ -38,12 +38,16 @@
                     <h2>Now <span style="font-weight: bold; font-size: 60px;"
                             th:text=" '&quot;' +  ${CURRENT_DIGITS} + '&quot;'">&quot;9&quot;</span> Digits Processing..
                     </h2>
+                    "<span th:text="${CURRENT_DIGITS_MIN}">000000000</span>"
+                    -
+                    "<span th:text="${CURRENT_DIGITS_MAX}">999999999</span>"
+                    <br />
                     現在 "<span th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..
                 </div>
 
                 <table style="width:0; white-space:nowrap;" class="table is-narrow ">
 
-                    
+
 
                     <tr>
                         <td align="right" style="width:0; white-space:nowrap;">
@@ -86,6 +90,9 @@
 
                     </tr>
 
+
+
+
                     <tr>
                         <td align="right" style="width:0; white-space:nowrap;">
                             Process Time(sec):
@@ -98,6 +105,21 @@
                             探索処理時間(秒)
                         </td>
                     </tr>
+
+                    <tr>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            One Discovery / sec:
+                        </td>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            <span class="has-text-weight-bold" th:text="${CURRENT_SPEED} + '/sec'">9999/sec</span>
+                        </td>
+                        <td>
+                            個/秒
+                        </td>
+                    </tr>
+
+
+
                 </table>
 
                 <p style="font-size: smaller;">
@@ -146,25 +168,25 @@
                                     </td>
                                     <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
                                         "<span th:text="${CURRENT_SURVIVAL_START}">9999999</span>"
-                                             - 
-                                             "<span th:text="${CURRENT_SURVIVAL_END}"  >9999999</span>"
+                                        -
+                                        "<span th:text="${CURRENT_SURVIVAL_END}">9999999</span>"
                                     </td>
                                     <td>
                                         現在の探索ユニット
                                     </td>
                                 </tr>
-                                
-                                
+
+
 
                                 <tr>
                                     <td align="right" style="width:0; white-space:nowrap;">
-                                        Count:
+                                        Size:
                                     </td>
                                     <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
                                         <span th:text="${CURRENT_SURVIVAL_INITIAL_COUNT}">9999999</span>
                                     </td>
                                     <td>
-                                       ユニットの対象数
+                                        ユニットの対象数
                                     </td>
                                 </tr>
 
@@ -178,7 +200,7 @@
                                         <span th:text="${CURRENT_SURVIVAL_DISCOVERD_COUNT}">9999999</span>
                                     </td>
                                     <td>
-                                       ユニット内発見数
+                                        ユニット内発見数
                                     </td>
                                 </tr>
 
@@ -190,7 +212,7 @@
                                         <span th:text="${CURRENT_SURVIVAL_DISCOVERD_RATE}">9999999</span>%
                                     </td>
                                     <td>
-                                       ユニット進捗
+                                        ユニット進捗
                                     </td>
                                 </tr>
 
@@ -203,15 +225,40 @@
                                         <span th:text="${CURRENT_SURVIVAL_DEPTH}">9999999</span>
                                     </td>
                                     <td>
-                                       ユニット探索深さ
+                                        ユニット探索深さ
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Start Datetime:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span th:text="${CURRENT_SURVIVAL_START_DATETIME}">9999999</span>
+                                    </td>
+                                    <td>
+                                        開始日時
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Process Time(sec):
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span th:text="${CURRENT_SURVIVAL_ELAPSED_TIME}">9999999</span>
+                                    </td>
+                                    <td>
+                                        経過時間(秒)
                                     </td>
                                 </tr>
 
 
-                                
 
 
-                                
+
+
+
 
                             </table>
                         </div>
