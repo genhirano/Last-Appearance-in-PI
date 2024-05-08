@@ -229,7 +229,7 @@ public class StoreController {
 
     public static ProgressReportBean getProgressReport() {
         ProgressReportBean prb = new ProgressReportBean();
-        
+
         prb.setServerTime(new Timestamp(System.currentTimeMillis()));// サーバーの現在時刻
 
         prb.setAllPiDataLength(allPiDataLength); // 検索対象のPIデータ全桁数
@@ -247,24 +247,43 @@ public class StoreController {
                 prb.setCurrentTargetLength(
                         Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
 
-                // すでに発見された数
-                Integer initialSurviavalListSize = Integer
-                        .valueOf(survivalProgressMap.get("SURVIVAL_INITIAL_LIST_SIZE").toString());
-                Integer currentSurviavalListSize = Integer
-                        .valueOf(survivalProgressMap.get("SURVIVAL_CURRENT_LIST_SIZE").toString());
-                Long discoverCount = Long.valueOf(map.get("DiscoveredCount"))
-                        + (initialSurviavalListSize - currentSurviavalListSize);
-                prb.setCurrentDiscoveredCount(discoverCount);
 
-                // 未発見の数
-                Integer allMax = Integer.valueOf(StringUtils.repeat("9",
-                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString())));
-                Long undiscoverCount = allMax - discoverCount;
+
+
+                //保存済みの探索終了数
+                Integer discoverdCount = Integer.valueOf(map.get("DiscoveredCount"));
+
+                //現在のサバイバルリストの状況
+                TargetRange tr =  ((TargetRange)survivalProgressMap.get("SURVIVAL_INITIAL_INFO"));
+                Integer initialSurviavalListSize = Integer.valueOf(tr.getEnd()) - Integer.valueOf(tr.getStart());
+                Integer currentSurviavalListSize = (Integer)survivalProgressMap.get("NOW_SURVIVAL_LIST_SIZE");
+                prb.setInitSurvivalInfo(tr);
+                prb.setCurenntSurvivalDiscoveredCount(initialSurviavalListSize - currentSurviavalListSize);
+
+                prb.setCurenntSurvivalDepth((Long)survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
+
+                // [全体]すでに発見された数
+                Integer nowDiscoverCount = discoverdCount + initialSurviavalListSize - currentSurviavalListSize;
+                prb.setCurrentDiscoveredCount(nowDiscoverCount);
+
+                // [全体]未発見の数
+                Integer allMax = Integer.valueOf(StringUtils.repeat("9", tr.getLength()));
+                Integer undiscoverCount = allMax - nowDiscoverCount;
                 prb.setCurrentUndiscoveredCount(undiscoverCount);
+
+
+
+
+                //カレントサバイバルリスト関連
+
+
+
+
+
 
                 // 開始からの経過時間（秒）
                 // 処理開始と処理終了の時間差（実行時間）を計算
-                Long allSec = Long.valueOf(map.get("ProcessTimeSec")); 
+                Long allSec = Long.valueOf(map.get("ProcessTimeSec"));
                 ZonedDateTime startTime = (ZonedDateTime) StoreController.survivalProgressMap
                         .get("SURVIVAL_CURRENT_START_TIME");
                 ZonedDateTime endTime = ZonedDateTime.now();

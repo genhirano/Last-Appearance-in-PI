@@ -41,6 +41,65 @@
                     現在 "<span th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..
                 </div>
 
+                <table style="width:0; white-space:nowrap;" class="table is-narrow ">
+
+                    
+
+                    <tr>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            Discoverd Count:
+                        </td>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            <div class="has-text-weight-bold" th:text="${CURRENT_DISCOVERD_COUNT}">
+                                9999999</div>
+                        </td>
+                        <td>
+                            発見済
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            Undiscoverd Count:
+                        </td>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            <div class="has-text-weight-bold" th:text="${CURRENT_UNDISCOVERD_COUNT}">
+                                9999999</div>
+                        </td>
+                        <td>
+                            未発見
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            Progress:
+                        </td>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            <div class="has-text-weight-bold" th:text="${CURRENT_PROGRESS_RATE}+'%'">
+                                9999999%</div>
+                        </td>
+                        <td>
+                            進捗率
+                        </td>
+
+                    </tr>
+
+                    <tr>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            Process Time(sec):
+                        </td>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            <div class="has-text-weight-bold" th:text="${CURRENT_ELAPSED_TIME}">9999999
+                            </div>
+                        </td>
+                        <td>
+                            探索処理時間(秒)
+                        </td>
+                    </tr>
+                </table>
+
                 <p style="font-size: smaller;">
                     I have pi data with
                     <span class="has-text-weight-bold" th:text="${YCD_MAX_DEPTH}">999,999,999,999</span>
@@ -64,45 +123,96 @@
                         <div class="content">
                             <H2>Progress Information</H2>
                             <table style="width:0; white-space:nowrap;" class="table is-narrow ">
-                                <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        Progress Rate:
-                                    </td>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        <div class="has-text-weight-bold" th:text="${CURRENT_PROGRESS_RATE}+'%'">9999999%</div>
-                                    </td>
-                                    <td>
-                                        進捗率
-                                    </td>
 
-                                </tr>
 
                                 <tr>
                                     <td align="right" style="width:0; white-space:nowrap;">
-                                        Process Time(sec):
-                                    </td>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        <div class="has-text-weight-bold" th:text="${CURRENT_ELAPSED_TIME}">9999999</div>
-                                    </td>
-                                    <td>
-                                        探索処理時間(秒)
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        Now Deepest:<br/>
+                                        Now Deepest:<br />
                                         Appearing Position:</br>
                                     </td>
                                     <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        "<span th:text="'' + ${CURRENT_DEEPEST_FIND}">9999999</span>"<br />
+                                        "<span th:text="${CURRENT_DEEPEST_FIND}">9999999</span>"<br />
                                         <span th:text="${CURRENT_DEEPEST_FIND_POSITION}">9,999,999</span>
                                     </td>
                                     <td>
-                                        現在の最遅出現<br/>
+                                        現在の最遅出現<br />
                                         場所
                                     </td>
                                 </tr>
+
+                                <tr>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Now Unit:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        "<span th:text="${CURRENT_SURVIVAL_START}">9999999</span>"
+                                             - 
+                                             "<span th:text="${CURRENT_SURVIVAL_END}"  >9999999</span>"
+                                    </td>
+                                    <td>
+                                        現在の探索ユニット
+                                    </td>
+                                </tr>
+                                
+                                
+
+                                <tr>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Count:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span th:text="${CURRENT_SURVIVAL_INITIAL_COUNT}">9999999</span>
+                                    </td>
+                                    <td>
+                                       ユニットの対象数
+                                    </td>
+                                </tr>
+
+
+
+                                <tr>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Discoverd:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span th:text="${CURRENT_SURVIVAL_DISCOVERD_COUNT}">9999999</span>
+                                    </td>
+                                    <td>
+                                       ユニット内発見数
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Process Rate:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span th:text="${CURRENT_SURVIVAL_DISCOVERD_RATE}">9999999</span>%
+                                    </td>
+                                    <td>
+                                       ユニット進捗
+                                    </td>
+                                </tr>
+
+
+                                <tr>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Process Depth:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span th:text="${CURRENT_SURVIVAL_DEPTH}">9999999</span>
+                                    </td>
+                                    <td>
+                                       ユニット探索深さ
+                                    </td>
+                                </tr>
+
+
+                                
+
+
+                                
+
                             </table>
                         </div>
                     </div>
@@ -126,7 +236,7 @@
                                         <th>Position<br />出現桁</th>
                                         <th>ProcessTime(Sec)<br />処理時間(秒)</th>
                                     </thead>
-        
+
                                     <tbody>
                                         <tr th:each="map : ${DATA}">
                                             <td th:text="${map.get('digits')}"></td>
@@ -137,7 +247,7 @@
                                     </tbody>
                                 </table>
 
-                            </div>
+                        </div>
                     </div>
                 </div>
         </section>

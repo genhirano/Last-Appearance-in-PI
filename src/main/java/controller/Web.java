@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import model.ProgressReportBean;
+import model.pi.SurvivalList;
 
 import static spark.Spark.*;
 import static spark.debug.DebugScreen.enableDebugScreen;
@@ -55,42 +56,60 @@ public class Web {
                 // ビューに渡すデータ作成
                 ProgressReportBean pr = StoreController.getProgressReport();
                 Map<String, Object> model = new HashMap<>();
-                //Collections.reverse(pr.getResult());
-                
-                
-                model.put("DATA", pr.getResult());//検索終了
-                
+                // Collections.reverse(pr.getResult());
 
+                model.put("DATA", pr.getResult());// 検索終了
 
-                
-                
                 model.put("YCD_MAX_DEPTH", String.format("%,d", pr.getAllPiDataLength()));
                 model.put("SYSTEMSTART", startTime);
                 model.put("RUNNING_TIME", pr.getCurenntElapsedTimeInSeconds());
 
                 model.put("CURRENT_DIGITS", pr.getCurrentTargetLength());
-                model.put("CURRENT_DISCOVERD_COUNT", pr.getCurrentDiscoveredCount());
                 model.put("CURRENT_UNDISCOVERD_COUNT", pr.getCurrentUndiscoveredCount());
                 model.put("CURRENT_ELAPSED_TIME", String.format("%,d", pr.getCurenntElapsedTimeInSeconds()));
-                model.put("CURRENT_DEEPEST_FIND_POSITION", String.format("%,d", pr.getCurrentDeepestFindPosition()));
+
                 model.put("CURRENT_DEEPEST_FIND", pr.getCurrentDeepestFind());
-                
+                model.put("CURRENT_DEEPEST_FIND_POSITION", String.format("%,d", pr.getCurrentDeepestFindPosition()));
 
                 model.put("SERVER_TIME", pr.getServerTime());
 
-
                 Integer allMax = -1;
-                if(null != pr.getCurrentTargetLength()){
+                if (null != pr.getCurrentTargetLength()) {
                     allMax = Integer.valueOf(StringUtils.repeat("9", pr.getCurrentTargetLength()));
                 }
-                
 
+                model.put("CURRENT_DISCOVERD_COUNT", pr.getCurrentDiscoveredCount());
+                model.put("CURRENT_UNDISCOVERD_COUNT", (allMax + 1) - pr.getCurrentDiscoveredCount());
                 double progress = 0.0;
-                if(null != pr.getCurrentDiscoveredCount()){
-                    double d = (pr.getCurrentDiscoveredCount() / (double)allMax) * 100;
+                if (null != pr.getCurrentDiscoveredCount()) {
+                    double d = (pr.getCurrentDiscoveredCount() / (double) allMax) * 100;
                     progress = ((double) Math.round(d * 100000)) / 100000;
                 }
                 model.put("CURRENT_PROGRESS_RATE", progress);
+
+                // サバイバルリストの初期サイズ
+                Integer SurvivalListInitialSize = 1 + Integer.valueOf(pr.getInitSurvivalInfo().getEnd())
+                        - Integer.valueOf(pr.getInitSurvivalInfo().getStart());
+                model.put("CURRENT_SURVIVAL_INITIAL_COUNT", SurvivalListInitialSize);
+
+                // サバイバルリストの現在発見数
+                Integer SurvivalListDiscoverdCount = pr.getCurenntSurvivalDiscoveredCount();
+                model.put("CURRENT_SURVIVAL_DISCOVERD_COUNT", SurvivalListDiscoverdCount);
+
+                // サバイバルリストの進捗率
+                Double survivalProcessRate = (double) SurvivalListDiscoverdCount / (double) SurvivalListInitialSize
+                        * 100d;
+                model.put("CURRENT_SURVIVAL_DISCOVERD_RATE", ((double) Math.round(survivalProcessRate * 100)) / 100);
+
+                // カレントサバイバルリスト情報
+                model.put("CURRENT_SURVIVAL_START", pr.getInitSurvivalInfo().getStart());
+                model.put("CURRENT_SURVIVAL_END", pr.getInitSurvivalInfo().getEnd());
+
+
+                model.put("CURRENT_SURVIVAL_DEPTH", String.format("%,d", pr.getCurenntSurvivalDepth()));
+                
+
+                
 
 
                 ModelAndView modelAndView = new ModelAndView(model, "index");

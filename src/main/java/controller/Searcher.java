@@ -116,10 +116,13 @@ public class Searcher extends Thread {
             // 今回のサバイバルリストの作成フラグがONの場合はサバイバルリストを作成
             // IOエラーなどで再度読み込みする場合は再作成しない
             if (goSurvivalListRemake) {
+
+                // サバイバルリスト作成
                 survivalList = new SurvivalList(targetRange.getLength(), Integer.valueOf(targetRange.getStart()),
                         Integer.valueOf(targetRange.getEnd()));
-                StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_LIST_SIZE",
-                        String.valueOf(survivalList.size()));
+
+                // 進捗情報用サバイバルリスト初期情報の登録
+                StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
             }
             goSurvivalListRemake = true; // サバイバルリストの再作成フラグをON
 
@@ -134,6 +137,9 @@ public class Searcher extends Thread {
                 for (YCD_SeqProvider.Unit currentPi : p) {
                     System.out.println("[NEXT UNIT] CurenntSurvivalCount: " + survivalList.size() + ", LastFindPos: "
                             + lastFoundPos + " CurrentPos: " + currentPi.getStartDigit());
+
+                    //現在の検索深さを記録
+                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",currentPi.getStartDigit() + currentPi.getData().length());
 
                     // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
                     for (int i = survivalList.size() - 1; i >= 0; i--) {
@@ -157,8 +163,7 @@ public class Searcher extends Thread {
                             // サバイバルリストからヒットした要素を削除
                             survivalList.remove(i);
 
-                            StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_LIST_SIZE",
-                                    String.valueOf(survivalList.size()));
+                            StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE",survivalList.size());
 
                             if (survivalList.size() % 100 == 0) {
                                 System.out.print(".");

@@ -14,13 +14,14 @@
 <header>
     <!-- タイトル・サブタイトル -->
     <section class="hero is-small is-primary has-background-primary-dark">
-        <div class="hero-body">
+        <div align="center" class="hero-body">
             <h1 class="title">
                 Last Appearance in PI
             </h1>
-            Search for the latest appearing number in pi.<br>
-            円周率の中で最も遅く出現する数値の探索
-        </div>
+            <p>
+                Search for the latest appearing number in pi.<br>
+                円周率の中で最も遅く出現する数値の探索
+            </p>
     </section>
 </header>
 
@@ -29,154 +30,248 @@
 <body>
 
     <!-- メインコンテンツ -->
-    <div class="column">
+    <div align="center" class="column">
         <!-- 本文 -->
         <article class="box media">
             <div class="media-content">
                 <div class="content">
-                    ServerTime :
-                    <span>2024-04-30 08:59:30.237</span></br>
+                    <h2>Now <span style="font-weight: bold; font-size: 60px;">&quot;6&quot;</span> Digits Processing..
+                    </h2>
+                    現在 "<span>6</span>" 桁を探索中..
+                </div>
+
+                <table style="width:0; white-space:nowrap;" class="table is-narrow ">
+
+                    
+
+                    <tr>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            Discoverd Count:
+                        </td>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            <div class="has-text-weight-bold">194998</div>
+                        </td>
+                        <td>
+                            発見済
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            Undiscoverd Count:
+                        </td>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            <div class="has-text-weight-bold">805002</div>
+                        </td>
+                        <td>
+                            未発見
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            Progress:
+                        </td>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            <div class="has-text-weight-bold">19.49982%</div>
+                        </td>
+                        <td>
+                            進捗率
+                        </td>
+
+                    </tr>
+
+                    <tr>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            Process Time(sec):
+                        </td>
+                        <td align="right" style="width:0; white-space:nowrap;">
+                            <div class="has-text-weight-bold">94</div>
+                        </td>
+                        <td>
+                            探索処理時間(秒)
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="font-size: smaller;">
+                    I have pi data with
+                    <span class="has-text-weight-bold">15,000,000</span>
+                    digits.
+                </p>
+
+                <p style="font-size: smaller;">
+                    update:
+                    <span>2024-05-08 13:41:49.398</span>
                     (please reload)
-
-                    <h2>Now Progress</h2>
-                    <table class="table is-narrow">
-                        <tr>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                DIGITS:
-                            </td>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                <div>8</div>
-                            </td>
-                            <td>
-                                探索中の桁
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                PROGRESS_RATE:
-                            </td>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                <div>11.09953%</div>
-                            </td>
-                            <td>
-                                進捗率
-                            </td>
-
-                        </tr>
-
-                        <tr>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                ELAPSED_TIME(sec):
-                            </td>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                <div>881,413</div>
-                            </td>
-                            <td>
-                                この桁の探索処理時間(秒)
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                NOW_DEEPEST:
-                            </td>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                "<span>01793962</span>"<br />
-                            </td>
-                            <td>
-                                現在候補
-                            </td>
-                        </tr>
-                        <tr>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                NOW_DEEPEST_POS:
-                            </td>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                <span>1,593,327,447</span>
-                            </td>
-                            <td>
-                                現在候補の出現場所
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                MAX_DEPTH:
-                            </td>
-                            <td align="right" style="width:0; white-space:nowrap;">
-                                <div>9,000,000,000,000</div>
-                            </td>
-                            <td>
-                                最大探索深度
-                            </td>
-
-                    </table>
-                </div>
+                </p>
 
             </div>
         </article>
 
-        <article class="box media">
-            <div class="media-content">
-                <div class="content">
-                    <h2>Finished Result</h1>
-                        <table bclass="table is-narrow">
-                            <thead>
-                                <th>digits<br/>桁</th>
-                                <th>Appearing<br/>最終出現</th>
-                                <th>Depth<br/>出現桁</th>
-                                <th>ProcessTime(Sec)<br/>処理時間(秒)</th>
-                            </thead>
+        <section class="section">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-half">
 
-                            <tbody>
+                        <div class="content">
+                            <H2>Progress Information</H2>
+                            <table style="width:0; white-space:nowrap;" class="table is-narrow ">
+
+
                                 <tr>
-                                    <td>1</td>
-                                    <td>0</td>
-                                    <td>32</td>
-                                    <td>8</td>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Now Deepest:<br />
+                                        Appearing Position:</br>
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        "<span>124374</span>"<br />
+                                        <span>12,803,162</span>
+                                    </td>
+                                    <td>
+                                        現在の最遅出現<br />
+                                        場所
+                                    </td>
                                 </tr>
+
                                 <tr>
-                                    <td>2</td>
-                                    <td>68</td>
-                                    <td>605</td>
-                                    <td>8</td>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Now Unit:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        "<span>185000</span>"
+                                             - 
+                                             "<span  >189999</span>"
+                                    </td>
+                                    <td>
+                                        現在の探索ユニット
+                                    </td>
                                 </tr>
+                                
+                                
+
                                 <tr>
-                                    <td>3</td>
-                                    <td>483</td>
-                                    <td>8553</td>
-                                    <td>8</td>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Count:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span>5000</span>
+                                    </td>
+                                    <td>
+                                       ユニットの対象数
+                                    </td>
                                 </tr>
+
+
+
                                 <tr>
-                                    <td>4</td>
-                                    <td>6716</td>
-                                    <td>99846</td>
-                                    <td>8</td>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Discoverd:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span>4999</span>
+                                    </td>
+                                    <td>
+                                       ユニット内発見数
+                                    </td>
                                 </tr>
+
                                 <tr>
-                                    <td>5</td>
-                                    <td>33394</td>
-                                    <td>1369560</td>
-                                    <td>9</td>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Process Rate:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span>99.98</span>%
+                                    </td>
+                                    <td>
+                                       ユニット進捗
+                                    </td>
                                 </tr>
+
+
                                 <tr>
-                                    <td>6</td>
-                                    <td>569540</td>
-                                    <td>14118307</td>
-                                    <td>252</td>
+                                    <td align="right" style="width:0; white-space:nowrap;">
+                                        Process Depth:
+                                    </td>
+                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                        <span>7,323,001</span>
+                                    </td>
+                                    <td>
+                                       ユニット探索深さ
+                                    </td>
                                 </tr>
-                                <tr>
-                                    <td>7</td>
-                                    <td>1075656</td>
-                                    <td>166100500</td>
-                                    <td>57358</td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+
+                                
+
+
+                                
+
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </article>
+        </section>
+
+
+
+        <section class="section">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-half">
+
+                        <div class="content">
+
+                            <h2>Finished Result</h1>
+                                <table bclass="table is-narrow">
+                                    <thead>
+                                        <th>Digits<br />桁</th>
+                                        <th>Appearing<br />最遅出現</th>
+                                        <th>Position<br />出現桁</th>
+                                        <th>ProcessTime(Sec)<br />処理時間(秒)</th>
+                                    </thead>
+
+                                    <tbody>
+                                        <tr>
+                                            <td>1</td>
+                                            <td>0</td>
+                                            <td>32</td>
+                                            <td>0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2</td>
+                                            <td>68</td>
+                                            <td>605</td>
+                                            <td>0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>3</td>
+                                            <td>483</td>
+                                            <td>8553</td>
+                                            <td>0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>4</td>
+                                            <td>6716</td>
+                                            <td>99846</td>
+                                            <td>0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>5</td>
+                                            <td>33394</td>
+                                            <td>1369560</td>
+                                            <td>0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                        </div>
+                    </div>
+                </div>
+        </section>
+
+
 
         <article class="box media">
             <div class="media-content">
