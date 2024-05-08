@@ -1,6 +1,7 @@
 package controller;
 
 import lombok.Getter;
+import lombok.Setter;
 import model.TargetRange;
 import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class Searcher extends Thread {
 
@@ -45,7 +47,10 @@ public class Searcher extends Thread {
         this.listSize = listSize;
         this.unitLength = unitLength;
 
+
         StoreController.setAllPiDataLength(YCDFileUtil.getAllDigitsCount(um_piFileList));
+
+        StoreController.setAllFileInfo(YCDFileUtil.createFileInfo(piFileList, 0));
 
     }
 
@@ -74,8 +79,6 @@ public class Searcher extends Thread {
             }
 
             StoreController.survivalProgressMap.put("SURVIVAL_DIGIT_LENGTH", String.valueOf(targetRange.getLength()));
-
-            System.out.println("Current Digits: " + targetRange.getLength());
 
             // 1サイクルのサバイバル実行
             SurvivalResult sr = survive(targetRange);
@@ -137,10 +140,14 @@ public class Searcher extends Thread {
                 // YCDプロバイダの作成に成功したらリトライカウントをリセット
                 continueCount = 0;
 
+                // YCDファイルの全ヘッダー情報を記録
+                StoreController.survivalProgressMap.put("YCD_FILE_INFO", p.getFileInfoMap());
+
+                // このサバイバルのスタート時間を記録
+                StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
+
                 // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
                 for (YCD_SeqProvider.Unit currentPi : p) {
-                    System.out.println("[NEXT UNIT] CurenntSurvivalCount: " + survivalList.size() + ", LastFindPos: "
-                            + lastFoundPos + " CurrentPos: " + currentPi.getStartDigit());
 
                     // 現在の検索深さを記録
                     StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
@@ -169,10 +176,6 @@ public class Searcher extends Thread {
                             survivalList.remove(i);
 
                             StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
-
-                            if (survivalList.size() % 100 == 0) {
-                                System.out.print(".");
-                            }
 
                         }
                     }
@@ -208,7 +211,6 @@ public class Searcher extends Thread {
                 Runtime.getRuntime().exit(-1);
             }
 
-            System.out.println(" .end Last Appearance : [" + lastFoundTarget + "] Pos : " + lastFoundPos);
             return new SurvivalResult(lastFoundTarget, lastFoundPos);
 
         }

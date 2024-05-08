@@ -6,7 +6,9 @@ import spark.template.thymeleaf.ThymeleafTemplateEngine;
 import java.io.File;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
@@ -14,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import model.ProgressReportBean;
-import model.pi.SurvivalList;
+import model.ycd.YCDFileUtil;
 
 import static spark.Spark.*;
 import static spark.debug.DebugScreen.enableDebugScreen;
@@ -120,17 +122,47 @@ public class Web {
                 model.put("CURRENT_SURVIVAL_END", pr.getInitSurvivalInfo().getEnd());
 
                 String formattedString = pr.getCurenntSurvivalStartTime().format(formatter);
+                String[] datetime = formattedString.split(" ");
 
-                model.put("CURRENT_SURVIVAL_START_DATETIME", formattedString);
+                model.put("CURRENT_SURVIVAL_START_DATE", datetime[0]);
+                model.put("CURRENT_SURVIVAL_START_TIME", datetime[1]);
+
                 model.put("CURRENT_SURVIVAL_ELAPSED_TIME", pr.getCurrentSurvivalElapsedSeconds());
 
                 model.put("CURRENT_SURVIVAL_DEPTH", String.format("%,d", pr.getCurenntSurvivalDepth()));
+
+                
+                //YCDファイル情報
+                //Map<File, Map<YCDFileUtil.FileInfo, String>>
+
+                List<Map<String, String>> fileInfo = new ArrayList<>();
+                for(File f : pr.getAllFileInfo().keySet() ){
+                    Map<YCDFileUtil.FileInfo, String> info = pr.getAllFileInfo().get(f);
+                    Map<String, String> map = new HashMap<>();
+
+                    for(YCDFileUtil.FileInfo key : info.keySet()){
+                        String value = info.get(key);
+                        if (value.matches("^[1-9]\\d*$")){
+                            value = String.format("%,d", Long.valueOf(value));
+                        }
+                        map.put(key.toString(), value);
+                    }
+                    fileInfo.add(map);
+                }
+
+                model.put("YCD_FILES_INFO", fileInfo);
+
+
 
                 ModelAndView modelAndView = new ModelAndView(model, "index");
 
                 // htmlを生成してファイルに保存
                 String html = templateEngine.render(modelAndView);
                 FileUtils.writeStringToFile(new File("index.html"), html, CHARACTER_ENCODING);
+
+                String now = ZonedDateTime.now().format(formatter);
+
+                System.out.println(now + " :  htmlを生成してファイルに保存しました。");
 
                 return modelAndView;
 

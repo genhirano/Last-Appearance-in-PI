@@ -1,6 +1,6 @@
 package model;
 
-import java.sql.Timestamp;
+import java.io.File;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,7 @@ import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
+import model.ycd.YCDFileUtil;
 
 public class ProgressReportBean {
 
@@ -19,6 +20,10 @@ public class ProgressReportBean {
     @Setter
     private Long allPiDataLength; // 検索対象のPIデータ全桁数
 
+    @Getter
+    @Setter
+    private Map<File, Map<YCDFileUtil.FileInfo, String>> allFileInfo; // 検索対象のPIデータの全ヘッダー情報
+ 
     @Getter
     @Setter
     private Integer currentTargetLength; // 現在の検索対象の桁数

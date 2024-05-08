@@ -29,49 +29,55 @@
 
 <body>
 
+
     <!-- メインコンテンツ -->
     <div align="center" class="column">
+
+        <p style="font-size: smaller;">
+            update:
+            <span th:text="${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
+            (please reload)
+        </p>
+
         <!-- 本文 -->
         <article class="box media">
             <div class="media-content">
                 <div class="content">
-                    <h2>Now <span style="font-weight: bold; font-size: 60px;"
+                    <h1>Now <span style="font-weight: bold; font-size: 90px;"
                             th:text=" '&quot;' +  ${CURRENT_DIGITS} + '&quot;'">&quot;9&quot;</span> Digits Processing..
-                    </h2>
+                    </h1>
+                    現在 "<span th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..
+                    <br />
                     "<span th:text="${CURRENT_DIGITS_MIN}">000000000</span>"
                     -
                     "<span th:text="${CURRENT_DIGITS_MAX}">999999999</span>"
-                    <br />
-                    現在 "<span th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..
                 </div>
 
                 <table style="width:0; white-space:nowrap;" class="table is-narrow ">
 
-
-
                     <tr>
                         <td align="right" style="width:0; white-space:nowrap;">
-                            Discoverd Count:
+                            Appeared Count:
                         </td>
                         <td align="right" style="width:0; white-space:nowrap;">
                             <div class="has-text-weight-bold" th:text="${CURRENT_DISCOVERD_COUNT}">
                                 9999999</div>
                         </td>
                         <td>
-                            発見済
+                            出現済の数
                         </td>
                     </tr>
 
                     <tr>
                         <td align="right" style="width:0; white-space:nowrap;">
-                            Undiscoverd Count:
+                            Yet Appeared Count:
                         </td>
                         <td align="right" style="width:0; white-space:nowrap;">
                             <div class="has-text-weight-bold" th:text="${CURRENT_UNDISCOVERD_COUNT}">
                                 9999999</div>
                         </td>
                         <td>
-                            未発見
+                            未出現の数
                         </td>
                     </tr>
 
@@ -90,9 +96,6 @@
 
                     </tr>
 
-
-
-
                     <tr>
                         <td align="right" style="width:0; white-space:nowrap;">
                             Process Time(sec):
@@ -102,7 +105,7 @@
                             </div>
                         </td>
                         <td>
-                            探索処理時間(秒)
+                            処理時間(秒)
                         </td>
                     </tr>
 
@@ -122,18 +125,6 @@
 
                 </table>
 
-                <p style="font-size: smaller;">
-                    I have pi data with
-                    <span class="has-text-weight-bold" th:text="${YCD_MAX_DEPTH}">999,999,999,999</span>
-                    digits.
-                </p>
-
-                <p style="font-size: smaller;">
-                    update:
-                    <span th:text="${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
-                    (please reload)
-                </p>
-
             </div>
         </article>
 
@@ -143,98 +134,85 @@
                     <div class="column is-half">
 
                         <div class="content">
-                            <H2>Progress Information</H2>
+                            <h2>Internal progress status</h2>
                             <table style="width:0; white-space:nowrap;" class="table is-narrow ">
-
-
+                                <caption><b>Progress of current search unit</b><br />現在検索実行中ユニットの進捗</caption>
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        Now Deepest:<br />
-                                        Appearing Position:</br>
+                                    <td align="right">
+                                        Target start:<br />
+                                        end:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        "<span th:text="${CURRENT_DEEPEST_FIND}">9999999</span>"<br />
-                                        <span th:text="${CURRENT_DEEPEST_FIND_POSITION}">9,999,999</span>
-                                    </td>
-                                    <td>
-                                        現在の最遅出現<br />
-                                        場所
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        Now Unit:
-                                    </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         "<span th:text="${CURRENT_SURVIVAL_START}">9999999</span>"
-                                        -
+                                        <br />
                                         "<span th:text="${CURRENT_SURVIVAL_END}">9999999</span>"
                                     </td>
                                     <td>
-                                        現在の探索ユニット
+                                        ここから<br />
+                                        ここまで
                                     </td>
                                 </tr>
 
 
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         Size:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         <span th:text="${CURRENT_SURVIVAL_INITIAL_COUNT}">9999999</span>
                                     </td>
                                     <td>
-                                        ユニットの対象数
+                                        対象数
                                     </td>
                                 </tr>
 
 
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         Discoverd:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         <span th:text="${CURRENT_SURVIVAL_DISCOVERD_COUNT}">9999999</span>
                                     </td>
                                     <td>
-                                        ユニット内発見数
+                                        発見数
                                     </td>
                                 </tr>
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         Process Rate:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         <span th:text="${CURRENT_SURVIVAL_DISCOVERD_RATE}">9999999</span>%
                                     </td>
                                     <td>
-                                        ユニット進捗
+                                        進捗
                                     </td>
                                 </tr>
 
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        Process Depth:
+                                    <td align="right">
+                                        Reach Depth:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         <span th:text="${CURRENT_SURVIVAL_DEPTH}">9999999</span>
                                     </td>
                                     <td>
-                                        ユニット探索深さ
+                                        到達深さ
                                     </td>
                                 </tr>
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         Start Datetime:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        <span th:text="${CURRENT_SURVIVAL_START_DATETIME}">9999999</span>
+                                    <td align="right">
+                                        <span th:text="${CURRENT_SURVIVAL_START_DATE}">YYYY-MM-DD</span><br />
+                                        <span th:text="${CURRENT_SURVIVAL_START_TIME}">HH:mm:SS</span>
                                     </td>
                                     <td>
                                         開始日時
@@ -242,10 +220,10 @@
                                 </tr>
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         Process Time(sec):
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         <span th:text="${CURRENT_SURVIVAL_ELAPSED_TIME}">9999999</span>
                                     </td>
                                     <td>
@@ -255,7 +233,25 @@
 
 
 
+                                <table style="width:0; white-space:nowrap;" class="table is-narrow ">
+                                    <caption><b>Now latest appearing</b><br />現在の最遅出現</caption>
 
+                                    <tr>
+                                        <td align="right">
+                                            Now Deepest:<br />
+                                            Appearing Position:</br>
+                                        </td>
+                                        <td align="right">
+                                            "<span th:text="${CURRENT_DEEPEST_FIND}">9999999</span>"<br />
+                                            <span th:text="${CURRENT_DEEPEST_FIND_POSITION}">9,999,999</span>
+                                        </td>
+                                        <td>
+                                            現在の最遅出現<br />
+                                            場所
+                                        </td>
+                                    </tr>
+
+                                </table>
 
 
 
@@ -275,30 +271,35 @@
 
                         <div class="content">
 
-                            <h2>Finished Result</h1>
-                                <table bclass="table is-narrow">
-                                    <thead>
-                                        <th>Digits<br />桁</th>
-                                        <th>Appearing<br />最遅出現</th>
-                                        <th>Position<br />出現桁</th>
-                                        <th>ProcessTime(Sec)<br />処理時間(秒)</th>
-                                    </thead>
+                            <h2>Finished Result</h2>
+                            <table bclass="table is-narrow">
+                                <thead>
+                                    <th>Digits<br />桁</th>
+                                    <th>Appearing<br />最遅出現</th>
+                                    <th>Position<br />出現桁</th>
+                                    <th>ProcessTime(Sec)<br />処理時間(秒)</th>
+                                </thead>
 
-                                    <tbody>
-                                        <tr th:each="map : ${DATA}">
-                                            <td th:text="${map.get('digits')}"></td>
-                                            <td th:text="${map.get('Appearing')}"></td>
-                                            <td th:text="${map.get('Depth')}"></td>
-                                            <td th:text="${map.get('ProcessTimeSec')}"></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <tbody>
+                                    <tr th:each="map : ${DATA}">
+                                        <td th:text="${map.get('digits')}"></td>
+                                        <td th:text="${map.get('Appearing')}"></td>
+                                        <td th:text="${map.get('Depth')}"></td>
+                                        <td th:text="${map.get('ProcessTimeSec')}"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
                         </div>
                     </div>
                 </div>
         </section>
 
+        <p style="font-size: smaller;">
+            I have pi data with
+            <span class="has-text-weight-bold" th:text="${YCD_MAX_DEPTH}">999,999,999,999</span>
+            digits.
+        </p>
 
 
         <article class="box media">
@@ -327,6 +328,28 @@
             </a>
         </p>
     </footer>
+
+
+    <h2>Pi Data File List</h2>
+    <table class="table is-bordered">
+        <thead>
+            <th>File Index</th>
+            <th>First Digits</th>
+            <th>End Digit</th>
+        </thead>
+
+        <tbody>
+            <tr th:each="files : ${YCD_FILES_INFO}">
+                <td align="right" th:text="${files.get('BLOCK_INDEX')}">00000</td>
+                <td align="right" th:text="${files.get('FIRST_DIGIT')}">00000000000</td>
+                <td align="right" th:text="${files.get('END_DIGIT')}">999999999</td>
+            </tr>
+        </tbody>
+    </table>
+
+
+
+
 
 </body>
 

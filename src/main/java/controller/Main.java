@@ -3,6 +3,8 @@ package controller;
 import java.io.File;
 import java.util.*;
 
+import model.ycd.YCDFileUtil;
+
 public class Main {
 
     private final static String propFileName = "/default.properties";
@@ -26,8 +28,8 @@ public class Main {
         }
 
         // todo: これは消す
-        String propPath = new File(".").getAbsoluteFile().getParent();
-        Env.setPropFileName(propPath + "\\src\\test\\resources\\test.properties");
+        //String propPath = new File(".").getAbsoluteFile().getParent();
+        //Env.setPropFileName(propPath + "\\src\\test\\resources\\test.properties");
 
         // Envクラスのインスタンスを取得 (シングルトン)
         Env env = Env.getInstance();

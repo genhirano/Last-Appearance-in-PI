@@ -29,46 +29,52 @@
 
 <body>
 
+
     <!-- メインコンテンツ -->
     <div align="center" class="column">
+
+        <p style="font-size: smaller;">
+            update:
+            <span>2024-05-08 22:29:34</span>
+            (please reload)
+        </p>
+
         <!-- 本文 -->
         <article class="box media">
             <div class="media-content">
                 <div class="content">
-                    <h2>Now <span style="font-weight: bold; font-size: 60px;">&quot;6&quot;</span> Digits Processing..
-                    </h2>
-                    "<span>000000</span>"
-                    -
-                    "<span>999999</span>"
+                    <h1>Now <span style="font-weight: bold; font-size: 90px;">&quot;8&quot;</span> Digits Processing..
+                    </h1>
+                    現在 "<span>8</span>" 桁を探索中..
                     <br />
-                    現在 "<span>6</span>" 桁を探索中..
+                    "<span>00000000</span>"
+                    -
+                    "<span>99999999</span>"
                 </div>
 
                 <table style="width:0; white-space:nowrap;" class="table is-narrow ">
 
-
-
                     <tr>
                         <td align="right" style="width:0; white-space:nowrap;">
-                            Discoverd Count:
+                            Appeared Count:
                         </td>
                         <td align="right" style="width:0; white-space:nowrap;">
-                            <div class="has-text-weight-bold">584998</div>
+                            <div class="has-text-weight-bold">13300415</div>
                         </td>
                         <td>
-                            発見済
+                            出現済の数
                         </td>
                     </tr>
 
                     <tr>
                         <td align="right" style="width:0; white-space:nowrap;">
-                            Undiscoverd Count:
+                            Yet Appeared Count:
                         </td>
                         <td align="right" style="width:0; white-space:nowrap;">
-                            <div class="has-text-weight-bold">415002</div>
+                            <div class="has-text-weight-bold">86699585</div>
                         </td>
                         <td>
-                            未発見
+                            未出現の数
                         </td>
                     </tr>
 
@@ -78,7 +84,7 @@
                             Progress:
                         </td>
                         <td align="right" style="width:0; white-space:nowrap;">
-                            <div class="has-text-weight-bold">58.49986%</div>
+                            <div class="has-text-weight-bold">13.30042%</div>
                         </td>
                         <td>
                             進捗率
@@ -86,18 +92,15 @@
 
                     </tr>
 
-
-
-
                     <tr>
                         <td align="right" style="width:0; white-space:nowrap;">
                             Process Time(sec):
                         </td>
                         <td align="right" style="width:0; white-space:nowrap;">
-                            <div class="has-text-weight-bold">305</div>
+                            <div class="has-text-weight-bold">980,893</div>
                         </td>
                         <td>
-                            探索処理時間(秒)
+                            処理時間(秒)
                         </td>
                     </tr>
 
@@ -106,7 +109,7 @@
                             One Discovery / sec:
                         </td>
                         <td align="right" style="width:0; white-space:nowrap;">
-                            <span class="has-text-weight-bold">1918.026/sec</span>
+                            <span class="has-text-weight-bold">13.559/sec</span>
                         </td>
                         <td>
                             個/秒
@@ -117,18 +120,6 @@
 
                 </table>
 
-                <p style="font-size: smaller;">
-                    I have pi data with
-                    <span class="has-text-weight-bold">15,000,000</span>
-                    digits.
-                </p>
-
-                <p style="font-size: smaller;">
-                    update:
-                    <span>2024-05-08 17:42:14</span>
-                    (please reload)
-                </p>
-
             </div>
         </article>
 
@@ -138,98 +129,85 @@
                     <div class="column is-half">
 
                         <div class="content">
-                            <H2>Progress Information</H2>
+                            <h2>Internal progress status</h2>
                             <table style="width:0; white-space:nowrap;" class="table is-narrow ">
-
-
+                                <caption><b>Progress of current search unit</b><br />現在検索実行中ユニットの進捗</caption>
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        Now Deepest:<br />
-                                        Appearing Position:</br>
+                                    <td align="right">
+                                        Target start:<br />
+                                        end:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        "<span>569540</span>"<br />
-                                        <span>14,118,307</span>
+                                    <td align="right">
+                                        "<span>13299535</span>"
+                                        <br />
+                                        "<span>13799534</span>"
                                     </td>
                                     <td>
-                                        現在の最遅出現<br />
-                                        場所
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        Now Unit:
-                                    </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        "<span>575000</span>"
-                                        -
-                                        "<span>579999</span>"
-                                    </td>
-                                    <td>
-                                        現在の探索ユニット
+                                        ここから<br />
+                                        ここまで
                                     </td>
                                 </tr>
 
 
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        Count:
+                                    <td align="right">
+                                        Size:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        <span>5000</span>
+                                    <td align="right">
+                                        <span>500000</span>
                                     </td>
                                     <td>
-                                        ユニットの対象数
+                                        対象数
                                     </td>
                                 </tr>
 
 
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         Discoverd:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        <span>4999</span>
+                                    <td align="right">
+                                        <span>881</span>
                                     </td>
                                     <td>
-                                        ユニット内発見数
+                                        発見数
                                     </td>
                                 </tr>
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         Process Rate:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        <span>99.98</span>%
+                                    <td align="right">
+                                        <span>0.18</span>%
                                     </td>
                                     <td>
-                                        ユニット進捗
+                                        進捗
                                     </td>
                                 </tr>
 
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
-                                        Process Depth:
+                                    <td align="right">
+                                        Reach Depth:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        <span>9,627,001</span>
+                                    <td align="right">
+                                        <span>1,900,001</span>
                                     </td>
                                     <td>
-                                        ユニット探索深さ
+                                        到達深さ
                                     </td>
                                 </tr>
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         Start Datetime:
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        <span>2024-05-08 17:42:09</span>
+                                    <td align="right">
+                                        <span>2024-05-08</span><br />
+                                        <span>22:29:04</span>
                                     </td>
                                     <td>
                                         開始日時
@@ -237,11 +215,11 @@
                                 </tr>
 
                                 <tr>
-                                    <td align="right" style="width:0; white-space:nowrap;">
+                                    <td align="right">
                                         Process Time(sec):
                                     </td>
-                                    <td align="right" class="has-text-weight-bold" style="width:0; white-space:nowrap;">
-                                        <span>5</span>
+                                    <td align="right">
+                                        <span>29</span>
                                     </td>
                                     <td>
                                         経過時間(秒)
@@ -250,7 +228,25 @@
 
 
 
+                                <table style="width:0; white-space:nowrap;" class="table is-narrow ">
+                                    <caption><b>Now latest appearing</b><br />現在の最遅出現</caption>
 
+                                    <tr>
+                                        <td align="right">
+                                            Now Deepest:<br />
+                                            Appearing Position:</br>
+                                        </td>
+                                        <td align="right">
+                                            "<span>11821244</span>"<br />
+                                            <span>1,678,052,811</span>
+                                        </td>
+                                        <td>
+                                            現在の最遅出現<br />
+                                            場所
+                                        </td>
+                                    </tr>
+
+                                </table>
 
 
 
@@ -270,54 +266,71 @@
 
                         <div class="content">
 
-                            <h2>Finished Result</h1>
-                                <table bclass="table is-narrow">
-                                    <thead>
-                                        <th>Digits<br />桁</th>
-                                        <th>Appearing<br />最遅出現</th>
-                                        <th>Position<br />出現桁</th>
-                                        <th>ProcessTime(Sec)<br />処理時間(秒)</th>
-                                    </thead>
+                            <h2>Finished Result</h2>
+                            <table bclass="table is-narrow">
+                                <thead>
+                                    <th>Digits<br />桁</th>
+                                    <th>Appearing<br />最遅出現</th>
+                                    <th>Position<br />出現桁</th>
+                                    <th>ProcessTime(Sec)<br />処理時間(秒)</th>
+                                </thead>
 
-                                    <tbody>
-                                        <tr>
-                                            <td>1</td>
-                                            <td>0</td>
-                                            <td>32</td>
-                                            <td>0</td>
-                                        </tr>
-                                        <tr>
-                                            <td>2</td>
-                                            <td>68</td>
-                                            <td>605</td>
-                                            <td>0</td>
-                                        </tr>
-                                        <tr>
-                                            <td>3</td>
-                                            <td>483</td>
-                                            <td>8553</td>
-                                            <td>0</td>
-                                        </tr>
-                                        <tr>
-                                            <td>4</td>
-                                            <td>6716</td>
-                                            <td>99846</td>
-                                            <td>0</td>
-                                        </tr>
-                                        <tr>
-                                            <td>5</td>
-                                            <td>33394</td>
-                                            <td>1369560</td>
-                                            <td>0</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>0</td>
+                                        <td>32</td>
+                                        <td>8</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>68</td>
+                                        <td>605</td>
+                                        <td>8</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>483</td>
+                                        <td>8553</td>
+                                        <td>8</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4</td>
+                                        <td>6716</td>
+                                        <td>99846</td>
+                                        <td>8</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5</td>
+                                        <td>33394</td>
+                                        <td>1369560</td>
+                                        <td>9</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6</td>
+                                        <td>569540</td>
+                                        <td>14118307</td>
+                                        <td>252</td>
+                                    </tr>
+                                    <tr>
+                                        <td>7</td>
+                                        <td>1075656</td>
+                                        <td>166100500</td>
+                                        <td>57358</td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
                         </div>
                     </div>
                 </div>
         </section>
 
+        <p style="font-size: smaller;">
+            I have pi data with
+            <span class="has-text-weight-bold">1,800,000,000,000</span>
+            digits.
+        </p>
 
 
         <article class="box media">
@@ -346,6 +359,68 @@
             </a>
         </p>
     </footer>
+
+
+    <h2>Pi Data File List</h2>
+    <table class="table is-bordered">
+        <thead>
+            <th>File Index</th>
+            <th>First Digits</th>
+            <th>End Digit</th>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td align="right">0</td>
+                <td align="right">1</td>
+                <td align="right">200,000,000,000</td>
+            </tr>
+            <tr>
+                <td align="right">1</td>
+                <td align="right">200,000,000,001</td>
+                <td align="right">400,000,000,000</td>
+            </tr>
+            <tr>
+                <td align="right">2</td>
+                <td align="right">400,000,000,001</td>
+                <td align="right">600,000,000,000</td>
+            </tr>
+            <tr>
+                <td align="right">3</td>
+                <td align="right">600,000,000,001</td>
+                <td align="right">800,000,000,000</td>
+            </tr>
+            <tr>
+                <td align="right">4</td>
+                <td align="right">800,000,000,001</td>
+                <td align="right">1,000,000,000,000</td>
+            </tr>
+            <tr>
+                <td align="right">5</td>
+                <td align="right">1,000,000,000,001</td>
+                <td align="right">1,200,000,000,000</td>
+            </tr>
+            <tr>
+                <td align="right">6</td>
+                <td align="right">1,200,000,000,001</td>
+                <td align="right">1,400,000,000,000</td>
+            </tr>
+            <tr>
+                <td align="right">7</td>
+                <td align="right">1,400,000,000,001</td>
+                <td align="right">1,600,000,000,000</td>
+            </tr>
+            <tr>
+                <td align="right">8</td>
+                <td align="right">1,600,000,000,001</td>
+                <td align="right">1,800,000,000,000</td>
+            </tr>
+        </tbody>
+    </table>
+
+
+
+
 
 </body>
 
