@@ -12,7 +12,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -22,6 +21,7 @@ import java.util.Map;
 
 import model.ProgressReportBean;
 import model.TargetRange;
+import model.ycd.YCDFileUtil;
 
 public class StoreController {
 
@@ -34,6 +34,10 @@ public class StoreController {
     @Getter
     @Setter
     private static Long allPiDataLength = 0L;
+
+    @Getter
+    @Setter
+    private static Map<File, Map<YCDFileUtil.FileInfo, String>> allFileInfo; // 検索対象のPIデータの全ヘッダー情報
 
     private static StoreController instance;
 
@@ -229,10 +233,11 @@ public class StoreController {
 
     public static ProgressReportBean getProgressReport() {
         ProgressReportBean prb = new ProgressReportBean();
-        
-        prb.setServerTime(new Timestamp(System.currentTimeMillis()));// サーバーの現在時刻
+
+        prb.setServerTime(ZonedDateTime.now());// サーバーの現在時刻
 
         prb.setAllPiDataLength(allPiDataLength); // 検索対象のPIデータ全桁数
+        prb.setAllFileInfo(allFileInfo);
         for (Map<String, String> map : getSummary()) {
             if (map.get("Finished").equals("false")) {
 
@@ -240,36 +245,45 @@ public class StoreController {
                 prb.setCurrentTargetLength(
                         Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
 
+
                 // 現在までに発見されたもののうち一番深いものとその位置
                 prb.setCurrentDeepestFindPosition(Long.valueOf(map.get("Depth")));
                 prb.setCurrentDeepestFind(map.get("Appearing"));
 
-                prb.setCurrentTargetLength(
-                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
 
-                // すでに発見された数
-                Integer initialSurviavalListSize = Integer
-                        .valueOf(survivalProgressMap.get("SURVIVAL_INITIAL_LIST_SIZE").toString());
-                Integer currentSurviavalListSize = Integer
-                        .valueOf(survivalProgressMap.get("SURVIVAL_CURRENT_LIST_SIZE").toString());
-                Long discoverCount = Long.valueOf(map.get("DiscoveredCount"))
-                        + (initialSurviavalListSize - currentSurviavalListSize);
-                prb.setCurrentDiscoveredCount(discoverCount);
+                // 保存済みの探索終了数
+                Integer discoverdCount = Integer.valueOf(map.get("DiscoveredCount"));
 
-                // 未発見の数
-                Integer allMax = Integer.valueOf(StringUtils.repeat("9",
-                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString())));
-                Long undiscoverCount = allMax - discoverCount;
+                // 現在のサバイバルリストの状況
+                TargetRange tr = ((TargetRange) survivalProgressMap.get("SURVIVAL_INITIAL_INFO"));
+                Integer initialSurviavalListSize = Integer.valueOf(tr.getEnd()) - Integer.valueOf(tr.getStart());
+                Integer currentSurviavalListSize = (Integer) survivalProgressMap.get("NOW_SURVIVAL_LIST_SIZE");
+                prb.setInitSurvivalInfo(tr);
+                prb.setCurenntSurvivalDiscoveredCount(initialSurviavalListSize - currentSurviavalListSize);
+
+                prb.setCurenntSurvivalDepth((Long) survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
+
+                ZonedDateTime survivalStartTime = (ZonedDateTime) survivalProgressMap
+                        .get("SURVIVAL_CURRENT_START_TIME");
+                prb.setCurenntSurvivalStartTime(survivalStartTime);
+                Long survivalSec = Duration.between(survivalStartTime, ZonedDateTime.now()).getSeconds();
+                prb.setCurrentSurvivalElapsedSeconds(survivalSec);
+
+                // [全体]すでに発見された数
+                Integer nowDiscoverCount = discoverdCount + initialSurviavalListSize - currentSurviavalListSize;
+                prb.setCurrentDiscoveredCount(nowDiscoverCount);
+
+                // [全体]未発見の数
+                Integer allMax = Integer.valueOf(StringUtils.repeat("9", tr.getLength()));
+                Integer undiscoverCount = allMax - nowDiscoverCount;
                 prb.setCurrentUndiscoveredCount(undiscoverCount);
 
                 // 開始からの経過時間（秒）
                 // 処理開始と処理終了の時間差（実行時間）を計算
-                Long allSec = Long.valueOf(map.get("ProcessTimeSec")); 
-                ZonedDateTime startTime = (ZonedDateTime) StoreController.survivalProgressMap
-                        .get("SURVIVAL_CURRENT_START_TIME");
+                Long allSec = Long.valueOf(map.get("ProcessTimeSec"));
                 ZonedDateTime endTime = ZonedDateTime.now();
-                Long survivalSec = Duration.between(startTime, endTime).getSeconds();
-                prb.setCurenntElapsedTimeInSeconds(allSec + survivalSec);
+                Long elapsedSec = Duration.between(survivalStartTime, endTime).getSeconds();
+                prb.setCurenntElapsedTimeInSeconds(allSec + elapsedSec);
 
             } else {
                 prb.getResult().add(map);

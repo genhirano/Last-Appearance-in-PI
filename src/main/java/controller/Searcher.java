@@ -1,6 +1,7 @@
 package controller;
 
 import lombok.Getter;
+import lombok.Setter;
 import model.TargetRange;
 import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class Searcher extends Thread {
 
@@ -45,7 +47,10 @@ public class Searcher extends Thread {
         this.listSize = listSize;
         this.unitLength = unitLength;
 
+
         StoreController.setAllPiDataLength(YCDFileUtil.getAllDigitsCount(um_piFileList));
+
+        StoreController.setAllFileInfo(YCDFileUtil.createFileInfo(piFileList, 0));
 
     }
 
@@ -74,8 +79,6 @@ public class Searcher extends Thread {
             }
 
             StoreController.survivalProgressMap.put("SURVIVAL_DIGIT_LENGTH", String.valueOf(targetRange.getLength()));
-
-            System.out.println("Current Digits: " + targetRange.getLength());
 
             // 1サイクルのサバイバル実行
             SurvivalResult sr = survive(targetRange);
@@ -107,6 +110,9 @@ public class Searcher extends Thread {
         // サバイバルリストの作成フラグ
         Boolean goSurvivalListRemake = true;
 
+        // このサバイバルのスタート時間を記録
+        StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
+
         while (true) {
 
             if (5 < continueCount) {
@@ -116,10 +122,14 @@ public class Searcher extends Thread {
             // 今回のサバイバルリストの作成フラグがONの場合はサバイバルリストを作成
             // IOエラーなどで再度読み込みする場合は再作成しない
             if (goSurvivalListRemake) {
+
+                // サバイバルリスト作成
                 survivalList = new SurvivalList(targetRange.getLength(), Integer.valueOf(targetRange.getStart()),
                         Integer.valueOf(targetRange.getEnd()));
-                StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_LIST_SIZE",
-                        String.valueOf(survivalList.size()));
+
+                // 進捗情報用サバイバルリスト初期情報の登録
+                StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
+
             }
             goSurvivalListRemake = true; // サバイバルリストの再作成フラグをON
 
@@ -130,10 +140,18 @@ public class Searcher extends Thread {
                 // YCDプロバイダの作成に成功したらリトライカウントをリセット
                 continueCount = 0;
 
+                // YCDファイルの全ヘッダー情報を記録
+                StoreController.survivalProgressMap.put("YCD_FILE_INFO", p.getFileInfoMap());
+
+                // このサバイバルのスタート時間を記録
+                StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
+
                 // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
                 for (YCD_SeqProvider.Unit currentPi : p) {
-                    System.out.println("[NEXT UNIT] CurenntSurvivalCount: " + survivalList.size() + ", LastFindPos: "
-                            + lastFoundPos + " CurrentPos: " + currentPi.getStartDigit());
+
+                    // 現在の検索深さを記録
+                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
+                            currentPi.getStartDigit() + currentPi.getData().length());
 
                     // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
                     for (int i = survivalList.size() - 1; i >= 0; i--) {
@@ -157,12 +175,7 @@ public class Searcher extends Thread {
                             // サバイバルリストからヒットした要素を削除
                             survivalList.remove(i);
 
-                            StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_LIST_SIZE",
-                                    String.valueOf(survivalList.size()));
-
-                            if (survivalList.size() % 100 == 0) {
-                                System.out.print(".");
-                            }
+                            StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
 
                         }
                     }
@@ -198,7 +211,6 @@ public class Searcher extends Thread {
                 Runtime.getRuntime().exit(-1);
             }
 
-            System.out.println(" .end Last Appearance : [" + lastFoundTarget + "] Pos : " + lastFoundPos);
             return new SurvivalResult(lastFoundTarget, lastFoundPos);
 
         }

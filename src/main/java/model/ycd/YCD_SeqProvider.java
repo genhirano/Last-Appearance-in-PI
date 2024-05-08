@@ -12,6 +12,7 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
     /**
      * 検索対象ファイルの情報保持Map.
      */
+    @Getter
     private final Map<File, Map<YCDFileUtil.FileInfo, String>> fileInfoMap;
 
     private Integer overWrapLength;
@@ -64,7 +65,7 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
         this.baseUnitLength = unitLength;
 
         // 全ファイルヘッダー情報取得
-        this.fileInfoMap = createFileInfo(fileList, overWrapLength);
+        this.fileInfoMap = Collections.unmodifiableMap(createFileInfo(fileList, overWrapLength));
 
         // カレントファイルを先頭ファイルにする
         this.currentFile = fileList.get(0);
