@@ -33,24 +33,25 @@
     <!-- メインコンテンツ -->
     <div align="center" class="column">
 
-        <p style="font-size: smaller;">
-            update:
-            <span th:text="${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
-            (please reload)
-        </p>
-
         <!-- 本文 -->
         <article class="box media">
             <div class="media-content">
                 <div class="content">
-                    <h1>Now <span style="font-weight: bold; font-size: 90px;"
+                    <h2>Now <span style="font-weight: bold; font-size: 90px;"
                             th:text=" '&quot;' +  ${CURRENT_DIGITS} + '&quot;'">&quot;9&quot;</span> Digits Processing..
-                    </h1>
-                    現在 "<span th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..
-                    <br />
+                    </h2>
                     "<span th:text="${CURRENT_DIGITS_MIN}">000000000</span>"
                     -
                     "<span th:text="${CURRENT_DIGITS_MAX}">999999999</span>"
+                    <br />
+                    現在 "<span th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..
+                    <br />
+                    <p style="font-size: smaller;">
+                        update:
+                        <span th:text="${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
+                        (please reload)
+                    </p>
+
                 </div>
 
                 <table style="width:0; white-space:nowrap;" class="table is-narrow ">
@@ -117,11 +118,9 @@
                             <span class="has-text-weight-bold" th:text="${CURRENT_SPEED} + '/sec'">9999/sec</span>
                         </td>
                         <td>
-                            個/秒
+                            出現 個/秒
                         </td>
                     </tr>
-
-
 
                 </table>
 
@@ -132,11 +131,47 @@
             <div class="container">
                 <div class="columns is-centered">
                     <div class="column is-half">
-
                         <div class="content">
                             <h2>Internal progress status</h2>
                             <table style="width:0; white-space:nowrap;" class="table is-narrow ">
                                 <caption><b>Progress of current search unit</b><br />現在検索実行中ユニットの進捗</caption>
+
+                                <tr>
+                                    <td align="right">
+                                        Size:
+                                    </td>
+                                    <td align="right">
+                                        <span th:text="${CURRENT_SURVIVAL_INITIAL_COUNT}">9999999</span>
+                                    </td>
+                                    <td>
+                                        対象数
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td align="right">
+                                        Process Rate:
+                                    </td>
+                                    <td align="right">
+                                        <span th:text="${CURRENT_SURVIVAL_DISCOVERD_RATE}">9999999</span>%
+                                    </td>
+                                    <td>
+                                        進捗
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td align="right">
+                                        Discoverd:
+                                    </td>
+                                    <td align="right">
+                                        <span th:text="${CURRENT_SURVIVAL_DISCOVERD_COUNT}">9999999</span>
+                                    </td>
+                                    <td>
+                                        発見数
+                                    </td>
+                                </tr>
+
                                 <tr>
                                     <td align="right">
                                         Target start:<br />
@@ -153,45 +188,6 @@
                                     </td>
                                 </tr>
 
-
-
-                                <tr>
-                                    <td align="right">
-                                        Size:
-                                    </td>
-                                    <td align="right">
-                                        <span th:text="${CURRENT_SURVIVAL_INITIAL_COUNT}">9999999</span>
-                                    </td>
-                                    <td>
-                                        対象数
-                                    </td>
-                                </tr>
-
-
-
-                                <tr>
-                                    <td align="right">
-                                        Discoverd:
-                                    </td>
-                                    <td align="right">
-                                        <span th:text="${CURRENT_SURVIVAL_DISCOVERD_COUNT}">9999999</span>
-                                    </td>
-                                    <td>
-                                        発見数
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td align="right">
-                                        Process Rate:
-                                    </td>
-                                    <td align="right">
-                                        <span th:text="${CURRENT_SURVIVAL_DISCOVERD_RATE}">9999999</span>%
-                                    </td>
-                                    <td>
-                                        進捗
-                                    </td>
-                                </tr>
 
 
                                 <tr>
@@ -230,35 +226,32 @@
                                         経過時間(秒)
                                     </td>
                                 </tr>
+                            </table>
 
 
 
-                                <table style="width:0; white-space:nowrap;" class="table is-narrow ">
-                                    <caption><b>Now latest appearing</b><br />現在の最遅出現</caption>
+                            <table style="width:0; white-space:nowrap;" class="table is-narrow ">
+                                <caption><b>Now latest appearing</b><br />現在の最遅出現</caption>
 
-                                    <tr>
-                                        <td align="right">
-                                            Now Deepest:<br />
-                                            Appearing Position:</br>
-                                        </td>
-                                        <td align="right">
-                                            "<span th:text="${CURRENT_DEEPEST_FIND}">9999999</span>"<br />
-                                            <span th:text="${CURRENT_DEEPEST_FIND_POSITION}">9,999,999</span>
-                                        </td>
-                                        <td>
-                                            現在の最遅出現<br />
-                                            場所
-                                        </td>
-                                    </tr>
-
-                                </table>
-
-
-
+                                <tr>
+                                    <td align="right">
+                                        Now Deepest:<br />
+                                        Appearing Position:</br>
+                                    </td>
+                                    <td align="right">
+                                        "<span th:text="${CURRENT_DEEPEST_FIND}">9999999</span>"<br />
+                                        <span th:text="${CURRENT_DEEPEST_FIND_POSITION}">9,999,999</span>
+                                    </td>
+                                    <td>
+                                        現在の最遅出現<br />
+                                        場所
+                                    </td>
+                                </tr>
 
                             </table>
                         </div>
                     </div>
+
                 </div>
         </section>
 
