@@ -295,11 +295,6 @@
                 </div>
         </section>
 
-        <p style="font-size: smaller;">
-            I have pi data with
-            <span class="has-text-weight-bold" th:text="${YCD_MAX_DEPTH}">999,999,999,999</span>
-            digits.
-        </p>
 
 
         <article class="box media">
@@ -310,6 +305,48 @@
             </div>
         </article>
     </div>
+
+
+    <article class="box media">
+        <div class="media-content">
+            <p style="font-size: smaller;">
+                I have pi data with
+                <span class="has-text-weight-bold" th:text="${YCD_MAX_DEPTH}">999,999,999,999</span>
+                digits.
+            </p>
+            <details>
+                <summary class="button is-text is-small">
+                    <i class="fas fa-arrow-down">
+                    </i>&nbsp; Using Ycd File List
+                </summary>
+                <section class="section">
+                    <div class="container">
+                        <div class="columns is-centered">
+                            <div class="column is-half">
+                                <div class="content">
+                                    <h2>Pi Data File List</h2>
+                                    <table class="table is-bordered">
+                                        <thead>
+                                            <th>File<br />Index</th>
+                                            <th>First Digit</th>
+                                            <th>End Digit</th>
+                                        </thead>
+
+                                        <tbody>
+                                            <tr th:each="files : ${YCD_FILES_INFO}">
+                                                <td align="right" th:text="${files.get('BLOCK_INDEX')}">00000</td>
+                                                <td align="right" th:text="${files.get('FIRST_DIGIT')}">00000000000</td>
+                                                <td align="right" th:text="${files.get('END_DIGIT')}">999999999</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                </section>
+            </details>
+        </div>
+    </article>
 
     <!-- フッター -->
     <footer class="footer has-background-primary-dark has-text-white">
@@ -330,27 +367,9 @@
     </footer>
 
 
-    <h2>Pi Data File List</h2>
-    <table class="table is-bordered">
-        <thead>
-            <th>File Index</th>
-            <th>First Digits</th>
-            <th>End Digit</th>
-        </thead>
-
-        <tbody>
-            <tr th:each="files : ${YCD_FILES_INFO}">
-                <td align="right" th:text="${files.get('BLOCK_INDEX')}">00000</td>
-                <td align="right" th:text="${files.get('FIRST_DIGIT')}">00000000000</td>
-                <td align="right" th:text="${files.get('END_DIGIT')}">999999999</td>
-            </tr>
-        </tbody>
-    </table>
-
-
-
 
 
 </body>
+
 
 </html>
