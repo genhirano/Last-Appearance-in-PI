@@ -3,8 +3,6 @@ package controller;
 import java.io.File;
 import java.util.*;
 
-import model.ycd.YCDFileUtil;
-
 public class Main {
 
     private final static String propFileName = "/default.properties";

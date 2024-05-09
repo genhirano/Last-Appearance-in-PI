@@ -21,6 +21,7 @@ import java.util.Map;
 
 import model.ProgressReportBean;
 import model.TargetRange;
+import model.pi.SurvivalList.DiscoverdInfo;
 import model.ycd.YCDFileUtil;
 
 public class StoreController {
@@ -268,6 +269,11 @@ public class StoreController {
                 prb.setCurenntSurvivalStartTime(survivalStartTime);
                 Long survivalSec = Duration.between(survivalStartTime, ZonedDateTime.now()).getSeconds();
                 prb.setCurrentSurvivalElapsedSeconds(survivalSec);
+
+
+                prb.setDiscoverd((ArrayList<DiscoverdInfo>)survivalProgressMap.get("SURVIVAL_DISCOVERD_LIST"));
+                
+
 
                 // [全体]すでに発見された数
                 Integer nowDiscoverCount = discoverdCount + initialSurviavalListSize - currentSurviavalListSize;

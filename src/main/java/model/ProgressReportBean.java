@@ -8,6 +8,7 @@ import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
+import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;
 
 public class ProgressReportBean {
@@ -77,6 +78,9 @@ public class ProgressReportBean {
     @Setter
     Long currentSurvivalElapsedSeconds;// カレントサバイバルの処理時間(Sec)
  
+    @Getter
+    @Setter
+    ArrayList<SurvivalList.DiscoverdInfo> discoverd;// 発見済み
 
     
     public ProgressReportBean() {

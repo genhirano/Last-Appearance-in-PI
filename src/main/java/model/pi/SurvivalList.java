@@ -2,6 +2,9 @@ package model.pi;
 
 import org.apache.commons.lang3.StringUtils;
 
+import lombok.Getter;
+
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -14,6 +17,39 @@ import java.util.Collection;
 public class SurvivalList extends ArrayList<String> {
 
     /**
+     * 発見済情報保持用.
+     */
+    public static class DiscoverdInfo {
+
+        @Getter
+        private String target;
+
+        @Getter
+        private Long findPos;
+
+        @Getter
+        private ZonedDateTime findDateTime;
+
+        public DiscoverdInfo(String target, Long findPos,ZonedDateTime findDateTime) {
+            this.target = target;
+            this.findPos = findPos;
+            this.findDateTime = findDateTime;
+        }
+
+        @Override
+        public String toString() {
+            return "DiscoverdInfo{" +
+                    "target='" + target + '\'' +
+                    ", findPos=" + findPos +
+                    ", findDateTime=" + findDateTime +
+                    '}';
+        }
+    }
+
+    //発見済リスト
+    ArrayList<DiscoverdInfo> discoveredList = new ArrayList<>();
+
+    /**
      * コンストラクタ.
      *
      * 指定長さの、スタートからエンドまでのゼロ埋め連続リストを作成する.
@@ -21,7 +57,6 @@ public class SurvivalList extends ArrayList<String> {
      * @param length 桁数
      * @param start 開始数
      * @param end 終了数
-     *
      *
      */
     public SurvivalList(Integer length, Integer start, Integer end) {
@@ -75,6 +110,24 @@ public class SurvivalList extends ArrayList<String> {
         throw new IllegalAccessException("no args");
     }
 
+    /**
+     * remove（使用禁止).
+     */
+    @Override
+    @Deprecated
+    public String remove(int index) {
+        throw new RuntimeException("Not available");
+    }
+
+    public void discover(int index, Long findPos) {
+        this.discoveredList.add(new DiscoverdInfo(this.get(index), findPos, ZonedDateTime.now()));
+        super.remove(index);
+    }
+
+
+    public ArrayList<DiscoverdInfo> getDiscoverdInfo() {
+        return this.discoveredList;
+    }
 
 
 }

@@ -1,7 +1,6 @@
 package controller;
 
 import lombok.Getter;
-import lombok.Setter;
 import model.TargetRange;
 import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;
@@ -12,7 +11,6 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class Searcher extends Thread {
 
@@ -30,13 +28,13 @@ public class Searcher extends Thread {
     }
 
     @Getter
-    private final List<File> um_piFileList;// 不変
+    private final List<File> um_piFileList;// 検索用ファイルリスト（不変にする）
 
     @Getter
-    private final Integer listSize;
+    private final Integer listSize; // サバイバルリストの現在サイズ（残り）
 
     @Getter
-    private final Integer unitLength;
+    private final Integer unitLength;//一回の読み込み長さ
 
     public Searcher(List<File> piFileList, Integer listSize, Integer unitLength)
             throws IOException {
@@ -47,7 +45,6 @@ public class Searcher extends Thread {
         this.listSize = listSize;
         this.unitLength = unitLength;
 
-
         StoreController.setAllPiDataLength(YCDFileUtil.getAllDigitsCount(um_piFileList));
 
         StoreController.setAllFileInfo(YCDFileUtil.createFileInfo(piFileList, 0));
@@ -57,8 +54,6 @@ public class Searcher extends Thread {
     @Override
     public void run() {
 
-        Integer survaivalListSize = Env.getInstance().getListSize(); // サバイバルリストの初期サイズ
-
         // 検索処理のメインループ
         while (true) {
 
@@ -66,17 +61,8 @@ public class Searcher extends Thread {
             ZonedDateTime startTime = ZonedDateTime.now();
             StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", startTime);
 
-            // 処理範囲の決定（次に記録する１行を定義）
-            // この桁数の初めての時は、サバイバルリストの初期サイズをデフォルトに戻す
-            TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(survaivalListSize);
-            if (targetRange.getStart().replaceAll("0", "").isEmpty()) {
-
-                // サバイバルリストを初期サイズとする
-                survaivalListSize = Env.getInstance().getListSize();
-
-                // 対象レンジをデフォルトのサイズで再計算
-                targetRange = StoreController.getInstance().getCurrentTargetStartEnd(survaivalListSize);
-            }
+            // 処理範囲の決定（次の処理を定義）
+            TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(this.listSize);
 
             StoreController.survivalProgressMap.put("SURVIVAL_DIGIT_LENGTH", String.valueOf(targetRange.getLength()));
 
@@ -105,9 +91,10 @@ public class Searcher extends Thread {
         String lastFoundTarget = "";
         Long lastFoundPos = -1L;
 
+        // サバイバルリスト
         SurvivalList survivalList = null;
 
-        // サバイバルリストの作成フラグ
+        // サバイバルリストの(再)作成フラグ
         Boolean goSurvivalListRemake = true;
 
         // このサバイバルのスタート時間を記録
@@ -129,6 +116,8 @@ public class Searcher extends Thread {
 
                 // 進捗情報用サバイバルリスト初期情報の登録
                 StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
+                StoreController.survivalProgressMap.put("SURVIVAL_DISCOVERD_LIST", survivalList.getDiscoverdInfo());
+
 
             }
             goSurvivalListRemake = true; // サバイバルリストの再作成フラグをON
@@ -173,7 +162,7 @@ public class Searcher extends Thread {
                             }
 
                             // サバイバルリストからヒットした要素を削除
-                            survivalList.remove(i);
+                            survivalList.discover(i, curFindPos);
 
                             StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
 
