@@ -14,6 +14,7 @@ public class YCDFileUtil {
         FIRST_DATA,
         FIRST_DIGIT,
         END_DIGIT,
+        FILE_SIZE,
         ;
     }
 
@@ -230,6 +231,9 @@ public class YCDFileUtil {
                 //先頭桁と最終桁の取得
                 value.put(YCDFileUtil.FileInfo.FIRST_DIGIT, String.valueOf((blockID * blockSize) + 1L));
                 value.put(YCDFileUtil.FileInfo.END_DIGIT, String.valueOf((blockID + 1L) * blockSize));
+
+                //ファイルサイズ(Byte)
+                value.put(YCDFileUtil.FileInfo.FILE_SIZE, String.valueOf(YCDFileUtil.getFileSize(f.getPath())));
 
                 //全ての円周率ファイルの先頭から、そのファイルの前のファイルの末尾に付加する桁数だけ切り出す
                 value.put(YCDFileUtil.FileInfo.FIRST_DATA, YCDFileUtil.getFirstData(f.getPath(), overwrapLength));
