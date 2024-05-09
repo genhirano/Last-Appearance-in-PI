@@ -17,6 +17,7 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import model.ProgressReportBean;
 import model.ycd.YCDFileUtil;
+import model.ycd.YCDFileUtil.FileInfo;
 
 import static spark.Spark.*;
 import static spark.debug.DebugScreen.enableDebugScreen;
@@ -133,13 +134,13 @@ public class Web {
 
                 
                 //YCDファイル情報
-                //Map<File, Map<YCDFileUtil.FileInfo, String>>
-
                 List<Map<String, String>> fileInfo = new ArrayList<>();
                 for(File f : pr.getAllFileInfo().keySet() ){
                     Map<YCDFileUtil.FileInfo, String> info = pr.getAllFileInfo().get(f);
                     Map<String, String> map = new HashMap<>();
 
+
+                    //カンマ
                     for(YCDFileUtil.FileInfo key : info.keySet()){
                         String value = info.get(key);
                         if (value.matches("^[1-9]\\d*$")){
@@ -147,6 +148,21 @@ public class Web {
                         }
                         map.put(key.toString(), value);
                     }
+
+                    //ファイルサイズのByte→GB変換
+                    Long fileSize = Long.valueOf(info.get(FileInfo.FILE_SIZE));
+                    String unitString = "";
+                    double printFileSize = -1;
+                    if(1024*1024*1024 > fileSize){
+                        printFileSize = fileSize/1024d/1024d;
+                        unitString = "MB";
+                    }else{
+                        printFileSize = fileSize/1024d/1024d/1024d;
+                        unitString = "GB";
+                    }
+                    
+                    map.put("PRINT_FILE_SIZE", String.format("%.3f", printFileSize) + unitString);
+
                     fileInfo.add(map);
                 }
 

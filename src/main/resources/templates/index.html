@@ -138,37 +138,25 @@
 
                                 <tr>
                                     <td align="right">
-                                        Size:
-                                    </td>
-                                    <td align="right">
-                                        <span th:text="${CURRENT_SURVIVAL_INITIAL_COUNT}">9999999</span>
-                                    </td>
-                                    <td>
-                                        対象数
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td align="right">
                                         Process Rate:
                                     </td>
                                     <td align="right">
                                         <span th:text="${CURRENT_SURVIVAL_DISCOVERD_RATE}">9999999</span>%
                                     </td>
                                     <td>
-                                        進捗
+                                        進捗率
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td align="right">
-                                        Discoverd:
+                                        Reach Depth:
                                     </td>
                                     <td align="right">
-                                        <span th:text="${CURRENT_SURVIVAL_DISCOVERD_COUNT}">9999999</span>
+                                        <span th:text="${CURRENT_SURVIVAL_DEPTH}">9999999</span>
                                     </td>
                                     <td>
-                                        発見数
+                                        到達深さ
                                     </td>
                                 </tr>
 
@@ -188,19 +176,30 @@
                                     </td>
                                 </tr>
 
-
+                                <tr>
+                                    <td align="right">
+                                        Size:
+                                    </td>
+                                    <td align="right">
+                                        <span th:text="${CURRENT_SURVIVAL_INITIAL_COUNT}">9999999</span>
+                                    </td>
+                                    <td>
+                                        対象数
+                                    </td>
+                                </tr>
 
                                 <tr>
                                     <td align="right">
-                                        Reach Depth:
+                                        Discoverd:
                                     </td>
                                     <td align="right">
-                                        <span th:text="${CURRENT_SURVIVAL_DEPTH}">9999999</span>
+                                        <span th:text="${CURRENT_SURVIVAL_DISCOVERD_COUNT}">9999999</span>
                                     </td>
                                     <td>
-                                        到達深さ
+                                        発見数
                                     </td>
                                 </tr>
+
 
                                 <tr>
                                     <td align="right">
@@ -264,13 +263,13 @@
 
                         <div class="content">
 
-                            <h2>Finished Result</h2>
+                            <h2>Completed Result</h2>
                             <table bclass="table is-narrow">
                                 <thead>
-                                    <th>Digits<br />桁</th>
-                                    <th>Appearing<br />最遅出現</th>
-                                    <th>Position<br />出現桁</th>
-                                    <th>ProcessTime(Sec)<br />処理時間(秒)</th>
+                                    <th>Target<br />Digits<br />桁</th>
+                                    <th>Last<br />Appeared<br />最遅出現</th>
+                                    <th>Appeared<br />Position<br />出現桁</th>
+                                    <th>Process<br />Time(Sec)<br />処理時間(秒)</th>
                                 </thead>
 
                                 <tbody>
@@ -289,14 +288,6 @@
         </section>
 
 
-
-        <article class="box media">
-            <div class="media-content">
-                <a class="button is-black" href="https://github.com/genhirano/Last-Appearance-in-PI" target="_blank">
-                    project github : <span class="icon"><i class="fab fa-github"></i></span>
-                </a>
-            </div>
-        </article>
     </div>
 
 
@@ -317,12 +308,13 @@
                         <div class="columns is-centered">
                             <div class="column is-half">
                                 <div class="content">
-                                    <h2>Pi Data File List</h2>
+                                    <h3>Using YCD(Pi) File List</h3>
                                     <table class="table is-bordered">
                                         <thead>
                                             <th>File<br />Index</th>
                                             <th>First Digit</th>
                                             <th>End Digit</th>
+                                            <th>File<br /> Size</th>
                                         </thead>
 
                                         <tbody>
@@ -330,6 +322,10 @@
                                                 <td align="right" th:text="${files.get('BLOCK_INDEX')}">00000</td>
                                                 <td align="right" th:text="${files.get('FIRST_DIGIT')}">00000000000</td>
                                                 <td align="right" th:text="${files.get('END_DIGIT')}">999999999</td>
+                                                <td align="right" th:text="${files.get('PRINT_FILE_SIZE')}">999999999
+                                                </td>
+
+
                                             </tr>
                                         </tbody>
                                     </table>
@@ -343,6 +339,14 @@
 
     <!-- フッター -->
     <footer class="footer has-background-primary-dark has-text-white">
+
+        <p class="has-text-centered">
+            <a class="button is-black" href="https://github.com/genhirano/Last-Appearance-in-PI" target="_blank">
+                project github : <span class="icon"><i class="fab fa-github"></i></span>
+            </a>
+        </p>
+        <br />
+
         <p class="has-text-centered">
             Copyright © 2022-2024 genhirano
         </p>
