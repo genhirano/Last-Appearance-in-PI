@@ -64,7 +64,6 @@ public class Web {
                 // ビューに渡すデータ作成
                 ProgressReportBean pr = StoreController.getProgressReport();
                 Map<String, Object> model = new HashMap<>();
-                // Collections.reverse(pr.getResult());
 
                 model.put("DATA", pr.getResult());// 検索終了
 
@@ -103,36 +102,11 @@ public class Web {
 
                 model.put("CURRENT_SPEED", ((double) Math.round(speed * 1000)) / 1000);
 
-                ArrayList<SurvivalList.DiscoverdInfo> discoverdInfoList = pr.getDiscoverd();
-                LinkedHashMap<Long, Long> discoverdTimeMap = new LinkedHashMap<>();
-                ZonedDateTime baseDiscoverTime = discoverdInfoList.get(0).getFindDateTime();
-                ZonedDateTime lastDiscoverTime = discoverdInfoList.get(discoverdInfoList.size() - 1).getFindDateTime();
-                // 10分割
-                Long split = (lastDiscoverTime.toEpochSecond() - baseDiscoverTime.toEpochSecond()) / 10;
-                for (Integer i = 1; i <= 10; i++) {
-                    discoverdTimeMap.put(split * i, 0L);
-                }
-                discoverdTimeMap.put((split * 10 + split), 0L);
-
-                for (SurvivalList.DiscoverdInfo di : discoverdInfoList) {
-
-                    // 経過時間
-                    ZonedDateTime z = di.getFindDateTime();
-
-                    Long elapsed = z.toEpochSecond() - baseDiscoverTime.toEpochSecond();
-
-                    for (Long dif : discoverdTimeMap.keySet()) {
-                        if (elapsed <= dif) {
-                            discoverdTimeMap.put(dif, discoverdTimeMap.get(dif) + 1);
-                            break;
-                        }
-                    }
-
-                }
-                model.put("SURVIVAL_DISCOVERD_LIST", discoverdTimeMap);
+                ArrayList<Long> discoverdInfoList = pr.getDiscoverdPosList();
 
                 LinkedHashMap<Long, Long> discoverdPosMap = new LinkedHashMap<>();
-                Long lastDiscoverPos = discoverdInfoList.get(discoverdInfoList.size() - 1).getFindPos();
+                Long lastDiscoverPos = discoverdInfoList.get(discoverdInfoList.size() - 1);
+                
                 // 10分割
                 Long splitPos = lastDiscoverPos / 10;
                 for (Integer i = 1; i <= 10; i++) {
@@ -140,17 +114,29 @@ public class Web {
                 }
                 discoverdPosMap.put((splitPos * 10 + splitPos), 0L);
 
-                for (SurvivalList.DiscoverdInfo di : discoverdInfoList) {
+                for (Long di : discoverdInfoList) {
 
                     for (Long dif : discoverdPosMap.keySet()) {
-                        if (di.getFindPos() <= dif) {
+                        if (di <= dif) {
                             discoverdPosMap.put(dif, discoverdPosMap.get(dif) + 1);
                             break;
                         }
                     }
 
                 }
-                model.put("SURVIVAL_DISCOVERD_POS_LIST", discoverdPosMap);
+
+                LinkedHashMap<String, String> formatedDiscoverdPosMap = new LinkedHashMap<>();
+
+                Long from = 0L;
+                for (Long key : discoverdPosMap.keySet()) {
+                    String fromKey = String.format("%,d", from); 
+                    String toKey = String.format("%,d", key);
+                    
+                    formatedDiscoverdPosMap.put((fromKey + " - " + toKey), String.format("%,d", discoverdPosMap.get(key)));
+                    from = key;
+                }
+
+                model.put("SURVIVAL_DISCOVERD_POS_MAP", formatedDiscoverdPosMap);
 
                 // サバイバルリストの初期サイズ
                 Integer SurvivalListInitialSize = 1 + Integer.valueOf(pr.getInitSurvivalInfo().getEnd())

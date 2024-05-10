@@ -7,6 +7,7 @@ import lombok.Getter;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * サバイバルリスト.
@@ -14,7 +15,7 @@ import java.util.Collection;
  * 基本的には{@code ArrayList<String>} と同じだが、StartからEndまでの連番ゼロ埋めを自動生成した状態を初期値とする.
  * 総当たり検索用。
  */
-public class SurvivalList extends ArrayList<String> {
+public class SurvivalList extends CopyOnWriteArrayList<String> {
 
     /**
      * 発見済情報保持用.

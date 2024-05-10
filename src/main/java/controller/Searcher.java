@@ -34,7 +34,7 @@ public class Searcher extends Thread {
     private final Integer listSize; // サバイバルリストの現在サイズ（残り）
 
     @Getter
-    private final Integer unitLength;//一回の読み込み長さ
+    private final Integer unitLength;// 一回の読み込み長さ
 
     public Searcher(List<File> piFileList, Integer listSize, Integer unitLength)
             throws IOException {
@@ -118,7 +118,6 @@ public class Searcher extends Thread {
                 StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
                 StoreController.survivalProgressMap.put("SURVIVAL_DISCOVERD_LIST", survivalList.getDiscoverdInfo());
 
-
             }
             goSurvivalListRemake = true; // サバイバルリストの再作成フラグをON
 
@@ -144,7 +143,6 @@ public class Searcher extends Thread {
 
                     // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
                     for (int i = survivalList.size() - 1; i >= 0; i--) {
-
                         String target = survivalList.get(i);
 
                         int pos = currentPi.indexOf(target);

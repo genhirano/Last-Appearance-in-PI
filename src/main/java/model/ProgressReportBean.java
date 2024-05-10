@@ -3,8 +3,11 @@ package model;
 import java.io.File;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.eclipse.jetty.server.RequestLog.Collection;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -81,6 +84,17 @@ public class ProgressReportBean {
     @Getter
     @Setter
     ArrayList<SurvivalList.DiscoverdInfo> discoverd;// 発見済み
+
+
+    public ArrayList<Long> getDiscoverdPosList() {
+        ArrayList<Long> discoverdPosList = new ArrayList<>();
+        for (SurvivalList.DiscoverdInfo di : discoverd) {
+            discoverdPosList.add(di.getFindPos());
+        }
+        
+        Collections.sort(discoverdPosList);
+        return discoverdPosList;
+    }
 
     
     public ProgressReportBean() {
