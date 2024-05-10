@@ -65,7 +65,14 @@ public class Web {
                 ProgressReportBean pr = StoreController.getProgressReport();
                 Map<String, Object> model = new HashMap<>();
 
-                model.put("DATA", pr.getResult());// 検索終了
+
+                List<Map<String, String>> tmpData =pr.getResult();
+                for (Map<String, String> map : tmpData) {
+                    map.put("Depth", String.format("%,d", Long.valueOf(map.get("Depth"))));
+                }
+                model.put("DATA", tmpData);// 検索終了
+
+
 
                 model.put("YCD_MAX_DEPTH", String.format("%,d", pr.getAllPiDataLength()));
                 model.put("SYSTEMSTART", startTime);
@@ -76,7 +83,7 @@ public class Web {
                 model.put("CURRENT_DIGITS_MIN", StringUtils.repeat("0", pr.getCurrentTargetLength()));
                 model.put("CURRENT_DIGITS_MAX", StringUtils.repeat("9", pr.getCurrentTargetLength()));
 
-                model.put("CURRENT_UNDISCOVERD_COUNT", pr.getCurrentUndiscoveredCount());
+                model.put("CURRENT_DISCOVERD_COUNT", String.format("%,d", pr.getCurrentDiscoveredCount()));
                 model.put("CURRENT_ELAPSED_TIME", String.format("%,d", pr.getCurenntElapsedTimeInSeconds()));
 
                 model.put("CURRENT_DEEPEST_FIND", pr.getCurrentDeepestFind());
@@ -89,8 +96,7 @@ public class Web {
                     allMax = Integer.valueOf(StringUtils.repeat("9", pr.getCurrentTargetLength()));
                 }
 
-                model.put("CURRENT_DISCOVERD_COUNT", pr.getCurrentDiscoveredCount());
-                model.put("CURRENT_UNDISCOVERD_COUNT", (allMax + 1) - pr.getCurrentDiscoveredCount());
+                model.put("CURRENT_UNDISCOVERD_COUNT", String.format("%,d", (allMax + 1) - pr.getCurrentDiscoveredCount()));
                 double progress = 0.0;
                 if (null != pr.getCurrentDiscoveredCount()) {
                     double d = (pr.getCurrentDiscoveredCount() / (double) allMax) * 100;
@@ -131,7 +137,6 @@ public class Web {
                 for (Long key : discoverdPosMap.keySet()) {
                     String fromKey = String.format("%,d", from); 
                     String toKey = String.format("%,d", key);
-                    
                     formatedDiscoverdPosMap.put((fromKey + " - " + toKey), String.format("%,d", discoverdPosMap.get(key)));
                     from = key;
                 }
@@ -141,11 +146,11 @@ public class Web {
                 // サバイバルリストの初期サイズ
                 Integer SurvivalListInitialSize = 1 + Integer.valueOf(pr.getInitSurvivalInfo().getEnd())
                         - Integer.valueOf(pr.getInitSurvivalInfo().getStart());
-                model.put("CURRENT_SURVIVAL_INITIAL_COUNT", SurvivalListInitialSize);
+                model.put("CURRENT_SURVIVAL_INITIAL_COUNT", String.format("%,d", SurvivalListInitialSize));
 
                 // サバイバルリストの現在発見数
                 Integer SurvivalListDiscoverdCount = pr.getCurenntSurvivalDiscoveredCount();
-                model.put("CURRENT_SURVIVAL_DISCOVERD_COUNT", SurvivalListDiscoverdCount);
+                model.put("CURRENT_SURVIVAL_DISCOVERD_COUNT", String.format("%,d", SurvivalListDiscoverdCount));
 
                 // サバイバルリストの進捗率
                 Double survivalProcessRate = (double) SurvivalListDiscoverdCount / (double) SurvivalListInitialSize

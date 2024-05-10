@@ -26,8 +26,8 @@ public class Main {
         }
 
         // todo: これは消す
-        String propPath = new File(".").getAbsoluteFile().getParent();
-        Env.setPropFileName(propPath + "\\src\\test\\resources\\test.properties");
+        //String propPath = new File(".").getAbsoluteFile().getParent();
+        //Env.setPropFileName(propPath + "\\src\\test\\resources\\test.properties");
 
         // Envクラスのインスタンスを取得 (シングルトン)
         Env env = Env.getInstance();
