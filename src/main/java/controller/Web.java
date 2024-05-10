@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import model.ProgressReportBean;
+import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;
 import model.ycd.YCDFileUtil.FileInfo;
 
@@ -59,13 +61,18 @@ public class Web {
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-                
                 // ビューに渡すデータ作成
                 ProgressReportBean pr = StoreController.getProgressReport();
                 Map<String, Object> model = new HashMap<>();
-                // Collections.reverse(pr.getResult());
 
-                model.put("DATA", pr.getResult());// 検索終了
+
+                List<Map<String, String>> tmpData =pr.getResult();
+                for (Map<String, String> map : tmpData) {
+                    map.put("Depth", String.format("%,d", Long.valueOf(map.get("Depth"))));
+                }
+                model.put("DATA", tmpData);// 検索終了
+
+
 
                 model.put("YCD_MAX_DEPTH", String.format("%,d", pr.getAllPiDataLength()));
                 model.put("SYSTEMSTART", startTime);
@@ -76,7 +83,7 @@ public class Web {
                 model.put("CURRENT_DIGITS_MIN", StringUtils.repeat("0", pr.getCurrentTargetLength()));
                 model.put("CURRENT_DIGITS_MAX", StringUtils.repeat("9", pr.getCurrentTargetLength()));
 
-                model.put("CURRENT_UNDISCOVERD_COUNT", pr.getCurrentUndiscoveredCount());
+                model.put("CURRENT_DISCOVERD_COUNT", String.format("%,d", pr.getCurrentDiscoveredCount()));
                 model.put("CURRENT_ELAPSED_TIME", String.format("%,d", pr.getCurenntElapsedTimeInSeconds()));
 
                 model.put("CURRENT_DEEPEST_FIND", pr.getCurrentDeepestFind());
@@ -89,10 +96,7 @@ public class Web {
                     allMax = Integer.valueOf(StringUtils.repeat("9", pr.getCurrentTargetLength()));
                 }
 
-
-
-                model.put("CURRENT_DISCOVERD_COUNT", pr.getCurrentDiscoveredCount());
-                model.put("CURRENT_UNDISCOVERD_COUNT", (allMax + 1) - pr.getCurrentDiscoveredCount());
+                model.put("CURRENT_UNDISCOVERD_COUNT", String.format("%,d", (allMax + 1) - pr.getCurrentDiscoveredCount()));
                 double progress = 0.0;
                 if (null != pr.getCurrentDiscoveredCount()) {
                     double d = (pr.getCurrentDiscoveredCount() / (double) allMax) * 100;
@@ -104,14 +108,49 @@ public class Web {
 
                 model.put("CURRENT_SPEED", ((double) Math.round(speed * 1000)) / 1000);
 
+                ArrayList<Long> discoverdInfoList = pr.getDiscoverdPosList();
+
+                LinkedHashMap<Long, Long> discoverdPosMap = new LinkedHashMap<>();
+                Long lastDiscoverPos = discoverdInfoList.get(discoverdInfoList.size() - 1);
+                
+                // 10分割
+                Long splitPos = lastDiscoverPos / 10;
+                for (Integer i = 1; i <= 10; i++) {
+                    discoverdPosMap.put(splitPos * i, 0L);
+                }
+                discoverdPosMap.put((splitPos * 10 + splitPos), 0L);
+
+                for (Long di : discoverdInfoList) {
+
+                    for (Long dif : discoverdPosMap.keySet()) {
+                        if (di <= dif) {
+                            discoverdPosMap.put(dif, discoverdPosMap.get(dif) + 1);
+                            break;
+                        }
+                    }
+
+                }
+
+                LinkedHashMap<String, String> formatedDiscoverdPosMap = new LinkedHashMap<>();
+
+                Long from = 0L;
+                for (Long key : discoverdPosMap.keySet()) {
+                    String fromKey = String.format("%,d", from); 
+                    String toKey = String.format("%,d", key);
+                    formatedDiscoverdPosMap.put((fromKey + " - " + toKey), String.format("%,d", discoverdPosMap.get(key)));
+                    from = key;
+                }
+
+                model.put("SURVIVAL_DISCOVERD_POS_MAP", formatedDiscoverdPosMap);
+
                 // サバイバルリストの初期サイズ
                 Integer SurvivalListInitialSize = 1 + Integer.valueOf(pr.getInitSurvivalInfo().getEnd())
                         - Integer.valueOf(pr.getInitSurvivalInfo().getStart());
-                model.put("CURRENT_SURVIVAL_INITIAL_COUNT", SurvivalListInitialSize);
+                model.put("CURRENT_SURVIVAL_INITIAL_COUNT", String.format("%,d", SurvivalListInitialSize));
 
                 // サバイバルリストの現在発見数
                 Integer SurvivalListDiscoverdCount = pr.getCurenntSurvivalDiscoveredCount();
-                model.put("CURRENT_SURVIVAL_DISCOVERD_COUNT", SurvivalListDiscoverdCount);
+                model.put("CURRENT_SURVIVAL_DISCOVERD_COUNT", String.format("%,d", SurvivalListDiscoverdCount));
 
                 // サバイバルリストの進捗率
                 Double survivalProcessRate = (double) SurvivalListDiscoverdCount / (double) SurvivalListInitialSize
@@ -132,43 +171,39 @@ public class Web {
 
                 model.put("CURRENT_SURVIVAL_DEPTH", String.format("%,d", pr.getCurenntSurvivalDepth()));
 
-                
-                //YCDファイル情報
+                // YCDファイル情報
                 List<Map<String, String>> fileInfo = new ArrayList<>();
-                for(File f : pr.getAllFileInfo().keySet() ){
+                for (File f : pr.getAllFileInfo().keySet()) {
                     Map<YCDFileUtil.FileInfo, String> info = pr.getAllFileInfo().get(f);
                     Map<String, String> map = new HashMap<>();
 
-
-                    //カンマ
-                    for(YCDFileUtil.FileInfo key : info.keySet()){
+                    // カンマ
+                    for (YCDFileUtil.FileInfo key : info.keySet()) {
                         String value = info.get(key);
-                        if (value.matches("^[1-9]\\d*$")){
+                        if (value.matches("^[1-9]\\d*$")) {
                             value = String.format("%,d", Long.valueOf(value));
                         }
                         map.put(key.toString(), value);
                     }
 
-                    //ファイルサイズのByte→GB変換
+                    // ファイルサイズのByte→GB変換
                     Long fileSize = Long.valueOf(info.get(FileInfo.FILE_SIZE));
                     String unitString = "";
                     double printFileSize = -1;
-                    if(1024*1024*1024 > fileSize){
-                        printFileSize = fileSize/1024d/1024d;
+                    if (1024 * 1024 * 1024 > fileSize) {
+                        printFileSize = fileSize / 1024d / 1024d;
                         unitString = "MB";
-                    }else{
-                        printFileSize = fileSize/1024d/1024d/1024d;
+                    } else {
+                        printFileSize = fileSize / 1024d / 1024d / 1024d;
                         unitString = "GB";
                     }
-                    
+
                     map.put("PRINT_FILE_SIZE", String.format("%.3f", printFileSize) + unitString);
 
                     fileInfo.add(map);
                 }
 
                 model.put("YCD_FILES_INFO", fileInfo);
-
-
 
                 ModelAndView modelAndView = new ModelAndView(model, "index");
 
