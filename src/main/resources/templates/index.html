@@ -2,6 +2,17 @@
 <html xmlns:th="http://www.w3.org/1999/xhtml">
 
 <head>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BQGPL86FVT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-BQGPL86FVT');
+    </script>
+
     <meta charset="utf-8" />
     <title>Last Appearance in PI Project</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -146,11 +157,11 @@
                     <summary class="button is-info is-light">
                         <i class="fas fa-arrow-down">&nbsp;<b>Show Internal progress status</b></i>
                     </summary>
-                    <br/>
-                    <br/>
+                    <br />
+                    <br />
 
                     <h2><span style="font-weight: bold; font-size: 30px;">The Current Unit</span></h2>
-                    <br/>
+                    <br />
                     <table style="width:0; white-space:nowrap;" class="table is-narrow ">
                         <caption><b>Progress of current search unit</b><br />現在検索実行中ユニットの進捗</caption>
 
@@ -331,13 +342,16 @@
 
                                     <tbody>
                                         <tr th:each="files : ${YCD_FILES_INFO}">
-                                            <td style="font-size: smaller;"align="right" th:text="${files.get('BLOCK_INDEX')}">
+                                            <td style="font-size: smaller;" align="right"
+                                                th:text="${files.get('BLOCK_INDEX')}">
                                                 00000</td>
-                                            <td style="font-size: smaller;" align="right" th:text="${files.get('FIRST_DIGIT')}">
+                                            <td style="font-size: smaller;" align="right"
+                                                th:text="${files.get('FIRST_DIGIT')}">
                                                 00000000000</td>
-                                            <td style="font-size: smaller;"align="right" th:text="${files.get('END_DIGIT')}">
+                                            <td style="font-size: smaller;" align="right"
+                                                th:text="${files.get('END_DIGIT')}">
                                                 999999999</td>
-                                            <td style="font-size: smaller;"align="right"
+                                            <td style="font-size: smaller;" align="right"
                                                 th:text="${files.get('PRINT_FILE_SIZE')}">999999999
                                             </td>
                                         </tr>
