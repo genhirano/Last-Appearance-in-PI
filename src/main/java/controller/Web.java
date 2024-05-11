@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import model.ProgressReportBean;
-import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;
 import model.ycd.YCDFileUtil.FileInfo;
 

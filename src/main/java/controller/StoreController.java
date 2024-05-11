@@ -232,6 +232,7 @@ public class StoreController {
 
     }
 
+    @SuppressWarnings("unchecked")
     public static ProgressReportBean getProgressReport() {
         ProgressReportBean prb = new ProgressReportBean();
 
@@ -270,10 +271,7 @@ public class StoreController {
                 Long survivalSec = Duration.between(survivalStartTime, ZonedDateTime.now()).getSeconds();
                 prb.setCurrentSurvivalElapsedSeconds(survivalSec);
 
-
                 prb.setDiscoverd((ArrayList<DiscoverdInfo>)survivalProgressMap.get("SURVIVAL_DISCOVERD_LIST"));
-                
-
 
                 // [全体]すでに発見された数
                 Integer nowDiscoverCount = discoverdCount + initialSurviavalListSize - currentSurviavalListSize;

@@ -7,8 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jetty.server.RequestLog.Collection;
-
 import lombok.Getter;
 import lombok.Setter;
 import model.pi.SurvivalList;
