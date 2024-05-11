@@ -120,7 +120,7 @@
 
 
 ## IMAGE
-![image](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/bca89ca7-f0df-49ab-98df-bdd8591b3b27)
+![Screenshot_20240511-144810.png](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/be791931-3a28-4d90-9ad5-d51bfd7e57a7)
 
 ## 特徴
 * Resumable（中断・再開が可能）
