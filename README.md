@@ -122,7 +122,8 @@
 
 * 非富豪的なアプローチ
   * 非力なコンピュータでも実行可能なように設計しています。例えば、円周率の中に自然数を発見するたびにその自然数をすべてメモしておくようなことはできません。このプログラムは、桁数が大きくなっても（検索効率と引き換えに）非力なコンピュータで処理できるリソース範囲で実行できます。
-  *  [現在の稼働環境](https://genhirano.coresv.com/) - [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/) ![PXL_20240507_111731293](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/37cc4fbb-8a0b-4370-bb22-b8822d4774fa)
+  *  [現在の稼働環境](https://genhirano.coresv.com/) - [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
+  *  ![PXL_20240507_111731293](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/37cc4fbb-8a0b-4370-bb22-b8822d4774fa)
 
 * 円周率データ（YCDファイル）読み込みをモジュール化した
   * 膨大な円周率が格納されている"YCD"形式ファイルは保管効率のためにバイナリ保存されています。このプロジェクトでは、[y-cruncher](http://www.numberworld.org/y-cruncher/)プログラムが生成する **"YCD形式ファイル"** をJavaで直接扱えるように、読み込み部分のプログラムを隔離して明確にモジュール化しました。YCD_SeqProviderクラスは、YCDファイルから（ファイルをまたぐ場合でも）連続して指定した桁数ずつ切り出し提供できる、拡張forループが利用可能なモジュールを作りました。
@@ -190,6 +191,10 @@ https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy
   * The place to collaborate on an open-source implementation of the Java Platform, Standard Edition, and related projects.
 * [Spark Framework](https://sparkjava.com/)
   * micro framework for creating web applications in Kotlin and Java 8 with minimal effort
+* [Bluma](https://bulma.io/)
+  * CSS Framework 
+* [Octicons](https://github.com/primer/octicons)
+  * Octicons are a set of SVG icons
 * [Apatch Maven](https://maven.apache.org/)
   * software project management and comprehension tool. 
 * [Intellij idea](https://www.jetbrains.com/idea/)
