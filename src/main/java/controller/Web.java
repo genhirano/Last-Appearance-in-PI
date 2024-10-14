@@ -112,12 +112,12 @@ public class Web {
                 LinkedHashMap<Long, Long> discoverdPosMap = new LinkedHashMap<>();
                 Long lastDiscoverPos = discoverdInfoList.get(discoverdInfoList.size() - 1);
                 
-                // 10分割
+                // MAX検索深さをMAXとして10分割
                 Long splitPos = lastDiscoverPos / 10;
                 for (Integer i = 1; i <= 10; i++) {
                     discoverdPosMap.put(splitPos * i, 0L);
                 }
-                discoverdPosMap.put((splitPos * 10 + splitPos), 0L);
+
 
                 for (Long di : discoverdInfoList) {
 
@@ -129,12 +129,14 @@ public class Web {
                     }
 
                 }
+                discoverdPosMap.put((lastDiscoverPos + splitPos), 0L);
+
 
                 LinkedHashMap<String, String> formatedDiscoverdPosMap = new LinkedHashMap<>();
 
                 Long from = 0L;
                 for (Long key : discoverdPosMap.keySet()) {
-                    String fromKey = String.format("%,d", from); 
+                    String fromKey = String.format("%,d", from+1); 
                     String toKey = String.format("%,d", key);
                     formatedDiscoverdPosMap.put((fromKey + " - " + toKey), String.format("%,d", discoverdPosMap.get(key)));
                     from = key;
@@ -152,9 +154,8 @@ public class Web {
                 model.put("CURRENT_SURVIVAL_DISCOVERD_COUNT", String.format("%,d", SurvivalListDiscoverdCount));
 
                 // サバイバルリストの進捗率
-                Double survivalProcessRate = (double) SurvivalListDiscoverdCount / (double) SurvivalListInitialSize
-                        * 100d;
-                model.put("CURRENT_SURVIVAL_DISCOVERD_RATE", ((double) Math.round(survivalProcessRate * 100)) / 100);
+                Double survivalProcessRate = (double) SurvivalListDiscoverdCount / (double) SurvivalListInitialSize;
+                model.put("CURRENT_SURVIVAL_DISCOVERD_RATE", ((double) Math.round(survivalProcessRate * 1000000)) / 1000000*100);
 
                 // カレントサバイバルリスト情報
                 model.put("CURRENT_SURVIVAL_START", pr.getInitSurvivalInfo().getStart());
