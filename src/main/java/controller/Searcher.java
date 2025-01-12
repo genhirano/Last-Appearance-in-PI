@@ -305,14 +305,21 @@ public class Searcher extends Thread {
                             currentPiStr = currentPi.getData();
 
                             // サバイバルリストから探す
+                            suvFindIndex = -1;
                             for (int i = 0; i < survivalList.size(); i++) {
                                 int findIndex = currentPiStr.indexOf(survivalList.get(i));
                                 if (findIndex >= 0) {
+                                    System.out.println("find: " + survivalList.get(i));
                                     suvFindIndex = findIndex;
                                     findPiStr =  survivalList.get(i);
                                     break;
                                 }
                             }
+
+                            if(-1 == suvFindIndex){
+                                break; //対象文字列の中にはもうない
+                            }
+
                         }
 
                         if (0 <= suvFindIndex) {
