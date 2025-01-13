@@ -67,7 +67,7 @@ public class Searcher extends Thread {
             StoreController.survivalProgressMap.put("SURVIVAL_DIGIT_LENGTH", String.valueOf(targetRange.getLength()));
 
             // 1サイクルのサバイバル実行
-            SurvivalResult sr = survive2(targetRange);
+            SurvivalResult sr = survive(targetRange);
 
             // １サイクルの終了時間
             ZonedDateTime endTime = ZonedDateTime.now();
@@ -97,131 +97,7 @@ public class Searcher extends Thread {
         // サバイバルリストの(再)作成フラグ
         Boolean goSurvivalListRemake = true;
 
-        // このサバイバルのスタート時間を記録
-        StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
-
-        while (true) {
-
-            if (5 < continueCount) {
-                throw new RuntimeException("Fail!  Retry limit exceeded." + continueCount);
-            }
-
-            // 今回のサバイバルリストの作成フラグがONの場合はサバイバルリストを作成
-            // IOエラーなどで再度読み込みする場合は再作成しない
-            if (goSurvivalListRemake) {
-
-                // サバイバルリスト作成
-                survivalList = new SurvivalList(targetRange.getLength(), Integer.valueOf(targetRange.getStart()),
-                        Integer.valueOf(targetRange.getEnd()));
-
-                // 進捗情報用サバイバルリスト初期情報の登録
-                StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
-                StoreController.survivalProgressMap.put("SURVIVAL_DISCOVERD_LIST", survivalList.getDiscoverdInfo());
-
-            }
-            goSurvivalListRemake = true; // サバイバルリストの再作成フラグをON
-
-            // YCDデータプロバイダを作成
-            int overWrapLength = targetRange.getLength(); // 一つ前のケツの部分を今回の先頭に重ねる桁の長さ
-            try (YCD_SeqProvider p = new YCD_SeqProvider(this.um_piFileList, overWrapLength, this.unitLength);) {
-
-                // YCDプロバイダの作成に成功したらリトライカウントをリセット
-                continueCount = 0;
-
-                // YCDファイルの全ヘッダー情報を記録
-                StoreController.survivalProgressMap.put("YCD_FILE_INFO", p.getFileInfoMap());
-
-                // このサバイバルのスタート時間を記録
-                StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
-
-                // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
-                for (YCD_SeqProvider.Unit currentPi : p) {
-
-                    // 現在の検索深さを記録
-                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
-                            currentPi.getStartDigit() + currentPi.getData().length());
-
-                    // このユニットの検索スタート位置
-                    int startPos = 0;
-
-                    // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
-                    for (int i = survivalList.size() - 1; i >= 0; i--) {
-                        String target = survivalList.get(i);
-
-                        int pos = currentPi.indexOf(target, startPos);
-                        if (0 <= pos) {
-                            // ヒット
-                            // ヒットしたら基本的にはサバイバルリストから削除する
-
-                            // カレントパイ文字列の中での発見位置を、全体位置に変換
-                            Long curFindPos = currentPi.getStartDigit() + pos;
-
-                            // 発見位置が今までで一番後ろだったらメモ記録
-                            if (lastFoundPos < curFindPos) {
-                                lastFoundTarget = target; // 発見した対象
-                                lastFoundPos = curFindPos; // 発見位置
-                            }
-
-                            // サバイバルリストからヒットした要素を削除
-                            survivalList.discover(i, curFindPos);
-
-                            StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
-
-                        }
-                    }
-
-                    // サバイバルリストが空になったら終了
-                    if (survivalList.isEmpty()) {
-                        break;
-                    }
-
-                }
-
-            } catch (Throwable t) {
-
-                // YCDファイルの読み込みなど、仮に何かしらのエラーが発生した場合でも、ちょっと時間をおいて再起動してみる
-                continueCount++;
-                RuntimeException ee = new RuntimeException("ERROR!  start over. count: " + continueCount, t);
-                ee.printStackTrace();
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-                goSurvivalListRemake = false; // サバイバルリストの再作成フラグをOFF
-                continue; // 再起動
-            }
-
-            // 検索終了。サバイバルリストが空になっているはず。
-            // サバイバルリストが空でない場合は探しきれなかった、とする。
-            if (!survivalList.isEmpty()) {
-                System.out.println(
-                        "The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)"
-                                + "  検索できなかったものの一例: " + survivalList.get(0));
-                Runtime.getRuntime().exit(-1);
-            }
-
-            return new SurvivalResult(lastFoundTarget, lastFoundPos);
-
-        }
-
-    }
-
-    private SurvivalResult survive2(TargetRange targetRange) {
-
-        // YCDファイル読み込みに失敗することがある。その場合はリトライするがリトライ回数に制限を設ける
-        Integer continueCount = 0;
-
-        String lastFoundTarget = "";
-        Long lastFoundPos = -1L;
-
-        // サバイバルリスト
-        SurvivalList survivalList = null;
-
-        // サバイバルリストの(再)作成フラグ
-        Boolean goSurvivalListRemake = true;
-
-        // このサバイバルのスタート時間を記録
+        // このサバイバルリスト消化のスタート時間を記録
         StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
 
         while (true) {
@@ -260,105 +136,69 @@ public class Searcher extends Thread {
                 StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
 
                 // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
-                // 取り出したデータは、前のブロックのケツを先頭に負荷していて、区切り目の検索漏れを防いでいる
+                // 取り出したデータは、前のブロックのケツを先頭に付加していて、ユニット区切り目の検索漏れを防いでいる
                 for (final YCD_SeqProvider.Unit currentPi : p) {
 
                     // 現在の検索深さを記録
                     StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
                             currentPi.getStartDigit() + currentPi.getData().length());
 
-                    // サバイバルリストの共通部分を取得
+                    // サバイバルリストの文字列左共通部分を取得（共通部分でまず検索シークするため）
                     String leftCommonStr = survivalList.getCommonPrefix();
-                    final String DUMMY = "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
                     if (leftCommonStr.isEmpty()) {
                         // 共通部分がない場合は、共通部分なしを示す適当な文字をセット（indexOFは空文字検索でゼロを返すのでその対策）
-                        leftCommonStr = DUMMY;
+                        leftCommonStr = "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
                     }
 
-
-
-                    // このユニットの検索スタート位置初期値
+                    // このユニットの検索スタート位置初期値（検索終了している部分をスキップするためのシーク位置）
                     int commonSeekPos = 0;
 
-                    if (leftCommonStr.equals(DUMMY)) {
-                        // 共通部分なしの場合は、YCD読み取りユニット全体を検索対象としてサバイバルリストをイテレートする
+                    // カレントパイユニットが末尾に達するまで繰り返す
+                    while (true) {
 
-                        // カレント文字列全体から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
-                        for (int i = survivalList.size() - 1; i >= 0; i--) {
-                            final String target = survivalList.get(i);
+                        // スタート位置を確定（次の共通文字列を検索してシークする）
+                        int startPos = currentPi.indexOf(leftCommonStr, commonSeekPos);
 
-                            final int pos = currentPi.indexOf(target, 0);
-                            if (0 <= pos) {
-                                // ヒット
-                                // ヒットしたら基本的にはサバイバルリストから削除する
-
-                                // カレントパイ文字列の中での発見位置を、全体位置に変換
-                                final Long curFindPos = currentPi.getStartDigit() + pos;
-
-                                // 発見位置が今までで一番後ろだったらメモ記録
-                                if (lastFoundPos < curFindPos) {
-                                    lastFoundTarget = target; // 発見した対象
-                                    lastFoundPos = curFindPos; // 発見位置
-                                }
-
-                                // サバイバルリストからヒットした要素を削除
-                                survivalList.discover(target, curFindPos);
-
-                                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE",
-                                        survivalList.size());
-
-                            }
+                        // 共通左文字によるシークができなかった場合は、１文字だけシークする（逐次）
+                        if (startPos == -1) {
+                            startPos = commonSeekPos;
                         }
 
-                    } else {
-                        // 共通部分ありの場合は、その位置から桁数分切り取って検索対象とする
-
-                        while (true) {
-
-                            // スタート位置を確定
-                            int startPos = currentPi.indexOf(leftCommonStr, commonSeekPos);
-
-                            // 共通部分が見つからなかった場合は、次のYCDユニットへ
-                            if (-1 >= startPos) {
-                                break;
-                            }
-
-                            // データが足りない場合は、次のYCDユニットへ
-                            if (startPos + targetRange.getLength() > currentPi.getData().length()) {
-                                break;
-                            }
-
-                            // カレント文字列
-                            final String currentPiStr = currentPi.getData().substring(startPos,
-                                    startPos + targetRange.getLength());
-
-                            // サバイバルリストから探す
-                            final int suvIndex = survivalList.indexOf(currentPiStr);
-
-                            if (-1 < suvIndex) {
-                                // サバイバルリストからヒット
-
-                                // カレントパイ文字列の中での発見位置を、全体位置に変換
-                                final Long curFindPos = currentPi.getStartDigit() + startPos;
-
-                                // 発見位置が今までで一番後ろだったらメモ記録
-                                if (lastFoundPos < curFindPos) {
-                                    lastFoundTarget = currentPiStr; // 発見した対象
-                                    lastFoundPos = curFindPos; // 発見位置
-                                }
-
-                                // サバイバルリストからヒットした要素を削除
-                                survivalList.discover(currentPiStr, curFindPos);
-
-                                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
-
-                            }
-
-                            // 共通部分発見位置の1文字次から再スタート
-                            commonSeekPos = startPos + 1;
+                        // シーク位置を先頭にしたとき、データが足りない場合は、次のYCDユニットへ
+                        if (startPos + targetRange.getLength() > currentPi.getData().length()) {
+                            break;
                         }
 
+                        // カレントパイ文字列
+                        final String currentPiStr = currentPi.getData().substring(startPos,
+                                startPos + targetRange.getLength());
+
+                        // サバイバルリストからそれを探す
+                        final int suvIndex = survivalList.indexOf(currentPiStr);
+
+                        if (-1 < suvIndex) {
+                            // サバイバルリストヒット
+
+                            // カレントパイ文字列の中での発見位置を、全体位置に変換
+                            final Long curFindPos = currentPi.getStartDigit() + startPos;
+
+                            // 発見位置が今までで一番後ろだったらメモ記録（最遅候補とする）
+                            if (lastFoundPos < curFindPos) {
+                                lastFoundTarget = currentPiStr; // 発見した対象
+                                lastFoundPos = curFindPos; // 発見位置
+                            }
+
+                            // ヒットした要素をサバイバルリストから削除
+                            survivalList.discover(currentPiStr, curFindPos);
+
+                            StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
+
+                        }
+
+                        // シーク位置を１文字ずらす。（共通部分発見位置の次の文字から再開する）
+                        commonSeekPos = startPos + 1;
                     }
+
                     // サバイバルリストが空になったら終了
                     if (survivalList.isEmpty()) {
                         break; // read YCD UNIT break
