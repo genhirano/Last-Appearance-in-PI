@@ -261,97 +261,107 @@ public class Searcher extends Thread {
 
                 // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
                 // 取り出したデータは、前のブロックのケツを先頭に負荷していて、区切り目の検索漏れを防いでいる
-                for (YCD_SeqProvider.Unit currentPi : p) {
+                for (final YCD_SeqProvider.Unit currentPi : p) {
 
                     // 現在の検索深さを記録
                     StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
                             currentPi.getStartDigit() + currentPi.getData().length());
 
-                    // このユニットの検索スタート位置
-                    int commonSeekPos = 0;
-
+                    // サバイバルリストの共通部分を取得
                     String leftCommonStr = survivalList.getCommonPrefix();
-
+                    final String DUMMY = "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
                     if (leftCommonStr.isEmpty()) {
                         // 共通部分がない場合は、共通部分なしを示す適当な文字をセット（indexOFは空文字検索でゼロを返すのでその対策）
-                        leftCommonStr = "@@@@";
+                        leftCommonStr = DUMMY;
                     }
 
-                    while (true) {
 
-                        // 共通部分検索
-                        commonSeekPos = currentPi.indexOf(leftCommonStr, commonSeekPos);
 
-                        String currentPiStr = "";
+                    // このユニットの検索スタート位置初期値
+                    int commonSeekPos = 0;
 
-                        int suvFindIndex = -1;
-                        String findPiStr = "";
+                    if (leftCommonStr.equals(DUMMY)) {
+                        // 共通部分なしの場合は、YCD読み取りユニット全体を検索対象としてサバイバルリストをイテレートする
 
-                        if (0 <= commonSeekPos) {
-                            // 共通部分発見 の場合は、その場所から桁数分切り取って検索対象とする
+                        // カレント文字列全体から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
+                        for (int i = survivalList.size() - 1; i >= 0; i--) {
+                            final String target = survivalList.get(i);
 
-                            // 共通部分が見つかった場合その位置から文字列長さを切り取る
-                            currentPiStr = currentPi.getData().substring(commonSeekPos,
-                                    commonSeekPos + targetRange.getLength() - 1);
+                            final int pos = currentPi.indexOf(target, 0);
+                            if (0 <= pos) {
+                                // ヒット
+                                // ヒットしたら基本的にはサバイバルリストから削除する
 
-                            // サバイバルリストから探す
-                            if (survivalList.contains(currentPiStr)) {
-                                suvFindIndex = commonSeekPos;
-                                findPiStr =  currentPiStr;
-                            }
+                                // カレントパイ文字列の中での発見位置を、全体位置に変換
+                                final Long curFindPos = currentPi.getStartDigit() + pos;
 
-                        } else {
-                            // 共通部分発見できず の場合は、YCD読み取りユニット全体を検索対象とする
-                            currentPiStr = currentPi.getData();
-
-                            // サバイバルリストから探す
-                            suvFindIndex = -1;
-                            for (int i = 0; i < survivalList.size(); i++) {
-                                int findIndex = currentPiStr.indexOf(survivalList.get(i));
-                                if (findIndex >= 0) {
-                                    System.out.println("find: " + survivalList.get(i));
-                                    suvFindIndex = findIndex;
-                                    findPiStr =  survivalList.get(i);
-                                    break;
+                                // 発見位置が今までで一番後ろだったらメモ記録
+                                if (lastFoundPos < curFindPos) {
+                                    lastFoundTarget = target; // 発見した対象
+                                    lastFoundPos = curFindPos; // 発見位置
                                 }
-                            }
 
-                            if(-1 == suvFindIndex){
-                                break; //対象文字列の中にはもうない
-                            }
+                                // サバイバルリストからヒットした要素を削除
+                                survivalList.discover(target, curFindPos);
 
+                                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE",
+                                        survivalList.size());
+
+                            }
                         }
 
-                        if (0 <= suvFindIndex) {
+                    } else {
+                        // 共通部分ありの場合は、その位置から桁数分切り取って検索対象とする
 
-                            // YCDカレント文字列の中での発見位置を全体位置に変換
-                            Long curFindPos = currentPi.getStartDigit() + suvFindIndex;
+                        while (true) {
 
-                            // 発見位置が今までで一番後ろだったらメモ記録
-                            if (lastFoundPos < curFindPos) {
-                                lastFoundTarget = currentPiStr; // 発見した対象
-                                lastFoundPos = curFindPos; // 発見位置
+                            // スタート位置を確定
+                            int startPos = currentPi.indexOf(leftCommonStr, commonSeekPos);
+
+                            // 共通部分が見つからなかった場合は、次のYCDユニットへ
+                            if (-1 >= startPos) {
+                                break;
                             }
 
-                            // サバイバルリストからヒットした要素を削除
-                            survivalList.discover(findPiStr, curFindPos);
-                            StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
+                            // データが足りない場合は、次のYCDユニットへ
+                            if (startPos + targetRange.getLength() > currentPi.getData().length()) {
+                                break;
+                            }
 
+                            // カレント文字列
+                            final String currentPiStr = currentPi.getData().substring(startPos,
+                                    startPos + targetRange.getLength());
+
+                            // サバイバルリストから探す
+                            final int suvIndex = survivalList.indexOf(currentPiStr);
+
+                            if (-1 < suvIndex) {
+                                // サバイバルリストからヒット
+
+                                // カレントパイ文字列の中での発見位置を、全体位置に変換
+                                final Long curFindPos = currentPi.getStartDigit() + startPos;
+
+                                // 発見位置が今までで一番後ろだったらメモ記録
+                                if (lastFoundPos < curFindPos) {
+                                    lastFoundTarget = currentPiStr; // 発見した対象
+                                    lastFoundPos = curFindPos; // 発見位置
+                                }
+
+                                // サバイバルリストからヒットした要素を削除
+                                survivalList.discover(currentPiStr, curFindPos);
+
+                                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
+
+                            }
+
+                            // 共通部分発見位置の1文字次から再スタート
+                            commonSeekPos = startPos + 1;
                         }
-
-                        // サバイバルリストが空になったら終了
-                        if (survivalList.isEmpty()) {
-                            break; // read YCD UNIT break
-                        }
-
-                        //共通検索位置を１文字進める
-                        commonSeekPos++;
 
                     }
-
                     // サバイバルリストが空になったら終了
                     if (survivalList.isEmpty()) {
-                        break; // read YCD break
+                        break; // read YCD UNIT break
                     }
 
                 }
@@ -375,8 +385,11 @@ public class Searcher extends Thread {
             // サバイバルリストが空でない場合は探しきれなかった、とする。
             if (!survivalList.isEmpty()) {
                 System.out.println(
-                        "The file was too short to finalize the last one(最後の一つを確定するにはYCDファイルが短すぎました)"
+                        "The file was too short to finalize the last one(発見できず。YCDファイルが短すぎました)"
                                 + "  検索できなかったものの一例: " + survivalList.get(0));
+
+                System.out.println(StoreController.survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
+
                 Runtime.getRuntime().exit(-1);
             }
 
