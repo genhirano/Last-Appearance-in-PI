@@ -8,6 +8,7 @@ import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -100,6 +101,9 @@ public class Searcher extends Thread {
         // このサバイバルリスト消化のスタート時間を記録
         StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
 
+        DecimalFormat decimalFormat = new DecimalFormat("#,###");
+
+        // 読み込み失敗時のリトライ処理用ループ
         while (true) {
 
             // YCDプロバイダの作成に失敗することがある。その場合はリトライするがリトライ回数に制限を設ける
@@ -203,6 +207,18 @@ public class Searcher extends Thread {
                     if (survivalList.isEmpty()) {
                         break; // read YCD UNIT break
                     }
+
+                    final String anowReadDepth = decimalFormat
+                            .format((Long.parseLong(currentPi.getFileInfo().get(YCDFileUtil.FileInfo.END_DIGIT))));
+                    final String nowReadDepth = decimalFormat
+                            .format((currentPi.getStartDigit() + currentPi.getData().length()));
+                    System.out.print("\rRemainingItems: " + survivalList.size()
+                            + " ReadDepth: " + nowReadDepth
+                            + " / " + anowReadDepth
+                            + " min:" + survivalList.get(0)
+                            + " max:" + survivalList.get(survivalList.size() - 1)
+                            + " leftCommon:" + leftCommonStr
+                            + "                      ");
 
                 }
 

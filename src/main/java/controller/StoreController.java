@@ -204,6 +204,7 @@ public class StoreController {
         if (!file.exists()) {
             try {
                 file.createNewFile();
+                System.out.println();
                 System.out.println(filename + "create!");
             } catch (IOException e) {
                 throw new RuntimeException(file.getPath(), e);
@@ -405,8 +406,10 @@ public class StoreController {
 
             // レスポンスコードを取得
             int statusCode = response.statusCode();
-            System.out.println("Response Code: " + statusCode);
-
+            if(statusCode != 200) {
+                throw new RuntimeException("HTTP Request Error! " + statusCode);
+            }
+            
         } catch (Exception e) {
             // エラーが発生した場合の処理
             e.printStackTrace();

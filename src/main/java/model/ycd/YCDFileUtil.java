@@ -5,7 +5,16 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public class YCDFileUtil {
-
+    // const char YCF_CDF_FileVersion[] = "1.1.0";
+    // const char YCF_CDF_TOKEN_FileVersion[] = "FileVersion:";
+    // const char YCF_CDF_TOKEN_Base[] = "Base:";
+    // const char YCF_CDF_TOKEN_FirstDigits[] = "FirstDigits:";
+    // const char YCF_CDF_TOKEN_TotalDigits[] = "TotalDigits:";
+    // const char YCF_CDF_TOKEN_BlockSize[] = "Blocksize:";
+    // const char YCF_CDF_TOKEN_TotalBlocks[] = "TotalBlocks:";
+    // const char YCF_CDF_TOKEN_BlockID[] = "BlockID:";
+    // const char YCF_CDF_TOKEN_EndHeader[] = "EndHeader";
+    
     /**
      * ファイルヘッダー情報のそれぞれのラベル
      */
@@ -28,10 +37,10 @@ public class YCDFileUtil {
      * @throws IOException ファイルアクセスエラー
      */
     public static Integer getHeaderSize(String ycdFileName) throws IOException {
-        //最初の CRLFを探し、それに 1を加えた
+        // 最初の CRLFを探し、それに 1を加えた
         Integer headerSize = -1;
         try (final FileInputStream fi = new FileInputStream(ycdFileName);
-             BufferedInputStream inputStream = new BufferedInputStream(fi);) {
+                BufferedInputStream inputStream = new BufferedInputStream(fi);) {
 
             byte[] charArr = new byte[300];
             inputStream.read(charArr);
@@ -40,7 +49,7 @@ public class YCDFileUtil {
             final String CRLF = "" + (char) 0x0D + (char) 0x0A;
             headerSize = header.lastIndexOf(CRLF) + CRLF.length() - 1;
 
-            //CRLFの次になんか、よくわからないが最後に1バイトついてるので、その分の「１」加える。
+            // CRLFの次になんか、よくわからないが最後に1バイトついてるので、その分の「１」加える。
             headerSize++;
 
         } catch (IOException e) {
@@ -118,8 +127,7 @@ public class YCDFileUtil {
                 && (!map.containsKey(YCDHeaderInfoElem.FIRST_DIGITS))
                 && (!map.containsKey(YCDHeaderInfoElem.TOTAL_DIGITS))
                 && (!map.containsKey(YCDHeaderInfoElem.BLOCK_SIZE))
-                && (!map.containsKey(YCDHeaderInfoElem.BLOCK_ID))
-        ) {
+                && (!map.containsKey(YCDHeaderInfoElem.BLOCK_ID))) {
             throw new IOException("ファイルヘッダーが不正です : " + fileName + "   " + map);
         }
 
@@ -138,50 +146,50 @@ public class YCDFileUtil {
         return matcher.matches();
     }
 
-    //指定ファイルの、指定桁数だけファイル先頭から読み込んで返す
+    // 指定ファイルの、指定桁数だけファイル先頭から読み込んで返す
     public static String getFirstData(String fileName, Integer disitCount) throws IOException {
 
         if (0 > disitCount) {
             throw new RuntimeException("ファイルの両端桁取得桁数はゼロ以上を指定してください: " + disitCount);
         }
 
-        //ヘッダー読み飛ばすため、ヘッダーサイズ取得
+        // ヘッダー読み飛ばすため、ヘッダーサイズ取得
         Integer headerSize = YCDFileUtil.getHeaderSize(fileName);
 
-        //ブロック数算出
+        // ブロック数算出
         Integer readBlockSize = (disitCount / 19) + 1;
 
-        //読み込む全桁(19×ブロックまとめ数)文字列。
+        // 読み込む全桁(19×ブロックまとめ数)文字列。
         StringBuilder allNum = new StringBuilder();
 
-        //対象ファイルアサイン
+        // 対象ファイルアサイン
         try (BufferedInputStream fileStream = new BufferedInputStream(new FileInputStream(fileName))) {
-            //ヘッダー読み飛ばし
+            // ヘッダー読み飛ばし
             fileStream.skip(headerSize + 1);
-
 
             for (Integer i = 0; i < readBlockSize; i++) {
 
-                //ブロックサイズ × 8バイト読む。 64-bit(8 byte)に19桁の整数値で１ブロック。リトルエンディアン。
-                // Base 10 .ycd files are stored as 64-bit integers words with 19 digits per word.
+                // ブロックサイズ × 8バイト読む。 64-bit(8 byte)に19桁の整数値で１ブロック。リトルエンディアン。
+                // Base 10 .ycd files are stored as 64-bit integers words with 19 digits per
+                // word.
                 // In both cases, each 8-byte word is little-endian.
-                byte[] readBuffer = new byte[8];  //8バイト × ブロックまとめ数
+                byte[] readBuffer = new byte[8]; // 8バイト × ブロックまとめ数
                 Integer readByteCount = fileStream.read(readBuffer);
                 if (readByteCount != readBuffer.length) {
                     throw new IOException("正しく読み込めませんでした。 : " + fileName
                             + " 8バイトであるべき読み込みデータ長さ:" + readByteCount);
                 }
 
-                //1ブロック(8バイト、19桁)づつ、ブロックまとめ数分読む
-                byte[] buff = Arrays.copyOfRange(readBuffer, 0, 8); //8バイト切り出す
+                // 1ブロック(8バイト、19桁)づつ、ブロックまとめ数分読む
+                byte[] buff = Arrays.copyOfRange(readBuffer, 0, 8); // 8バイト切り出す
                 String numStr = Long.toUnsignedString(Long.reverseBytes(ByteBuffer.wrap(buff).getLong()));
 
-                //先頭が０の場合はゼロの分だけ切られてしまうので、19桁になるように左ゼロ埋めする。
+                // 先頭が０の場合はゼロの分だけ切られてしまうので、19桁になるように左ゼロ埋めする。
                 if (19 > numStr.length()) {
                     numStr = String.format("%19s", numStr).replace(' ', '0');
                 }
 
-                //作成した文字列を積む
+                // 作成した文字列を積む
                 allNum.append(numStr);
             }
 
@@ -191,11 +199,11 @@ public class YCDFileUtil {
 
     }
 
-    //ファイルリストの総桁数を返す
+    // ファイルリストの総桁数を返す
     public static Long getAllDigitsCount(List<File> fileList) throws IOException {
 
         Long maxDigit = 0L;
-        for(File f : fileList){
+        for (File f : fileList) {
             Map<YCDHeaderInfoElem, String> fileInfoMap = getYCDHeader(f.getPath());
             Long blockSize = Long.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_SIZE));
             maxDigit = maxDigit + blockSize;
@@ -204,48 +212,49 @@ public class YCDFileUtil {
         return maxDigit;
     }
 
+    // YCDファイルリストから、ファイル情報を構築する。オーバーラップさせる桁数を指定し、先頭桁も取得する
+    public static Map<File, Map<YCDFileUtil.FileInfo, String>> createFileInfo(List<File> fileList,
+            Integer overwrapLength) {
 
-    //YCDファイルリストから、ファイル情報を構築する。オーバーラップさせる桁数を指定し、先頭桁も取得する
-    public static Map<File, Map<YCDFileUtil.FileInfo, String>> createFileInfo(List<File> fileList, Integer overwrapLength) {
-
-        //対象ファイル全ての情報事前取得
+        // 対象ファイル全ての情報事前取得
         try {
 
             Map<File, Map<YCDFileUtil.FileInfo, String>> fileMap = new LinkedHashMap<>();
 
-            //全てのファイルが対象(小さい順に並んでいること)
+            // 全てのファイルが対象(小さい順に並んでいること)
             for (File f : fileList) {
 
                 Map<YCDFileUtil.FileInfo, String> value = new HashMap<>();
 
-                //ファイル情報取得
+                // ファイル情報取得
                 Map<YCDHeaderInfoElem, String> fileInfoMap = YCDFileUtil.getYCDHeader(f.getPath());
 
-                //ブロックID（ブロックIndexということにする）
+                // ブロックID（ブロックIndexということにする）
                 Integer blockID = Integer.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_ID));
                 value.put(YCDFileUtil.FileInfo.BLOCK_INDEX, String.valueOf(blockID));
 
-                //ブロックサイズ（そのファイルに格納されている総桁数）
+                // ブロックサイズ（そのファイルに格納されている総桁数）
                 Long blockSize = Long.valueOf(fileInfoMap.get(YCDHeaderInfoElem.BLOCK_SIZE));
 
-                //先頭桁と最終桁の取得
+                // 先頭桁と最終桁の取得
                 value.put(YCDFileUtil.FileInfo.FIRST_DIGIT, String.valueOf((blockID * blockSize) + 1L));
                 value.put(YCDFileUtil.FileInfo.END_DIGIT, String.valueOf((blockID + 1L) * blockSize));
 
-                //ファイルサイズ(Byte)
+                // ファイルサイズ(Byte)
                 value.put(YCDFileUtil.FileInfo.FILE_SIZE, String.valueOf(YCDFileUtil.getFileSize(f.getPath())));
 
-                //全ての円周率ファイルの先頭から、そのファイルの前のファイルの末尾に付加する桁数だけ切り出す
+                // 全ての円周率ファイルの先頭から、そのファイルの前のファイルの末尾に付加する桁数だけ切り出す
                 value.put(YCDFileUtil.FileInfo.FIRST_DATA, YCDFileUtil.getFirstData(f.getPath(), overwrapLength));
 
                 fileMap.put(f, value);
 
             }
 
-            //ファイルがきちんと並んでいるかチェック
+            // ファイルがきちんと並んでいるかチェック
             Long firstDigit = Long.valueOf(fileMap.get(fileList.get(0)).get(YCDFileUtil.FileInfo.FIRST_DIGIT));
             if (!firstDigit.equals(1L)) {
-                throw new RuntimeException("Illegal first digit in file : " + fileList.get(0).getName() + " is " + firstDigit);
+                throw new RuntimeException(
+                        "Illegal first digit in file : " + fileList.get(0).getName() + " is " + firstDigit);
             }
 
             Integer tmpIndex = Integer.valueOf(fileMap.get(fileList.get(0)).get(YCDFileUtil.FileInfo.BLOCK_INDEX));
@@ -253,33 +262,35 @@ public class YCDFileUtil {
                 throw new RuntimeException("Illegal first block id : " + fileList.get(0).getName() + " is " + tmpIndex);
             }
 
-            //ファイルの順序と桁連結チェック
-            //先頭ファイルの末尾桁番号を取得
+            // ファイルの順序と桁連結チェック
+            // 先頭ファイルの末尾桁番号を取得
             Integer previndex = tmpIndex;
             Long prevLastDigit = Long.valueOf(fileMap.get(fileList.get(0)).get(YCDFileUtil.FileInfo.END_DIGIT));
             for (File fi : fileMap.keySet()) {
                 Map<YCDFileUtil.FileInfo, String> m = fileMap.get(fi);
 
-                //最初のファイルはスキップ
+                // 最初のファイルはスキップ
                 if (Long.valueOf(m.get(YCDFileUtil.FileInfo.FIRST_DIGIT)).equals(1L)) {
                     continue;
                 }
 
-                //このファイルの先頭桁番号取得
-                //前のファイルのラスト桁番号 +1 がこのファイルの先頭桁番号でなければならない
+                // このファイルの先頭桁番号取得
+                // 前のファイルのラスト桁番号 +1 がこのファイルの先頭桁番号でなければならない
                 Long thisStart = Long.valueOf(m.get(YCDFileUtil.FileInfo.FIRST_DIGIT));
                 if (!thisStart.equals(prevLastDigit + 1L)) {
-                    throw new RuntimeException("Illegal start digit in file : " + fi.getName() + " - is Start : " + thisStart);
+                    throw new RuntimeException(
+                            "Illegal start digit in file : " + fi.getName() + " - is Start : " + thisStart);
                 }
 
-                //このファイルのファイルインデックス取得
-                //前のファイルのインデックス +1 がこのファイルのインデックスでなければならない
+                // このファイルのファイルインデックス取得
+                // 前のファイルのインデックス +1 がこのファイルのインデックスでなければならない
                 Integer thisIndex = Integer.valueOf(m.get(YCDFileUtil.FileInfo.BLOCK_INDEX));
                 if (!thisIndex.equals(previndex + 1)) {
-                    throw new RuntimeException("Illegal index in file : " + fi.getName() + " - is index : " + thisIndex);
+                    throw new RuntimeException(
+                            "Illegal index in file : " + fi.getName() + " - is index : " + thisIndex);
                 }
 
-                //このファイルのインデックスと最後尾桁番号を次の比較用に保持
+                // このファイルのインデックスと最後尾桁番号を次の比較用に保持
                 previndex = Integer.valueOf(m.get(YCDFileUtil.FileInfo.BLOCK_INDEX));
                 prevLastDigit = Long.valueOf(m.get(YCDFileUtil.FileInfo.END_DIGIT));
 
@@ -292,6 +303,5 @@ public class YCDFileUtil {
         }
 
     }
-
 
 }

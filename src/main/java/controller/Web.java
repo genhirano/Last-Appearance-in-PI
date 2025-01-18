@@ -211,9 +211,8 @@ public class Web {
                 String html = templateEngine.render(modelAndView);
                 FileUtils.writeStringToFile(new File("index.html"), html, CHARACTER_ENCODING);
 
-                String now = ZonedDateTime.now().format(formatter);
-
-                System.out.println(now + " :  htmlを生成してファイルに保存しました。");
+                //String now = ZonedDateTime.now().format(formatter);
+                //System.out.println(now + " :  htmlを生成してファイルに保存しました。");
 
                 return modelAndView;
 
