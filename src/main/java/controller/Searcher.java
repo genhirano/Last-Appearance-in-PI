@@ -158,6 +158,7 @@ public class Searcher extends Thread {
                     int commonSeekPos = 0;
 
                     // カレントパイユニットが末尾に達するまで繰り返す
+                    long currentPiUnitStartTime = System.currentTimeMillis();
                     while (true) {
 
                         // スタート位置を確定（次の共通文字列を検索してシークする）
@@ -212,13 +213,20 @@ public class Searcher extends Thread {
                             .format((Long.parseLong(currentPi.getFileInfo().get(YCDFileUtil.FileInfo.END_DIGIT))));
                     final String nowReadDepth = decimalFormat
                             .format((currentPi.getStartDigit() + currentPi.getData().length()));
-                    System.out.print("\rRemainingItems: " + survivalList.size()
-                            + " ReadDepth: " + nowReadDepth
+                    long currentTime = System.currentTimeMillis();
+                    long timeDifference = currentTime - currentPiUnitStartTime;
+                    currentPiUnitStartTime = currentTime;
+                    
+                    String output = "\rItems: " + survivalList.size()
+                            + " Depth: " + nowReadDepth
                             + " / " + anowReadDepth
                             + " min:" + survivalList.get(0)
                             + " max:" + survivalList.get(survivalList.size() - 1)
-                            + " leftCommon:" + leftCommonStr
-                            + "                      ");
+                            + " Common:" + leftCommonStr
+                            + " TimeDiff: " + timeDifference + "ms";
+                    System.out.print(output);
+                    System.out.print(" ".repeat(Math.max(0, 120 - output.length())) + "|"); // ターミナルの幅に応じて調整
+                    System.out.flush();
 
                 }
 
