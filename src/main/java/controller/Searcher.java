@@ -148,10 +148,11 @@ public class Searcher extends Thread {
                             currentPi.getStartDigit() + currentPi.getData().length());
 
                     // サバイバルリストの文字列左共通部分を取得（共通部分でまず検索シークするため）
+                    final String dummyStr = "@";
                     String leftCommonStr = survivalList.getCommonPrefix();
                     if (leftCommonStr.isEmpty()) {
                         // 共通部分がない場合は、共通部分なしを示す適当な文字をセット（indexOFは空文字検索でゼロを返すのでその対策）
-                        leftCommonStr = "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
+                        leftCommonStr = dummyStr;
                     }
 
                     // このユニットの検索スタート位置初期値（検索終了している部分をスキップするためのシーク位置）
@@ -164,9 +165,12 @@ public class Searcher extends Thread {
                         // スタート位置を確定（次の共通文字列を検索してシークする）
                         int startPos = currentPi.indexOf(leftCommonStr, commonSeekPos);
 
-                        // 共通左文字によるシークができなかった場合は、１文字だけシークする（逐次）
-                        if (startPos == -1) {
+                        if (leftCommonStr.equals(dummyStr)) {
+                            // 共通文字列がない場合は、１文字だけシークする（逐次）※対象が一桁の時だけ通る
                             startPos = commonSeekPos;
+                        }else if (startPos < 0) {
+                            // 共通左文字が存在し、かつ、それでシークができなかった場合は次のユニットへ
+                            break;
                         }
 
                         // シーク位置を先頭にしたとき、データが足りない場合は、次のYCDユニットへ
