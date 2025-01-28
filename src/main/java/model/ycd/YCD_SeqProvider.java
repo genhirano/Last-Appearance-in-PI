@@ -38,6 +38,10 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
             this.data = data;
         }
 
+        public int indexOf(String targetString) {
+            return this.data.indexOf(targetString);
+        }
+
         public int indexOf(String targetString, int fromIndex) {
             return this.data.indexOf(targetString, fromIndex);
         }
