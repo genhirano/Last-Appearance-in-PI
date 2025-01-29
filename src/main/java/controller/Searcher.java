@@ -172,24 +172,21 @@ public class Searcher extends Thread {
 
                     long currentPiUnitStartTime = System.currentTimeMillis();
 
-                    // サバイバルリストの残り数の桁数を取得
-                    int survivalListSizeLength = Integer.toString(survivalList.size()).length();
-
                     // サバイバルリストに存在する値の左共通部分を取得
                     String leftCommonStr = survivalList.getCommonPrefix();
 
                     SurvivalResult sr = null;
                     String algorithm = "";
-                    if (survivalListSizeLength > leftCommonStr.length()) {
-                        // 左共通部分が長く、共通部分シーク検索が妥当な場合
-                        // 左共通部分を使ってPi文字列基準のシーク検索
-                        sr = searchLeftCommonAlgorithm(targetRange, survivalList, currentPi, leftCommonStr);
-                        algorithm = "LC";
-                    } else {
-                        // 左共通部分が短い、または無く、共通部分シーク検索が不経済な場合
+                    if (leftCommonStr.isEmpty()) {
+                        // 左共通部分が無い
                         // サバイバルリストループ検索
                         sr = searchSurvivalLoopAlgorithm(survivalList, currentPi);
                         algorithm = "SL";
+                    } else {
+                        // 左共通部分がある
+                        // 左共通部分を使ってPi文字列基準のシーク検索
+                        sr = searchLeftCommonAlgorithm(targetRange, survivalList, currentPi, leftCommonStr);
+                        algorithm = "LC";
                     }
 
                     // 新記録なら結果を更新
@@ -213,13 +210,13 @@ public class Searcher extends Thread {
                     String output = "\r"
                             + algorithm
                             + " Items:" + survivalList.size()
-                            + " Depth:" + nowReadDepth
+                            + " " + nowReadDepth
                             + " / " + anowReadDepth
-                            + " - " + survivalList.get(0)
-                            + "-" + survivalList.get(survivalList.size() - 1)
+                            + " - \"" + survivalList.get(0) + "\""
+                            + "-\"" + survivalList.get(survivalList.size() - 1) + "\""
                             + " " + timeDifference + "ms";
                     System.out.print(output);
-                    System.out.print(" ".repeat(Math.max(0, 95 - output.length())) + "|"); // ターミナルの幅に応じて調整
+                    System.out.print(" ".repeat(Math.max(0, 85 - output.length())) + "|"); // ターミナルの幅に応じて調整
                     System.out.flush();
 
                 }
