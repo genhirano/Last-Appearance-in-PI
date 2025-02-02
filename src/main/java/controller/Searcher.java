@@ -270,7 +270,8 @@ public class Searcher extends Thread {
         while (true) {
 
             // スタート位置を確定（次の共通文字列を検索してシークする）
-            int startPos = currentPi.indexOf(leftCommonStr, commonSeekPos);
+            //int startPos = currentPi.indexOf(leftCommonStr, commonSeekPos);
+            int startPos = boyerMooreSearch( currentPi.getData(), leftCommonStr, commonSeekPos);
 
             // 共通左文字でシークができなかった（共通文字が見つからなかった）場合は次のユニットへ
             if (startPos < 0) {
@@ -348,5 +349,44 @@ public class Searcher extends Thread {
         }
         return survivalResult;
     }
+    
+    // バッドキャラクターテーブルを作成
+    private int[] buildBadCharacterTable(String pattern) {
+        int[] badCharTable = new int[10];
+        for (int i = 0; i < 10; i++) {
+            badCharTable[i] = -1;
+        }
+        for (int i = 0; i < pattern.length(); i++) {
+            badCharTable[pattern.charAt(i) - '0'] = i;
+        }
+        return badCharTable;
+    }
 
+    // ボイヤー・ムーア検索
+    private int boyerMooreSearch(String text, String pattern, int startIndex) {
+        int[] badCharTable = buildBadCharacterTable(pattern);
+        int m = pattern.length();
+        int n = text.length();
+        int shift = startIndex; // 開始位置を指定
+
+        while (shift <= (n - m)) {
+            int j = m - 1;
+
+            // 右から左へ比較
+            while (j >= 0 && pattern.charAt(j) == text.charAt(shift + j)) {
+                j--;
+            }
+
+            // 一致した場合
+            if (j < 0) {
+                return shift;
+            }
+
+            // バッドキャラクタールールに従いシフト
+            int badCharIndex = text.charAt(shift + j) - '0';
+            int badCharShift = j - badCharTable[badCharIndex];
+            shift += Math.max(1, badCharShift);
+        }
+        return -1; // 見つからなかった場合
+    }
 }
