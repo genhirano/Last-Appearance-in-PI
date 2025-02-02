@@ -1,9 +1,10 @@
 package controller;
 
 import lombok.Getter;
-import lombok.Setter;
 import model.TargetRange;
+import model.pi.SearchThread;
 import model.pi.SurvivalList;
+import model.pi.SurvivalResult;
 import model.ycd.YCDFileUtil;
 import model.ycd.YCD_SeqProvider;
 
@@ -15,42 +16,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class Searcher extends Thread {
-
-    /**
-     * サバイバル結果を保持するクラス(メソッド戻り値として使用)
-     */
-    private class SurvivalResult implements Comparable<SurvivalResult> {
-
-        @Getter
-        @Setter
-        private String target;
-
-        @Getter
-        @Setter
-        private Long findPos;
-
-        public SurvivalResult(String target, Long findPos) {
-            this.target = target;
-            this.findPos = findPos;
-        }
-
-        public void update(SurvivalResult other) {
-            this.target = other.target;
-            this.findPos = other.findPos;
-        }
-
-        /**
-         * オブジェクト比較.
-         * 
-         * @param other
-         * @return 自分のほうが小さい場合はマイナス、大きい場合はプラス、同じ場合はゼロ
-         */
-        @Override
-        public int compareTo(SurvivalResult other) {
-            return this.findPos.compareTo(other.findPos);
-        }
-
-    }
 
     @Getter
     private final List<File> um_piFileList;// 検索用ファイルリスト（不変にする）
@@ -99,7 +64,7 @@ public class Searcher extends Thread {
 
             // １サイクルの結果保存
             StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
-                    targetRange.getEnd(), sr.target, sr.findPos, startTime, endTime);
+                    targetRange.getEnd(), sr.getTarget(), sr.getFindPos(), startTime, endTime);
 
             // Httpで強制アクセス（静的HTMLを作成するため）
             StoreController.getInstance().saveHTML();
@@ -113,7 +78,7 @@ public class Searcher extends Thread {
         // YCDファイル読み込みに失敗することがある。その場合はリトライするがリトライ回数に制限を設ける
         Integer continueCount = 0;
 
-        SurvivalResult processSurvivalResult = new SurvivalResult("", -1L);
+        SurvivalResult processDeepest = new SurvivalResult("", -1L);
 
         // サバイバルリスト
         SurvivalList survivalList = null;
@@ -123,8 +88,6 @@ public class Searcher extends Thread {
 
         // このサバイバルリスト消化のスタート時間を記録
         StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
-
-        DecimalFormat decimalFormat = new DecimalFormat("#,###");
 
         // 読み込み失敗時のリトライ処理用ループ
         while (true) {
@@ -150,7 +113,7 @@ public class Searcher extends Thread {
             goSurvivalListRemake = true; // サバイバルリストの再作成フラグをON（リセット）
 
             // YCDデータプロバイダ（シーケンシャルにYCDデータをブロックで提供）を作成
-            int overWrapLength = targetRange.getLength(); // 一つ前のケツの部分を今回の先頭に重ねる桁の長さ
+            int overWrapLength = targetRange.getLength(); // ユニットの境目対応として一つ前のケツの部分を今回の先頭に重ねる桁の長さ
             try (YCD_SeqProvider p = new YCD_SeqProvider(this.um_piFileList, overWrapLength, this.unitLength);) {
 
                 // YCDプロバイダの作成に成功したらリトライカウントをリセット
@@ -162,67 +125,66 @@ public class Searcher extends Thread {
                 // このサバイバルのスタート時間を記録
                 StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
 
-                // YCDプロバイダからパイユニットを順次取り出し（順次切り出したカレントパイループ）
-                // 取り出したデータは、前のブロックのケツを先頭に付加していて、ユニット区切り目の検索漏れを防いでいる
-                for (final YCD_SeqProvider.Unit currentPi : p) {
+                // 検索スレッドオブジェクト
+                SearchThread searchThread = null;
 
-                    // 現在の検索深さを記録
-                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
-                            currentPi.getStartDigit() + currentPi.getData().length());
+                // 検索処理の開始時間
+                long baseTime = System.currentTimeMillis();
 
-                    long currentPiUnitStartTime = System.currentTimeMillis();
+                while (true) {
 
-                    // サバイバルリストに存在する値の左共通部分を取得
-                    String leftCommonStr = survivalList.getCommonPrefix();
+                    // YCDから次の対象文字列を読み込む
+                    final YCD_SeqProvider.Unit currentPi = p.next();
 
-                    SurvivalResult sr = null;
-                    String algorithm = "";
-                    if (leftCommonStr.isEmpty()) {
-                        // 左共通部分が無い
-                        // サバイバルリストループ検索
-                        sr = searchSurvivalLoopAlgorithm(survivalList, currentPi);
-                        algorithm = "SL";
-                    } else {
-                        // 左共通部分がある
-                        // 左共通部分を使ってPi文字列基準のシーク検索
-                        sr = searchLeftCommonAlgorithm(targetRange, survivalList, currentPi, leftCommonStr);
-                        algorithm = "LC";
+                    // ひとつ前の検索処理の終了を待ち合わせる
+                    if (searchThread != null) {
+                        searchThread.join();
+
+                        // 現在の検索深さを記録
+                        StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
+                                currentPi.getStartDigit() + currentPi.getData().length());
+
+                        // 新記録なら結果を更新
+                        if (0 < searchThread.getResult().compareTo(processDeepest)) {
+                            processDeepest.update(searchThread.getResult());
+                        }
+                        // サバイバルリストが空になったら終了
+                        if (survivalList.isEmpty()) {
+                            break; // read YCD UNIT break
+                        }
+
                     }
 
-                    // 新記録なら結果を更新
-                    if (0 < sr.compareTo(processSurvivalResult)) {
-                        processSurvivalResult.update(sr);
+                    // デバッグ出力は、１秒より短く表示しない
+                    if ((null != searchThread) && (baseTime + 1000 < System.currentTimeMillis())) {
+
+                        DecimalFormat decimalFormat = new DecimalFormat("#,###");
+                        final String anowReadDepth = decimalFormat
+                                .format((Long.parseLong(currentPi.getFileInfo().get(YCDFileUtil.FileInfo.END_DIGIT))));
+                        final String nowReadDepth = decimalFormat
+                                .format((currentPi.getStartDigit() + currentPi.getData().length()));
+
+                        String output = "\r"
+                                + searchThread.getAlgorithm()
+                                + " Items:" + survivalList.size()
+                                + " " + nowReadDepth
+                                + " / " + anowReadDepth
+                                + " - \"" + survivalList.get(0) + "\""
+                                + "-\"" + survivalList.get(survivalList.size() - 1) + "\"";
+                        System.out.print(output);
+                        System.out.print(" ".repeat(Math.max(0, 85 - output.length())) + "|"); // ターミナルの幅に応じて調整
+                        System.out.flush();
+
+                        baseTime = System.currentTimeMillis();
                     }
 
-                    // サバイバルリストが空になったら終了
-                    if (survivalList.isEmpty()) {
-                        break; // read YCD UNIT break
-                    }
-
-                    final String anowReadDepth = decimalFormat
-                            .format((Long.parseLong(currentPi.getFileInfo().get(YCDFileUtil.FileInfo.END_DIGIT))));
-                    final String nowReadDepth = decimalFormat
-                            .format((currentPi.getStartDigit() + currentPi.getData().length()));
-                    long currentTime = System.currentTimeMillis();
-                    long timeDifference = currentTime - currentPiUnitStartTime;
-                    currentPiUnitStartTime = currentTime;
-
-                    String output = "\r"
-                            + algorithm
-                            + " Items:" + survivalList.size()
-                            + " " + nowReadDepth
-                            + " / " + anowReadDepth
-                            + " - \"" + survivalList.get(0) + "\""
-                            + "-\"" + survivalList.get(survivalList.size() - 1) + "\""
-                            + " " + timeDifference + "ms";
-                    System.out.print(output);
-                    System.out.print(" ".repeat(Math.max(0, 85 - output.length())) + "|"); // ターミナルの幅に応じて調整
-                    System.out.flush();
+                    // 検索スレッドの作成と開始
+                    searchThread = new SearchThread(survivalList, currentPi);
+                    searchThread.start();
 
                 }
 
             } catch (Throwable t) {
-
                 // YCDファイルの読み込みなど、仮に何かしらのエラーが発生した場合でも、ちょっと時間をおいて再起動してみる
                 continueCount++;
                 RuntimeException ee = new RuntimeException("ERROR!  start over. count: " + continueCount, t);
@@ -248,145 +210,8 @@ public class Searcher extends Thread {
                 Runtime.getRuntime().exit(-1);
             }
 
-            return processSurvivalResult;
+            return processDeepest;
 
         }
-
-    }
-
-    private SurvivalResult searchLeftCommonAlgorithm(TargetRange targetRange, SurvivalList survivalList,
-            YCD_SeqProvider.Unit currentPi, String leftCommonStr) {
-
-        if (leftCommonStr.isEmpty()) {
-            throw new RuntimeException("leftCommonStr is empty.");
-        }
-
-        SurvivalResult survivalResult = new SurvivalResult("", -1L);
-
-        // このユニットの検索スタート位置初期値（検索終了している部分をスキップするためのシーク位置）
-        int commonSeekPos = 0;
-
-        // カレントパイユニットが末尾に達するまで繰り返す
-        while (true) {
-
-            // スタート位置を確定（次の共通文字列を検索してシークする）
-            //int startPos = currentPi.indexOf(leftCommonStr, commonSeekPos);
-            int startPos = boyerMooreSearch( currentPi.getData(), leftCommonStr, commonSeekPos);
-
-            // 共通左文字でシークができなかった（共通文字が見つからなかった）場合は次のユニットへ
-            if (startPos < 0) {
-                break;
-            }
-
-            // シーク位置を先頭にしたとき、データが足りない場合は、次のYCDユニットへ
-            if (startPos + targetRange.getLength() > currentPi.getData().length()) {
-                break;
-            }
-
-            // カレントパイ文字列
-            final String currentPiStr = currentPi.getData().substring(startPos,
-                    startPos + targetRange.getLength());
-
-            // サバイバルリストからターゲットを探す
-            final int suvIndex = survivalList.indexOf(currentPiStr);
-
-            if (-1 < suvIndex) {
-                // サバイバルリストヒット
-
-                // カレントパイ文字列の中での発見位置を、全体位置に変換
-                final Long curFindPos = currentPi.getStartDigit() + startPos;
-
-                // 発見位置が今までで一番後ろだったらメモ記録（最遅候補とする）
-                if (survivalResult.getFindPos() < curFindPos) {
-                    survivalResult.setTarget(currentPiStr); // 発見した対象
-                    survivalResult.setFindPos(curFindPos); // 発見位置
-                }
-
-                // ヒットした要素をサバイバルリストから削除
-                survivalList.discover(currentPiStr, curFindPos);
-
-                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
-
-            }
-
-            // シーク位置を１文字ずらす。（共通部分発見位置の次の文字から再開する）
-            commonSeekPos = startPos + 1;
-        }
-
-        return survivalResult;
-
-    }
-
-    private SurvivalResult searchSurvivalLoopAlgorithm(SurvivalList survivalList, YCD_SeqProvider.Unit currentPi) {
-
-        SurvivalResult survivalResult = new SurvivalResult("", -1L);
-
-        // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
-        for (int i = survivalList.size() - 1; i >= 0; i--) {
-
-            String target = survivalList.get(i);
-
-            int pos = currentPi.indexOf(target);
-            if (0 <= pos) {
-                // ヒット
-                // ヒットしたら基本的にはサバイバルリストから削除する
-
-                // カレントパイ文字列の中での発見位置を、全体位置に変換
-                Long curFindPos = currentPi.getStartDigit() + pos;
-
-                // 発見位置が今までで一番後ろだったらメモ記録（最遅候補とする）
-                if (survivalResult.getFindPos() < curFindPos) {
-                    survivalResult.setTarget(target); // 発見した対象
-                    survivalResult.setFindPos(curFindPos); // 発見位置
-                }
-
-                // ヒットした要素をサバイバルリストから削除
-                survivalList.discover(target, curFindPos);
-
-                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
-
-            }
-        }
-        return survivalResult;
-    }
-    
-    // バッドキャラクターテーブルを作成
-    private int[] buildBadCharacterTable(String pattern) {
-        int[] badCharTable = new int[10];
-        for (int i = 0; i < 10; i++) {
-            badCharTable[i] = -1;
-        }
-        for (int i = 0; i < pattern.length(); i++) {
-            badCharTable[pattern.charAt(i) - '0'] = i;
-        }
-        return badCharTable;
-    }
-
-    // ボイヤー・ムーア検索
-    private int boyerMooreSearch(String text, String pattern, int startIndex) {
-        int[] badCharTable = buildBadCharacterTable(pattern);
-        int m = pattern.length();
-        int n = text.length();
-        int shift = startIndex; // 開始位置を指定
-
-        while (shift <= (n - m)) {
-            int j = m - 1;
-
-            // 右から左へ比較
-            while (j >= 0 && pattern.charAt(j) == text.charAt(shift + j)) {
-                j--;
-            }
-
-            // 一致した場合
-            if (j < 0) {
-                return shift;
-            }
-
-            // バッドキャラクタールールに従いシフト
-            int badCharIndex = text.charAt(shift + j) - '0';
-            int badCharShift = j - badCharTable[badCharIndex];
-            shift += Math.max(1, badCharShift);
-        }
-        return -1; // 見つからなかった場合
     }
 }

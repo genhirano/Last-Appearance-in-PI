@@ -203,6 +203,8 @@ public class YCD_SeqBlockStream implements AutoCloseable {
         }
 
         //ブロック読み込み用バッファの初期化。初期値は前回の余りをセットしておく
+        //StringBuffer sb = new StringBuffer(this.processUnitSize);
+        //sb.append(this.surplusDigitStr);
         StringBuffer sb = new StringBuffer(this.surplusDigitStr);
 
         String data = "";
