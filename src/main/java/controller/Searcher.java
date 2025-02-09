@@ -51,7 +51,7 @@ public class Searcher extends Thread {
             ZonedDateTime startTime = ZonedDateTime.now();
             StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", startTime);
 
-            // 処理範囲の決定（次の処理を定義）
+            // 処理範囲の決定（次の処理を定義をStoreControllerから得る）
             TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(this.listSize);
 
             StoreController.survivalProgressMap.put("SURVIVAL_DIGIT_LENGTH", String.valueOf(targetRange.getLength()));
@@ -75,143 +75,106 @@ public class Searcher extends Thread {
 
     private SurvivalResult survive(TargetRange targetRange) {
 
-        // YCDファイル読み込みに失敗することがある。その場合はリトライするがリトライ回数に制限を設ける
-        Integer continueCount = 0;
+        // このサバイバルのスタート時間を記録
+        StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
 
+        // プロセス内新記録の記録
         SurvivalResult processDeepest = new SurvivalResult("", -1L);
-
-        // サバイバルリスト
-        SurvivalList survivalList = null;
-
-        // サバイバルリストの(再)作成フラグ
-        Boolean goSurvivalListRemake = true;
 
         // このサバイバルリスト消化のスタート時間を記録
         StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
 
-        // 読み込み失敗時のリトライ処理用ループ
-        while (true) {
+        // サバイバルリスト作成
+        SurvivalList survivalList = new SurvivalList(targetRange.getLength(), Integer.valueOf(targetRange.getStart()),
+                Integer.valueOf(targetRange.getEnd()));
 
-            // YCDプロバイダの作成に失敗することがある。その場合はリトライするがリトライ回数に制限を設ける
-            if (5 < continueCount) {
-                throw new RuntimeException("Fail!  Retry limit exceeded." + continueCount);
-            }
+        // 進捗情報用サバイバルリスト初期情報の登録
+        StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
+        StoreController.survivalProgressMap.put("SURVIVAL_DISCOVERD_LIST", survivalList.getDiscoverdInfo());
 
-            // 今回のサバイバルリストの作成フラグがONの場合はサバイバルリストを作成
-            // IOエラーなどで再度読み込みする場合は再作成しない
-            if (goSurvivalListRemake) {
+        // YCDデータプロバイダ（シーケンシャルにYCDデータをブロックで提供）を作成
+        int overWrapLength = targetRange.getLength(); // ユニットの境目対応として一つ前のケツの部分を今回の先頭に重ねる桁の長さ
+        try (YCD_SeqProvider p = new YCD_SeqProvider(5, this.um_piFileList, overWrapLength, this.unitLength);) {
 
-                // サバイバルリスト作成
-                survivalList = new SurvivalList(targetRange.getLength(), Integer.valueOf(targetRange.getStart()),
-                        Integer.valueOf(targetRange.getEnd()));
+            // YCDファイルの全ヘッダー情報を記録
+            StoreController.survivalProgressMap.put("YCD_FILE_INFO", p.getFileInfoMap());
 
-                // 進捗情報用サバイバルリスト初期情報の登録
-                StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
-                StoreController.survivalProgressMap.put("SURVIVAL_DISCOVERD_LIST", survivalList.getDiscoverdInfo());
+            // 検索スレッドオブジェクト
+            SearchThread searchThread = null;
 
-            }
-            goSurvivalListRemake = true; // サバイバルリストの再作成フラグをON（リセット）
+            // 検索処理の開始時間
+            long baseTime = System.currentTimeMillis();
 
-            // YCDデータプロバイダ（シーケンシャルにYCDデータをブロックで提供）を作成
-            int overWrapLength = targetRange.getLength(); // ユニットの境目対応として一つ前のケツの部分を今回の先頭に重ねる桁の長さ
-            try (YCD_SeqProvider p = new YCD_SeqProvider(this.um_piFileList, overWrapLength, this.unitLength);) {
+            while (true) {
 
-                // YCDプロバイダの作成に成功したらリトライカウントをリセット
-                continueCount = 0;
+                // YCDから次の対象文字列を読み込む
+                final YCD_SeqProvider.Unit currentPi = p.next();
 
-                // YCDファイルの全ヘッダー情報を記録
-                StoreController.survivalProgressMap.put("YCD_FILE_INFO", p.getFileInfoMap());
+                // ひとつ前の検索処理の終了を待ち合わせる
+                if (searchThread != null) {
+                    searchThread.join();
 
-                // このサバイバルのスタート時間を記録
-                StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
+                    // 現在の検索深さを記録
+                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
+                            currentPi.getStartDigit() + currentPi.getData().length());
 
-                // 検索スレッドオブジェクト
-                SearchThread searchThread = null;
-
-                // 検索処理の開始時間
-                long baseTime = System.currentTimeMillis();
-
-                while (true) {
-
-                    // YCDから次の対象文字列を読み込む
-                    final YCD_SeqProvider.Unit currentPi = p.next();
-
-                    // ひとつ前の検索処理の終了を待ち合わせる
-                    if (searchThread != null) {
-                        searchThread.join();
-
-                        // 現在の検索深さを記録
-                        StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH",
-                                currentPi.getStartDigit() + currentPi.getData().length());
-
-                        // 新記録なら結果を更新
-                        if (0 < searchThread.getResult().compareTo(processDeepest)) {
-                            processDeepest.update(searchThread.getResult());
-                        }
-                        // サバイバルリストが空になったら終了
-                        if (survivalList.isEmpty()) {
-                            break; // read YCD UNIT break
-                        }
-
+                    // 新記録なら結果を更新
+                    if (0 < searchThread.getResult().compareTo(processDeepest)) {
+                        processDeepest.update(searchThread.getResult());
                     }
 
-                    // デバッグ出力は、１秒より短く表示しない
-                    if ((null != searchThread) && (baseTime + 1000 < System.currentTimeMillis())) {
-
-                        DecimalFormat decimalFormat = new DecimalFormat("#,###");
-                        final String anowReadDepth = decimalFormat
-                                .format((Long.parseLong(currentPi.getFileInfo().get(YCDFileUtil.FileInfo.END_DIGIT))));
-                        final String nowReadDepth = decimalFormat
-                                .format((currentPi.getStartDigit() + currentPi.getData().length()));
-
-                        String output = "\r"
-                                + searchThread.getAlgorithm()
-                                + " Items:" + survivalList.size()
-                                + " " + nowReadDepth
-                                + " / " + anowReadDepth
-                                + " - \"" + survivalList.get(0) + "\""
-                                + "-\"" + survivalList.get(survivalList.size() - 1) + "\"";
-                        System.out.print(output);
-                        System.out.print(" ".repeat(Math.max(0, 85 - output.length())) + "|"); // ターミナルの幅に応じて調整
-                        System.out.flush();
-
-                        baseTime = System.currentTimeMillis();
+                    // サバイバルリストが空になったら終了
+                    if (survivalList.isEmpty()) {
+                        break; // read YCD UNIT break
                     }
-
-                    // 検索スレッドの作成と開始
-                    searchThread = new SearchThread(survivalList, currentPi);
-                    searchThread.start();
 
                 }
 
-            } catch (Throwable t) {
-                // YCDファイルの読み込みなど、仮に何かしらのエラーが発生した場合でも、ちょっと時間をおいて再起動してみる
-                continueCount++;
-                RuntimeException ee = new RuntimeException("ERROR!  start over. count: " + continueCount, t);
-                ee.printStackTrace();
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
+                // デバッグ出力は、１秒より短く表示しない
+                if ((null != searchThread) && (baseTime + 1000 < System.currentTimeMillis())) {
+
+                    DecimalFormat decimalFormat = new DecimalFormat("#,###");
+                    final String anowReadDepth = decimalFormat
+                            .format((Long.parseLong(currentPi.getFileInfo().get(YCDFileUtil.FileInfo.END_DIGIT))));
+                    final String nowReadDepth = decimalFormat
+                            .format((currentPi.getStartDigit() + currentPi.getData().length()));
+
+                    String output = "\r"
+                            + searchThread.getAlgorithm()
+                            + " Items:" + survivalList.size()
+                            + " " + nowReadDepth
+                            + " / " + anowReadDepth
+                            + " - \"" + survivalList.get(0) + "\""
+                            + "-\"" + survivalList.get(survivalList.size() - 1) + "\"";
+                    System.out.print(output);
+                    System.out.print(" ".repeat(Math.max(0, 85 - output.length())) + "|"); // ターミナルの幅に応じて調整
+                    System.out.flush();
+
+                    baseTime = System.currentTimeMillis();
                 }
-                goSurvivalListRemake = false; // サバイバルリストの再作成フラグをOFF
-                continue; // 再起動
+
+                // 検索スレッドの作成と開始
+                searchThread = new SearchThread(survivalList, currentPi);
+                searchThread.start();
             }
 
-            // 検索終了。サバイバルリストが空になっているはず。
-            // サバイバルリストが空でない場合は探しきれなかった、とする。
-            if (!survivalList.isEmpty()) {
-                System.out.println(
-                        "The file was too short to finalize the last one(発見できず。YCDファイルが短すぎました)"
-                                + "  検索できなかったものの一例: " + survivalList.get(0));
-
-                System.out.println(StoreController.survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
-
-                Runtime.getRuntime().exit(-1);
-            }
-
-            return processDeepest;
-
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
         }
+
+        // 検索終了。サバイバルリストが空になっているはず。
+        // サバイバルリストが空でない場合は探しきれなかった、とする。
+        if (!survivalList.isEmpty()) {
+            System.out.println(
+                    "The file was too short to finalize the last one(発見できず。YCDファイルが短すぎました)"
+                            + "  検索できなかったものの一例: " + survivalList.get(0));
+
+            System.out.println(StoreController.survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
+
+            Runtime.getRuntime().exit(-1);
+        }
+
+        return processDeepest;
+
     }
 }

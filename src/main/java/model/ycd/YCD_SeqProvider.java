@@ -13,7 +13,7 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
      * 検索対象ファイルの情報保持Map.
      */
     @Getter
-    private final Map<File, Map<YCDFileUtil.FileInfo, String>> fileInfoMap;
+    private Map<File, Map<YCDFileUtil.FileInfo, String>> fileInfoMap;
 
     private Integer overWrapLength;
     private Integer baseUnitLength;
@@ -63,23 +63,56 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
      * @param unitLength     基本切り出し桁長さ
      * @throws IOException ファイル読み込みエラー
      */
-    public YCD_SeqProvider(List<File> fileList, Integer overWrapLength, Integer unitLength) throws IOException {
+    public YCD_SeqProvider(int attemptsLeft, List<File> fileList, Integer overWrapLength, Integer unitLength)
+            throws IOException {
 
-        this.overWrapLength = overWrapLength;
-        this.baseUnitLength = unitLength;
-
-        // 全ファイルヘッダー情報取得
-        this.fileInfoMap = Collections.unmodifiableMap(createFileInfo(fileList, overWrapLength));
-
-        // カレントファイルを先頭ファイルにする
-        this.currentFile = fileList.get(0);
-
-        // 終了判定用に最後のファイルを保持しておく
-        this.lastFile = fileList.get(fileList.size() - 1);
+        // なぜかアクセスエラーが発生するため、指定回数リトライする
+        this.creageInstanceWithRetry(attemptsLeft, fileList, overWrapLength, unitLength);
 
         // 初めての呼び出し
         this.currentStream = this.createStream(this.currentFile, this.baseUnitLength);
 
+    }
+
+    /**
+     * 再挑戦付きオブジェクトフィールドの初期化.
+     * 
+     * @param attemptsLeft
+     * @param fileList
+     * @param overWrapLength
+     * @param unitLength
+     * @throws IOException
+     */
+    private void creageInstanceWithRetry(int attemptsLeft, List<File> fileList, Integer overWrapLength,
+            Integer unitLength) throws IOException {
+        try {
+
+            this.overWrapLength = overWrapLength;
+            this.baseUnitLength = unitLength;
+
+            // 全ファイルヘッダー情報取得
+            this.fileInfoMap = Collections.unmodifiableMap(createFileInfo(fileList, overWrapLength));
+
+            // カレントファイルを先頭ファイルにする
+            this.currentFile = fileList.get(0);
+
+            // 終了判定用に最後のファイルを保持しておく
+            this.lastFile = fileList.get(fileList.size() - 1);
+
+        } catch (Exception e) {
+            try {
+                System.out.println("YCD_SeqProvider create error. Retry after 5 seconds.");
+                Thread.sleep(5000);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+
+            if (attemptsLeft > 1) {
+                this.creageInstanceWithRetry(attemptsLeft - 1, fileList, overWrapLength, unitLength);
+            } else {
+                throw new IOException(e);
+            }
+        }
     }
 
     /**
