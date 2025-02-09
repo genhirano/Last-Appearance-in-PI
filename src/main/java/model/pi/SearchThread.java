@@ -15,6 +15,11 @@ public class SearchThread extends Thread {
     @Getter
     String algorithm = "";
 
+    /**
+     * 検索ロジックスレッド.
+     * @param survivalList サバイバルリスト
+     * @param pi 文字列ユニット
+     */
     public SearchThread(SurvivalList survivalList, final YCD_SeqProvider.Unit pi) {
         this.survivalList = survivalList;
         this.pi = pi;
