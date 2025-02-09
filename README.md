@@ -1,5 +1,4 @@
 **【リアルタイム進捗はこちら】**  
-![image](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/0bc97c88-770c-478b-abea-cdea4dd180f7)
  [https://genhirano.coresv.com/](https://genhirano.coresv.com/)
 
 ---
