@@ -106,3 +106,120 @@
   3. 大きな桁においても、非力なコンピュータで実行できること 
   4. 検索スピードは問わない（遅くてよい） 
 
+> [!NOTE]
+> [現在のプロジェクト稼働環境](https://genhirano.coresv.com/)では現在、円周率データ(10進数)22,600,000,000,000桁(22兆桁)を対象に実行されています。このデータ量は合計約9TBです。
+
+## 実行中の画面イメージ
+![Screenshot_20240511-144810.png](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/be791931-3a28-4d90-9ad5-d51bfd7e57a7)
+
+### 特徴
+* 中断・再開が可能
+  * プログラムは途方も無い時間を必要とします。実行後に思いついたプログラム実装を適用したり、意図しないプログラムの中断やコンピュータのダウンなどが発生したとき、最初からやり直したくありません。このプログラムは、そういったプログラムの途中終了後に再度実行しても途中から再開します。
+
+* 非富豪的なアプローチ
+  * 非力なコンピュータでも実行可能なように設計しています。例えば、円周率の中に自然数を発見するたびにその自然数をすべてメモしておくようなことはできません。このプログラムは、桁数が大きくなっても（検索効率と引き換えに）非力なコンピュータで処理できるリソース範囲で実行できます。
+  *  [現在の稼働環境](https://genhirano.coresv.com/) - [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
+  *  ![PXL_20240507_111731293](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/37cc4fbb-8a0b-4370-bb22-b8822d4774fa)
+
+* 円周率データ（YCDファイル）読み込みをモジュール化した
+  * 膨大な円周率が格納されている"YCD"形式ファイルは保管効率のためにバイナリ保存されています。このプロジェクトでは、[y-cruncher](http://www.numberworld.org/y-cruncher/)プログラムが生成する **"YCD形式ファイル"** をJavaで直接扱えるように、読み込み部分のプログラムを隔離して明確にモジュール化しました。YCD_SeqProviderクラスは、YCDファイルから（ファイルをまたぐ場合でも）連続して指定した桁数ずつ切り出し提供できる、拡張forループが利用可能なモジュールを作りました。
+  * [YCD File Format](http://www.numberworld.org/y-cruncher/internals/representation.html)
+
+* 組み込みWEBサーバーと静的HTMLファイルコンパイル
+  * プログラムにはWEBサーバーが組み込まれています。プログラムを開始するだけでWEBサーバーが起動し、WEBブラウザで検索中の様子がリアルタイムに確認できます。
+  * 平行してHTMLファイルを静的コンパイルして作成します。このHTMLファイルを使って、例えばFTPで公開用レンタルサーバーへアップロードするなど活用できます。 
+
+## 注意
+* Just as a hobby（あくまでも趣味）
+  * このプロジェクトはあくまでも個人の趣味によって作成されており、結果の正しさはいかなる観点からも保証しません。
+  * このプロジェクトが算出して確認すべき結果データは、すでに偉大な先人によって10桁までネットで公開されています。（結果確認のため、プログラムテスト時に参照させていただいています）
+    *  [The On-Line Encyclopedia of Integer Sequences® (OEIS®)](https://oeis.org/A332262)
+* Entertainment-oriented mindset（エンタメです）
+  * このプロジェクトは探索結果を得るためのものでありますが、その探索過程、探索中の様子をリアルタイムで公開することを最重要視しています。したがって探索アルゴリズムについては合理性（リソースの利用方法、拡張性、検索スピード）への配慮は優先順位を落としています。 
+  * 原始的な総当り検索アルゴリズムで実装されていますので、実用的（笑）なスピードは期待できません。
+
+## USAGE
+* Entry Point
+  * controller.Main (Java version 11 or higher)
+* View Progress
+  * your browser "http://localhost:8080"
+* Maven
+  * Please install external packages that are dependent on using the .pom file of Maven.
+  ``` 
+  mvn install
+  ``` 
+* Create properties file "default.properties"
+  * Please place the program in the location where it will be executed.
+``` default.properties
+# Web server port
+port=8080
+
+# output path (経過保存用ファイルの吐き出し先パス)
+outputPath=./
+
+# searches per cycle (1ユニットあたりの対象数)
+listSize=500
+
+# read pi data per cycle (円周率データの１回の読み込み長さ)
+# Multiples of 19 are desirable (19の倍数が望ましい)
+unitLength=1900
+
+# Pi files (ycd Files)
+ycd000=X:/ycdFile/Pi - Dec - Chudnovsky - 0.ycd
+ycd001=X:/ycdFile/Pi - Dec - Chudnovsky - 1.ycd
+ycd002=X:/ycdFile/Pi - Dec - Chudnovsky - 2.ycd
+ycd003=X:/ycdFile/Pi - Dec - Chudnovsky - 3.ycd
+# (and more. Max:999 files)
+```
+
+## PI DATA SOURCE
+In this project, we are using the output of the pi calculation program "[y-cruncher](http://www.numberworld.org/y-cruncher/)" as the target for the search.  
+このプロジェクトでは、円周率計算プログラム「[y-cruncher](http://www.numberworld.org/y-cruncher/)」が出力した計算結果を検索対象としています。
+
+Data Download
+https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy
+
+
+## SPECIAL THANKS!
+* [y-cruncher - A Multi-Threaded Pi-Program](http://www.numberworld.org/y-cruncher/)
+  * Alexander J. Yee  - y-cruncher is a program that can compute Pi and other constants to trillions of digits. 
+* [OpenJDK](https://openjdk.org/)
+  * The place to collaborate on an open-source implementation of the Java Platform, Standard Edition, and related projects.
+* [Spark Framework](https://sparkjava.com/)
+  * micro framework for creating web applications in Kotlin and Java 8 with minimal effort
+* [Bluma](https://bulma.io/)
+  * CSS Framework 
+* [Octicons](https://github.com/primer/octicons)
+  * Octicons are a set of SVG icons
+* [Apatch Maven](https://maven.apache.org/)
+  * software project management and comprehension tool. 
+* [Intellij idea](https://www.jetbrains.com/idea/)
+  * The IDE that makes development a more productive and enjoyable experience
+* [Git Hub](https://github.co.jp/)
+  * development platform
+* [Git](https://git-scm.com/)
+  * free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency.
+* [Jenkins](https://www.jenkins.io/)
+  * The leading open source automation server,
+* ~~[Gitlab, Gitlab Pages]~~ 
+  * ~~https://docs.gitlab.com/ee/user/project/pages/~~
+  * ~~https://www.kageori.com/2023/06/gitlabgitlab-pages2023.html~~
+  * ~~（結果公開用にGitLabPagesを利用していましたが、400分/月のパイプラインの利用制限により要件と見合わなくなったため現在未使用）~~
+* [Real-World Data Sets](https://introcs.cs.princeton.edu/java/data/)
+  * list of real-world data sets collected from the web. 
+
+> [!NOTE]
+> **偉大なる先人たち**
+> 同様の探索は、偉大な先人によって既に実施されています。   
+>
+>**[オンライン整数列大辞典](https://oeis.org/)**  
+>The On-Line Encyclopedia of Integer Sequences® (OEIS®)  
+>[A032510](https://oeis.org/A032510) 桁数毎の最後に出現する整数  
+>[A036903](https://oeis.org/A036903) 桁数毎に全てが出現する事を確認するためにスキャンする必要のある桁数  
+>
+>**[Sequence Machine](https://sequencedb.net/)**  
+>Mathematical conjectures on top of 1301509 machine generated integer and decimal sequences.  
+>[A032510](https://sequencedb.net/s/A032510)  
+>0, 68, 483, 6716, 33394, 569540, 1075656, 36432643, 172484538, 5918289042, 56377726040,...  
+>[A036903](https://sequencedb.net/s/A036903)  
+>32, 606, 8555, 99849, 1369564, 14118312, 166100506, 1816743912, 22445207406, 241641121048, 2512258603207,...  
