@@ -50,6 +50,7 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
 
     private File currentFile;
     private File lastFile;
+    private int attemptsLeft = 5;
     private YCD_SeqBlockStream currentStream;
 
     String prevUnitData = "";
@@ -63,7 +64,7 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
      * @param unitLength     基本切り出し桁長さ
      * @throws IOException ファイル読み込みエラー
      */
-    public YCD_SeqProvider(int attemptsLeft, List<File> fileList, Integer overWrapLength, Integer unitLength)
+    public YCD_SeqProvider(List<File> fileList, Integer overWrapLength, Integer unitLength)
             throws IOException {
 
         // なぜかアクセスエラーが発生するため、指定回数リトライする

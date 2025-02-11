@@ -94,7 +94,7 @@ public class Searcher extends Thread {
 
         // YCDデータプロバイダ（シーケンシャルにYCDデータをブロックで提供）を作成
         int overWrapLength = targetRange.getLength(); // ユニットの境目対応として一つ前のケツの部分を今回の先頭に重ねる桁の長さ
-        try (YCD_SeqProvider p = new YCD_SeqProvider(5, this.um_piFileList, overWrapLength, this.unitLength);) {
+        try (YCD_SeqProvider p = new YCD_SeqProvider(this.um_piFileList, overWrapLength, this.unitLength);) {
 
             // YCDファイルの全ヘッダー情報を記録
             StoreController.survivalProgressMap.put("YCD_FILE_INFO", p.getFileInfoMap());
