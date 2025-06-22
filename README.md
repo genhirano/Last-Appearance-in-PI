@@ -1,13 +1,63 @@
-**【リアルタイム進捗はこちら】**  
- [https://genhirano.coresv.com/](https://genhirano.coresv.com/)
-
----
-
 # Last-Appearance-in-PI
 円周率の中で最も遅く出現する自然数の探索
 
+> [!NOTE]
+> **リアルタイム稼働状況**  
+> 現在の探索進捗をリアルタイムで確認できます：[https://genhirano.coresv.com/](https://genhirano.coresv.com/)
+
+## プロジェクト概要
+このプログラムは、円周率の中で「一番遅く出現する自然数」を桁数ごとに検索するプロジェクトです。例えば1桁では「0」が32桁目で最後に出現し、2桁では「68」が605桁目で最後に出現します。このような探索を3桁、4桁...と継続して行い、「円周率の中には、この世の中のすべての自然数が含まれている」という仮説を検証することを目的としています。
+
+## クイックスタート
+
+### 必要環境
+- Java 11以上
+- Maven
+- 円周率データファイル（YCD形式）
+  - [データダウンロード](https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy)からy-cruncher形式の円周率データを事前にダウンロードしてください
+
+### 基本的な実行手順
+1. 依存関係のインストール
+   ```bash
+   mvn install
+   ```
+
+2. JARファイルのビルド
+   ```bash
+   mvn clean package
+   ```
+
+3. 設定ファイル「default.properties」を作成
+   ```properties
+   # Web server port
+   port=8080
+   
+   # output path (経過保存用ファイルの吐き出し先パス)
+   outputPath=./
+   
+   # searches per cycle (1ユニットあたりの対象数)
+   listSize=500
+   
+   # read pi data per cycle (円周率データの１回の読み込み長さ)
+   # Multiples of 19 are desirable (19の倍数が望ましい)
+   unitLength=1900
+   
+   # Pi files (ycd Files)
+   ycd000=X:/ycdFile/Pi - Dec - Chudnovsky - 0.ycd
+   ycd001=X:/ycdFile/Pi - Dec - Chudnovsky - 1.ycd
+   # (and more. Max:999 files)
+   ```
+
+4. プログラム実行
+   ```bash
+   java -jar target/Last-Appearance-in-PI-1.0-SNAPSHOT-jar-with-dependencies.jar default.properties
+   ```
+
+5. 進捗確認
+   - ブラウザで http://localhost:8080 にアクセス
+
 ## プロローグ
-「円周率の中には、この世の中のすべての自然数が含まれている」 と言われています。  
+「円周率の中には、この世の中のすべての自然数が含まれている」と言われています。  
 * 例えば
   * 「999999」（ゼロが6個連続）は762桁目に出現します。  
   * 「12345678」は186,557,266桁目に出現します。	
@@ -22,7 +72,7 @@
 > 数列「999999」（ゼロが6個連続）が出現する762桁目は「ファインマン・ポイント」[(→Wikipedia)](https://ja.wikipedia.org/wiki/ファインマン・ポイント)と呼ばれています。
 
 ## アプローチ
-円周率は予測不能ですので、すべての自然数が円周率に含まれていることを証明するためには、**ひとつづず総当たりで探す**しかないようです。  
+円周率は予測不能ですので、すべての自然数が円周率に含まれていることを証明するためには、**ひとつずつ総当たりで探す**しかないようです。  
 自然数は無限にありますので、**桁数毎に**検索します。
 
 まずは、1桁。
@@ -78,8 +128,8 @@
 >  :  
 >  N桁：[0{N}...9{N}]の10のN乗個  
 
-数桁であっても膨大な検索量ですが、「円周率の中には、この世の中のすべての自然数が含まれている」のであれば、すべての桁で全て発見できるはずです。。。  
-でも目視ではとても難しそうです。。。
+数桁であっても膨大な検索量ですが、「円周率の中には、この世の中のすべての自然数が含まれている」のであれば、すべての桁で全て発見できるはずです。  
+でも目視ではとても難しそうです。
 
 **対象桁において、「一番遅く出現する自然数」が特定できれば、その対象桁の自然数はすべて出現したと言えます。このアプローチで証明できそうです。**
 
@@ -142,88 +192,62 @@
   * このプロジェクトは探索結果を得るためのものでありますが、その探索過程、探索中の様子をリアルタイムで公開することを最重要視しています。したがって探索アルゴリズムについては合理性（リソースの利用方法、拡張性、検索スピード）への配慮は優先順位を落としています。 
   * 原始的な総当り検索アルゴリズムで実装されていますので、実用的（笑）なスピードは期待できません。
 
-## USAGE
-* Entry Point
-  * controller.Main (Java version 11 or higher)
-* View Progress
-  * your browser "http://localhost:8080"
-* Maven
-  * Please install external packages that are dependent on using the .pom file of Maven.
-  ``` 
-  mvn install
-  ``` 
-* Create properties file "default.properties"
-  * Please place the program in the location where it will be executed.
-``` default.properties
-# Web server port
-port=8080
-
-# output path (経過保存用ファイルの吐き出し先パス)
-outputPath=./
-
-# searches per cycle (1ユニットあたりの対象数)
-listSize=500
-
-# read pi data per cycle (円周率データの１回の読み込み長さ)
-# Multiples of 19 are desirable (19の倍数が望ましい)
-unitLength=1900
-
-# Pi files (ycd Files)
-ycd000=X:/ycdFile/Pi - Dec - Chudnovsky - 0.ycd
-ycd001=X:/ycdFile/Pi - Dec - Chudnovsky - 1.ycd
-ycd002=X:/ycdFile/Pi - Dec - Chudnovsky - 2.ycd
-ycd003=X:/ycdFile/Pi - Dec - Chudnovsky - 3.ycd
-# (and more. Max:999 files)
-```
-
-## PI DATA SOURCE
-In this project, we are using the output of the pi calculation program "[y-cruncher](http://www.numberworld.org/y-cruncher/)" as the target for the search.  
+## 円周率データソース（PI DATA SOURCE）
 このプロジェクトでは、円周率計算プログラム「[y-cruncher](http://www.numberworld.org/y-cruncher/)」が出力した計算結果を検索対象としています。
 
-Data Download
-https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy
+> [!NOTE]
+> **YCD形式ファイルについて**  
+> 膨大な円周率データは効率的な保管のためにバイナリ形式（YCD形式）で保存されています。このプロジェクトでは、YCDファイルをJavaで直接読み込めるモジュールを作成し、ファイルをまたいだ連続データ読み込みを可能にしています。
 
+データダウンロード: https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy
 
-## SPECIAL THANKS!
+## 関連研究・先行事例
+
+> [!NOTE]
+> **偉大なる先人たち**  
+> 同様の探索は、偉大な先人によって既に実施されています。
+>
+> **[オンライン整数列大辞典（OEIS）](https://oeis.org/)**  
+> The On-Line Encyclopedia of Integer Sequences® (OEIS®)  
+> - [A032510](https://oeis.org/A032510) 桁数毎の最後に出現する整数  
+> - [A036903](https://oeis.org/A036903) 桁数毎に全てが出現する事を確認するためにスキャンする必要のある桁数  
+>
+> **[Sequence Machine](https://sequencedb.net/)**  
+> Mathematical conjectures on top of 1301509 machine generated integer and decimal sequences.  
+> - [A032510](https://sequencedb.net/s/A032510): 0, 68, 483, 6716, 33394, 569540, 1075656, 36432643, 172484538, 5918289042, 56377726040,...  
+> - [A036903](https://sequencedb.net/s/A036903): 32, 606, 8555, 99849, 1369564, 14118312, 166100506, 1816743912, 22445207406, 241641121048, 2512258603207,...
+
+## 謝辞・使用技術（SPECIAL THANKS）
+このプロジェクトの実現にあたり、以下の優秀なツールやサービスを利用させていただいています：
+
+### 主要技術・ツール
 * [y-cruncher - A Multi-Threaded Pi-Program](http://www.numberworld.org/y-cruncher/)
-  * Alexander J. Yee  - y-cruncher is a program that can compute Pi and other constants to trillions of digits. 
+  * Alexander J. Yee - y-cruncher is a program that can compute Pi and other constants to trillions of digits. 
 * [OpenJDK](https://openjdk.org/)
   * The place to collaborate on an open-source implementation of the Java Platform, Standard Edition, and related projects.
 * [Spark Framework](https://sparkjava.com/)
   * micro framework for creating web applications in Kotlin and Java 8 with minimal effort
-* [Bluma](https://bulma.io/)
+
+### UI・デザイン
+* [Bulma](https://bulma.io/)
   * CSS Framework 
 * [Octicons](https://github.com/primer/octicons)
   * Octicons are a set of SVG icons
-* [Apatch Maven](https://maven.apache.org/)
+
+### 開発環境・ツール
+* [Apache Maven](https://maven.apache.org/)
   * software project management and comprehension tool. 
-* [Intellij idea](https://www.jetbrains.com/idea/)
+* [IntelliJ IDEA](https://www.jetbrains.com/idea/)
   * The IDE that makes development a more productive and enjoyable experience
-* [Git Hub](https://github.co.jp/)
+* [GitHub](https://github.com/)
   * development platform
 * [Git](https://git-scm.com/)
   * free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency.
 * [Jenkins](https://www.jenkins.io/)
-  * The leading open source automation server,
-* ~~[Gitlab, Gitlab Pages]~~ 
-  * ~~https://docs.gitlab.com/ee/user/project/pages/~~
-  * ~~https://www.kageori.com/2023/06/gitlabgitlab-pages2023.html~~
-  * ~~（結果公開用にGitLabPagesを利用していましたが、400分/月のパイプラインの利用制限により要件と見合わなくなったため現在未使用）~~
-* [Real-World Data Sets](https://introcs.cs.princeton.edu/java/data/)
-  * list of real-world data sets collected from the web. 
+  * The leading open source automation server
 
-> [!NOTE]
-> **偉大なる先人たち**
-> 同様の探索は、偉大な先人によって既に実施されています。   
->
->**[オンライン整数列大辞典](https://oeis.org/)**  
->The On-Line Encyclopedia of Integer Sequences® (OEIS®)  
->[A032510](https://oeis.org/A032510) 桁数毎の最後に出現する整数  
->[A036903](https://oeis.org/A036903) 桁数毎に全てが出現する事を確認するためにスキャンする必要のある桁数  
->
->**[Sequence Machine](https://sequencedb.net/)**  
->Mathematical conjectures on top of 1301509 machine generated integer and decimal sequences.  
->[A032510](https://sequencedb.net/s/A032510)  
->0, 68, 483, 6716, 33394, 569540, 1075656, 36432643, 172484538, 5918289042, 56377726040,...  
->[A036903](https://sequencedb.net/s/A036903)  
->32, 606, 8555, 99849, 1369564, 14118312, 166100506, 1816743912, 22445207406, 241641121048, 2512258603207,...  
+### その他
+* ~~[Gitlab, Gitlab Pages]~~ 
+  * ~~結果公開用にGitLabPagesを利用していましたが、400分/月のパイプラインの利用制限により要件と見合わなくなったため現在未使用~~
+* [Real-World Data Sets](https://introcs.cs.princeton.edu/java/data/)
+  * list of real-world data sets collected from the web.  
