@@ -8,54 +8,6 @@
 ## プロジェクト概要
 このプログラムは、円周率の中で「一番遅く出現する自然数」を桁数ごとに検索するプロジェクトです。例えば1桁では「0」が32桁目で最後に出現し、2桁では「68」が605桁目で最後に出現します。このような探索を3桁、4桁...と継続して行い、「円周率の中には、この世の中のすべての自然数が含まれている」という仮説を検証することを目的としています。
 
-## クイックスタート
-
-### 必要環境
-- Java 11以上
-- Maven
-- 円周率データファイル（YCD形式）
-  - [データダウンロード](https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy)からy-cruncher形式の円周率データを事前にダウンロードしてください
-
-### 基本的な実行手順
-1. 依存関係のインストール
-   ```bash
-   mvn install
-   ```
-
-2. JARファイルのビルド
-   ```bash
-   mvn clean package
-   ```
-
-3. 設定ファイル「default.properties」を作成
-   ```properties
-   # Web server port
-   port=8080
-   
-   # output path (経過保存用ファイルの吐き出し先パス)
-   outputPath=./
-   
-   # searches per cycle (1ユニットあたりの対象数)
-   listSize=500
-   
-   # read pi data per cycle (円周率データの１回の読み込み長さ)
-   # Multiples of 19 are desirable (19の倍数が望ましい)
-   unitLength=1900
-   
-   # Pi files (ycd Files)
-   ycd000=X:/ycdFile/Pi - Dec - Chudnovsky - 0.ycd
-   ycd001=X:/ycdFile/Pi - Dec - Chudnovsky - 1.ycd
-   # (and more. Max:999 files)
-   ```
-
-4. プログラム実行
-   ```bash
-   java -jar target/Last-Appearance-in-PI-1.0-SNAPSHOT-jar-with-dependencies.jar default.properties
-   ```
-
-5. 進捗確認
-   - ブラウザで http://localhost:8080 にアクセス
-
 ## プロローグ
 「円周率の中には、この世の中のすべての自然数が含まれている」と言われています。  
 * 例えば
@@ -136,6 +88,54 @@
 > [!NOTE]
 >このプロジェクトにおいてN桁の自然数とは、N桁に左ゼロ埋めされた自然数をいいます。  
 > 例：4桁の自然数での「6」は、「0006」とします。
+
+## クイックスタート
+
+### 必要環境
+- Java 11以上
+- Maven
+- 円周率データファイル（YCD形式）
+  - [データダウンロード](https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy)からy-cruncher形式の円周率データを事前にダウンロードしてください
+
+### 基本的な実行手順
+1. 依存関係のインストール
+   ```bash
+   mvn install
+   ```
+
+2. JARファイルのビルド
+   ```bash
+   mvn clean package
+   ```
+
+3. 設定ファイル「default.properties」を作成
+   ```properties
+   # Web server port
+   port=8080
+   
+   # output path (経過保存用ファイルの吐き出し先パス)
+   outputPath=./
+   
+   # searches per cycle (1ユニットあたりの対象数)
+   listSize=500
+   
+   # read pi data per cycle (円周率データの１回の読み込み長さ)
+   # Multiples of 19 are desirable (19の倍数が望ましい)
+   unitLength=1900
+   
+   # Pi files (ycd Files)
+   ycd000=X:/ycdFile/Pi - Dec - Chudnovsky - 0.ycd
+   ycd001=X:/ycdFile/Pi - Dec - Chudnovsky - 1.ycd
+   # (and more. Max:999 files)
+   ```
+
+4. プログラム実行
+   ```bash
+   java -jar target/Last-Appearance-in-PI-1.0-SNAPSHOT-jar-with-dependencies.jar default.properties
+   ```
+
+5. 進捗確認
+   - ブラウザで http://localhost:8080 にアクセス
 
 ## プログラム「Last-Appearance-in-PI」
 円周率の中で一番遅く出現する自然数の検索
