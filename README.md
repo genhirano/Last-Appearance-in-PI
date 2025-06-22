@@ -14,6 +14,7 @@
 - Java 11以上
 - Maven
 - 円周率データファイル（YCD形式）
+  - [データダウンロード](https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy)からy-cruncher形式の円周率データを事前にダウンロードしてください
 
 ### 基本的な実行手順
 1. 依存関係のインストール
@@ -21,7 +22,12 @@
    mvn install
    ```
 
-2. 設定ファイル「default.properties」を作成
+2. JARファイルのビルド
+   ```bash
+   mvn clean package
+   ```
+
+3. 設定ファイル「default.properties」を作成
    ```properties
    # Web server port
    port=8080
@@ -42,16 +48,16 @@
    # (and more. Max:999 files)
    ```
 
-3. プログラム実行
+4. プログラム実行
    ```bash
-   java -cp target/Last-Appearance-in-PI-1.0-SNAPSHOT-jar-with-dependencies.jar controller.Main
+   java -jar target/Last-Appearance-in-PI-1.0-SNAPSHOT-jar-with-dependencies.jar default.properties
    ```
 
-4. 進捗確認
+5. 進捗確認
    - ブラウザで http://localhost:8080 にアクセス
 
 ## プロローグ
-「円周率の中には、この世の中のすべての自然数が含まれている」 と言われています。  
+「円周率の中には、この世の中のすべての自然数が含まれている」と言われています。  
 * 例えば
   * 「999999」（ゼロが6個連続）は762桁目に出現します。  
   * 「12345678」は186,557,266桁目に出現します。	
@@ -122,8 +128,8 @@
 >  :  
 >  N桁：[0{N}...9{N}]の10のN乗個  
 
-数桁であっても膨大な検索量ですが、「円周率の中には、この世の中のすべての自然数が含まれている」のであれば、すべての桁で全て発見できるはずです。。。  
-でも目視ではとても難しそうです。。。
+数桁であっても膨大な検索量ですが、「円周率の中には、この世の中のすべての自然数が含まれている」のであれば、すべての桁で全て発見できるはずです。  
+でも目視ではとても難しそうです。
 
 **対象桁において、「一番遅く出現する自然数」が特定できれば、その対象桁の自然数はすべて出現したと言えます。このアプローチで証明できそうです。**
 
