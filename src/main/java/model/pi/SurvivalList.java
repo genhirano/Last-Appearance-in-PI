@@ -7,6 +7,7 @@ import lombok.Getter;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -66,6 +67,13 @@ public class SurvivalList extends CopyOnWriteArrayList<String> {
      */
     public SurvivalList(Integer length, Integer start, Integer end) {
         super();
+        Objects.requireNonNull(length, "length must not be null");
+        Objects.requireNonNull(start,  "start must not be null");
+        Objects.requireNonNull(end,    "end must not be null");
+        if (start > end) {
+            throw new IllegalArgumentException(
+                    "start must be <= end, but start=" + start + ", end=" + end);
+        }
         this.length = length;
 
         // 生き残り（全員生き残っているとする）を作成
@@ -159,13 +167,13 @@ public class SurvivalList extends CopyOnWriteArrayList<String> {
 
         // 共通部分候補
         String commonLeftStr = "";
-            
-        //現在の保持要素の最大を取得
-        String max = this.get(this.size() - 1);
 
         if (this.size() == 0) {
             return commonLeftStr;
         }
+
+        //現在の保持要素の最大を取得
+        String max = this.get(this.size() - 1);
 
         //要素が一つだけの場合はそのまま返す（１文字なのだから、それは共通とする）
         if (this.size() == 1) {
