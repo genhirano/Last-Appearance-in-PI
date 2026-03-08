@@ -71,6 +71,11 @@ public class SearchThread extends Thread {
                     break;
                 }
 
+                // サバイバルリストが空になった場合（他スレッドによる discover で空になりうる）
+                if (survivalList.isEmpty()) {
+                    break;
+                }
+
                 // シーク位置を先頭にしたとき、データが足りない場合は、次のYCDユニットへ
                 if (startPos + survivalList.get(0).length() > currentPi.getData().length()) {
                     break;
@@ -108,10 +113,13 @@ public class SearchThread extends Thread {
 
             return survivalResult;
         } catch (Exception e) {
-            System.out.println(survivalList.get(0).length());
-            System.out.println(currentPi.getData().substring(startPos));
-            System.out.println(survivalList.get(0));
-
+            if (!survivalList.isEmpty()) {
+                System.out.println(survivalList.get(0).length());
+                System.out.println(survivalList.get(0));
+            }
+            if (startPos >= 0 && startPos < currentPi.getData().length()) {
+                System.out.println(currentPi.getData().substring(startPos));
+            }
             e.printStackTrace();
         }
 

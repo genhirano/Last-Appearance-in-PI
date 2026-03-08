@@ -3,6 +3,7 @@ package model.pi;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashSet;
+import java.util.Objects;
 
 /**
  * サバイバルリスト.
@@ -25,6 +26,13 @@ public class SurvivalSet extends HashSet<String> {
      */
     public SurvivalSet(Integer length, Integer start, Integer end) {
         super();
+        Objects.requireNonNull(length, "length must not be null");
+        Objects.requireNonNull(start,  "start must not be null");
+        Objects.requireNonNull(end,    "end must not be null");
+        if (start > end) {
+            throw new IllegalArgumentException(
+                    "start must be <= end, but start=" + start + ", end=" + end);
+        }
 
         //生き残り（全員生き残っているとする）を作成
         //リストサイズの指定が大きい場合、素直に追加するとターゲット桁長さを超えてしまうので、その際はターゲット長のマックスで打ち切り
