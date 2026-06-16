@@ -4,6 +4,8 @@ import controller.StoreController;
 import lombok.Getter;
 import model.ycd.YCD_SeqProvider;
 
+import java.util.HashMap;
+
 public class SearchThread extends Thread {
 
     private final SurvivalList survivalList;
@@ -33,8 +35,8 @@ public class SearchThread extends Thread {
 
         if (leftCommonStr.isEmpty()) {
             // 左共通部分が無い
-            // サバイバルリストループ検索
-            result = searchSurvivalLoopAlgorithm(survivalList, pi);
+            // スライディングウィンドウ＋HashMap検索
+            result = searchSurvivalWindowAlgorithm(survivalList, pi);
             algorithm = "SL";
         } else {
             // 左共通部分がある
@@ -124,6 +126,48 @@ public class SearchThread extends Thread {
         }
 
         return null;
+    }
+
+    private SurvivalResult searchSurvivalWindowAlgorithm(SurvivalList survivalList, YCD_SeqProvider.Unit currentPi) {
+
+        SurvivalResult survivalResult = new SurvivalResult("", -1L);
+
+        if (survivalList.isEmpty()) {
+            return survivalResult;
+        }
+
+        String piData = currentPi.getData();
+        int targetLen = survivalList.get(0).length();
+
+        // ① サバイバルリストをHashMapに変換（O(N)、チャンクごとに1回だけ）
+        // 初期容量はload factor(0.75)を考慮してsize*2に設定し再ハッシュを回避
+        HashMap<String, Integer> survivorMap = new HashMap<>(survivalList.size() * 2);
+        for (int i = 0; i < survivalList.size(); i++) {
+            survivorMap.put(survivalList.get(i), i);
+        }
+
+        // ② piチャンクを1回だけスキャン（O(C)）
+        for (int pos = 0; pos <= piData.length() - targetLen; pos++) {
+            String window = piData.substring(pos, pos + targetLen);
+
+            Integer idx = survivorMap.get(window);  // O(1)
+            if (idx != null) {
+                Long findPos = currentPi.getStartDigit() + pos;
+
+                if (survivalResult.getFindPos() < findPos) {
+                    survivalResult.setTarget(window);
+                    survivalResult.setFindPos(findPos);
+                }
+
+                survivorMap.remove(window);
+                survivalList.discover(window, findPos);
+                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
+
+                if (survivalList.isEmpty()) break;
+            }
+        }
+
+        return survivalResult;
     }
 
     private SurvivalResult searchSurvivalLoopAlgorithm(SurvivalList survivalList, YCD_SeqProvider.Unit currentPi) {
