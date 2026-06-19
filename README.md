@@ -124,8 +124,8 @@
    unitLength=1900
    
    # Pi files (ycd Files)
-   ycd000=X:/ycdFile/Pi - Dec - Chudnovsky - 0.ycd
-   ycd001=X:/ycdFile/Pi - Dec - Chudnovsky - 1.ycd
+   ycd000=src/test/resources/1000000/Pi - Dec - Chudnovsky - 0.ycd
+   ycd001=src/test/resources/1000000/Pi - Dec - Chudnovsky - 1.ycd
    # (and more. Max:999 files)
    ```
 
