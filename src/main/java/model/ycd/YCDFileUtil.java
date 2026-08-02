@@ -37,26 +37,7 @@ public class YCDFileUtil {
      * @throws IOException ファイルアクセスエラー
      */
     public static Integer getHeaderSize(String ycdFileName) throws IOException {
-        // 最初の CRLFを探し、それに 1を加えた
-        Integer headerSize = -1;
-        try (final FileInputStream fi = new FileInputStream(ycdFileName);
-                BufferedInputStream inputStream = new BufferedInputStream(fi);) {
-
-            byte[] charArr = new byte[300];
-            inputStream.read(charArr);
-            String header = new String(charArr);
-
-            final String CRLF = "" + (char) 0x0D + (char) 0x0A;
-            headerSize = header.lastIndexOf(CRLF) + CRLF.length() - 1;
-
-            // CRLFの次になんか、よくわからないが最後に1バイトついてるので、その分の「１」加える。
-            headerSize++;
-
-        } catch (IOException e) {
-            throw e;
-        }
-
-        return headerSize;
+        return (int) (getDataStartOffset(ycdFileName) - 1L);
     }
 
     /**
@@ -152,20 +133,22 @@ public class YCDFileUtil {
         if (0 > disitCount) {
             throw new RuntimeException("ファイルの両端桁取得桁数はゼロ以上を指定してください: " + disitCount);
         }
+        if (disitCount == 0) {
+            return "";
+        }
 
         // ヘッダー読み飛ばすため、ヘッダーサイズ取得
-        Integer headerSize = YCDFileUtil.getHeaderSize(fileName);
+        Long dataStartOffset = YCDFileUtil.getDataStartOffset(fileName);
 
         // ブロック数算出
-        Integer readBlockSize = (disitCount / 19) + 1;
+        Integer readBlockSize = (disitCount + 18) / 19;
 
         // 読み込む全桁(19×ブロックまとめ数)文字列。
         StringBuilder allNum = new StringBuilder();
 
         // 対象ファイルアサイン
-        try (BufferedInputStream fileStream = new BufferedInputStream(new FileInputStream(fileName))) {
-            // ヘッダー読み飛ばし
-            fileStream.skip(headerSize + 1);
+        try (RandomAccessFile fileStream = new RandomAccessFile(fileName, "r")) {
+            fileStream.seek(dataStartOffset);
 
             for (Integer i = 0; i < readBlockSize; i++) {
 
@@ -173,16 +156,16 @@ public class YCDFileUtil {
                 // Base 10 .ycd files are stored as 64-bit integers words with 19 digits per
                 // word.
                 // In both cases, each 8-byte word is little-endian.
-                byte[] readBuffer = new byte[8]; // 8バイト × ブロックまとめ数
-                Integer readByteCount = fileStream.read(readBuffer);
-                if (readByteCount != readBuffer.length) {
+                long num;
+                try {
+                    num = Long.reverseBytes(fileStream.readLong());
+                } catch (IOException e) {
                     throw new IOException("正しく読み込めませんでした。 : " + fileName
-                            + " 8バイトであるべき読み込みデータ長さ:" + readByteCount);
+                            + " 8バイトの読み込みに失敗しました", e);
                 }
 
-                // 1ブロック(8バイト、19桁)づつ、ブロックまとめ数分読む
-                byte[] buff = Arrays.copyOfRange(readBuffer, 0, 8); // 8バイト切り出す
-                String numStr = Long.toUnsignedString(Long.reverseBytes(ByteBuffer.wrap(buff).getLong()));
+                // 1ブロック(8バイト、19桁)読む
+                String numStr = Long.toUnsignedString(num);
 
                 // 先頭が０の場合はゼロの分だけ切られてしまうので、19桁になるように左ゼロ埋めする。
                 if (19 > numStr.length()) {
@@ -197,6 +180,20 @@ public class YCDFileUtil {
 
         return allNum.toString().substring(0, disitCount);
 
+    }
+
+    static long getDataStartOffset(String ycdFileName) throws IOException {
+        try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(ycdFileName))) {
+            int current;
+            long offset = 0L;
+            while ((current = inputStream.read()) != -1) {
+                if (current == 0x00) {
+                    return offset + 1L;
+                }
+                offset++;
+            }
+        }
+        throw new IOException("YCDヘッダー終端(0x00)が見つかりません: " + ycdFileName);
     }
 
     // ファイルリストの総桁数を返す

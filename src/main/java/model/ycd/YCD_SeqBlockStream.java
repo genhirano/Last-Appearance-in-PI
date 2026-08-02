@@ -1,13 +1,9 @@
 package model.ycd;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -29,7 +25,7 @@ public class YCD_SeqBlockStream implements AutoCloseable {
      * 対象ファイル読み込み用ストリーム.
      * OSのネイティブ呼び出しを少なくしてファイルから読み込む。
      */
-    private BufferedInputStream fileStream = null;
+    private RandomAccessFile fileStream = null;
 
     /**
      * 対象ファイルのスタート桁数
@@ -152,12 +148,8 @@ public class YCD_SeqBlockStream implements AutoCloseable {
             Integer headerSize = YCDFileUtil.getHeaderSize(this.filePath);
 
             //対象ファイルアサイン
-            @SuppressWarnings("resource") //try-with-resourcesでcloseされるため
-            FileInputStream fi = new FileInputStream(filePath);
-            this.fileStream = new BufferedInputStream((InputStream) fi);
-
-            //ヘッダー読み飛ばし
-            this.fileStream.skip(headerSize + 1);
+            this.fileStream = new RandomAccessFile(filePath, "r");
+            this.fileStream.seek(headerSize + 1L);
 
             this.isClosed = false;
 
@@ -226,7 +218,7 @@ public class YCD_SeqBlockStream implements AutoCloseable {
             sb.append(nextBlockRead());
 
             //プロセスユニット桁数に達したら終わり
-            if (this.processUnitSize < sb.toString().length()) {
+            if (this.processUnitSize < sb.length()) {
 
                 //プロセスユニットで必要な桁数を切り出す
                 data = sb.toString().substring(0, this.processUnitSize);
@@ -301,22 +293,21 @@ public class YCD_SeqBlockStream implements AutoCloseable {
         //ブロックサイズ × 8バイト読む。 64-bit(8 byte)に19桁の整数値で１ブロック。リトルエンディアン。
         // Base 10 .ycd files are stored as 64-bit integers words with 19 digits per word.
         // In both cases, each 8-byte word is little-endian.
-        byte[] readBuffer = new byte[8];  //8バイト × ブロックまとめ数
-        Integer readByteCount = this.fileStream.read(readBuffer);
-
-        if (readByteCount != readBuffer.length) {
+        long num;
+        try {
+            num = Long.reverseBytes(this.fileStream.readLong());
+        } catch (IOException e) {
             throw new IOException("正しく読み込めませんでした。 : " + this.filePath
                     + " 読み込もうとした先頭桁:" + this.currentBlock * 19
                     + " Block:" + this.currentBlock
-                    + " 8バイトであるべき読み込みデータ長さ:" + readByteCount);
+                    + " 8バイトの読み込みに失敗しました", e);
         }
 
         //リードブロックインデックスインクリメント
         this.currentReadBlockSeq++;
 
-        //1ブロック(8バイト、19桁)づつ、ブロックまとめ数分読む
-        byte[] buff = Arrays.copyOfRange(readBuffer, 0, 8); //8バイト切り出す
-        String numStr = Long.toUnsignedString(Long.reverseBytes(ByteBuffer.wrap(buff).getLong()));
+        //1ブロック(8バイト、19桁)読む
+        String numStr = Long.toUnsignedString(num);
 
         //先頭が０の場合はゼロの分だけ切られてしまうので、19桁になるように左ゼロ埋めする。
         if (19 > numStr.length()) {

@@ -140,7 +140,7 @@ public class Env {
                 //ファイル名取得。 "ycd" につなげて id
                 String fullPath = Env.getInstance().getProp().getProperty("ycd" + noStr, notfound);
 
-                File f = new File(fullPath);
+                File f = createYcdFile(fullPath);
                 if (!f.exists()) {
                     if (i == 0) {
                         throw new FileNotFoundException("piFile is not found: " + f);
@@ -149,7 +149,7 @@ public class Env {
                     }
                 }
 
-                fileList.add(new File(fullPath));
+                fileList.add(f);
 
             } catch (MissingResourceException e) {
                 if (i == 0) {
@@ -161,6 +161,21 @@ public class Env {
         }
 
         return fileList;
+    }
+
+    private File createYcdFile(String fullPath) {
+        File file = new File(fullPath);
+        if (file.isAbsolute()) {
+            return file;
+        }
+
+        File propFile = new File(PROP_FILE_NAME);
+        File parent = propFile.getAbsoluteFile().getParentFile();
+        if (parent == null) {
+            return file;
+        }
+
+        return new File(parent, fullPath);
     }
 
 
