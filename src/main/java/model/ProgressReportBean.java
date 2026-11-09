@@ -3,13 +3,11 @@ package model;
 import java.io.File;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
-import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;
 
 public class ProgressReportBean {
@@ -32,11 +30,11 @@ public class ProgressReportBean {
 
     @Getter
     @Setter
-    private Integer currentDiscoveredCount;// 発見された数
+    private Long currentDiscoveredCount;// 発見された数
 
     @Getter
     @Setter
-    private Integer currentUndiscoveredCount; // 未発見の数
+    private Long currentUndiscoveredCount; // 未発見の数
 
     @Getter
     @Setter
@@ -64,7 +62,7 @@ public class ProgressReportBean {
 
     @Getter
     @Setter
-    private Integer curenntSurvivalDiscoveredCount; // カレントユニット発見済数
+    private Long curenntSurvivalDiscoveredCount; // カレントユニット発見済数
 
     @Getter
     @Setter
@@ -81,18 +79,7 @@ public class ProgressReportBean {
  
     @Getter
     @Setter
-    ArrayList<SurvivalList.DiscoverdInfo> discoverd;// 発見済み
-
-
-    public ArrayList<Long> getDiscoverdPosList() {
-        ArrayList<Long> discoverdPosList = new ArrayList<>();
-        for (SurvivalList.DiscoverdInfo di : discoverd) {
-            discoverdPosList.add(di.getFindPos());
-        }
-        
-        Collections.sort(discoverdPosList);
-        return discoverdPosList;
-    }
+    long[] discoverdPosList = new long[0];// カレントサバイバルの発見位置（昇順）
 
     
     public ProgressReportBean() {

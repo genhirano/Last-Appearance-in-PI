@@ -24,6 +24,14 @@
                 <configuration>
                     <source>8</source>
                     <target>8</target>
+                    <!-- JDK 23以降はアノテーション処理が既定で無効のため、Lombokを明示指定 -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.42</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
@@ -100,7 +108,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.28</version>
+            <version>1.18.42</version>
             <scope>provided</scope>
         </dependency>
 

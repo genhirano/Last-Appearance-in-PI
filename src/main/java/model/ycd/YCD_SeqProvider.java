@@ -149,6 +149,12 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
     @Override
     public Unit next() {
 
+        // 次が無いのに呼ばれた場合は Iterator の契約どおり例外（NPE にしない）
+        if (null == this.currentStream || !this.hasNext()) {
+            throw new NoSuchElementException("No more YCD data. last file: "
+                    + (null == this.lastFile ? "" : this.lastFile.getName()));
+        }
+
         // すでにカレントストリーム末尾に達していたら次のファイルへ
         if (!this.currentStream.hasNext()) {
             this.nextFile();

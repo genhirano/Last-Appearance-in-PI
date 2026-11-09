@@ -16,10 +16,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * SearchThread のアルゴリズム分岐・Boyer-Moore 正確性・YCDファイル境界テスト.
+ * SearchThread の検索結果・Boyer-Moore 正確性・YCDファイル境界テスト.
  *
- * 1. 共通プレフィックスあり → LCアルゴリズムが選ばれる
- * 2. 共通プレフィックスなし → SLアルゴリズムが選ばれる
+ * 1. 共通プレフィックスあり（シーク検索）で正しい結果が返る
+ * 2. 共通プレフィックスなし（全位置走査）で正しい結果が返る
  * 3. Boyer-Moore: パターンが中間にある場合
  * 4. Boyer-Moore: パターンが見つからない場合
  * 5. Boyer-Moore: 全同一文字パターン ("0000000" 等)
@@ -54,12 +54,12 @@ public class SearchThreadAlgorithmTest extends TestBase {
     // =========================================================
 
     /**
-     * 共通プレフィックスが存在する SurvivalList を使うと LC アルゴリズムが選ばれる.
+     * 共通プレフィックスが存在する SurvivalList でπ先頭データを検索し、正しい最遅発見結果が返る.
      *
-     * 例: "0000"-"0009" → 共通プレフィックス "000" → LC
+     * 例: "0000"-"0009" → 共通プレフィックス "000"。π先頭70桁に "000" は無いので発見なし。
      */
     @Test
-    void run_共通プレフィックスあり_LCアルゴリズムが選ばれる() throws Exception {
+    void run_共通プレフィックスあり_発見なしなら空の結果() throws Exception {
         // "0000", "0001", ..., "0009" は共通プレフィックス "000" を持つ
         SurvivalList sl = new SurvivalList(4, 0, 9);
         assertEquals("000", sl.getCommonPrefix(), "前提: 共通プレフィックスが存在すること");
@@ -73,19 +73,18 @@ public class SearchThreadAlgorithmTest extends TestBase {
         thread.start();
         thread.join();
 
-        assertEquals("LC", thread.getAlgorithm(),
-                "共通プレフィックスがある場合は LC アルゴリズムが使われること");
+        assertEquals("", thread.getResult().getTarget());
+        assertEquals(-1L, thread.getResult().getFindPos());
+        assertEquals(10, sl.size(), "何も発見されないこと");
     }
 
     /**
-     * 共通プレフィックスが存在しない SurvivalList を使うと SL アルゴリズムが選ばれる.
-     *
-     * 例: "1"-"9" は共通プレフィックスなし → SL
+     * 共通プレフィックスが存在しない SurvivalList（全位置走査）でπ先頭データを検索し、1桁の最遅出現 "0"(32桁目) が返る.
      */
     @Test
-    void run_共通プレフィックスなし_SLアルゴリズムが選ばれる() throws Exception {
-        // "1", "2", ..., "9" は共通プレフィックスなし
-        SurvivalList sl = new SurvivalList(1, 1, 9);
+    void run_共通プレフィックスなし_全位置走査で1桁の最遅出現が正しい() throws Exception {
+        // "0", "1", ..., "9" は共通プレフィックスなし
+        SurvivalList sl = new SurvivalList(1, 0, 9);
         assertEquals("", sl.getCommonPrefix(), "前提: 共通プレフィックスが存在しないこと");
 
         YCD_SeqProvider.Unit unit = createUnit(1L,
@@ -95,14 +94,15 @@ public class SearchThreadAlgorithmTest extends TestBase {
         thread.start();
         thread.join();
 
-        assertEquals("SL", thread.getAlgorithm(),
-                "共通プレフィックスがない場合は SL アルゴリズムが使われること");
+        assertTrue(sl.isEmpty(), "1桁は先頭32桁で全て出現すること");
+        assertEquals("0", thread.getResult().getTarget());
+        assertEquals(32L, thread.getResult().getFindPos());
     }
 
     /**
-     * SL アルゴリズムで制御済みテキストから最も遅く初出するパターンが返される.
+     * 共通プレフィックスなし（全位置走査）で、制御済みテキストから最も遅く初出するパターンが返される.
      *
-     * テキスト "120134"、SurvivalList(2, 12, 34)（共通プレフィックスなし → SL）、
+     * テキスト "120134"、SurvivalList(2, 12, 34)（共通プレフィックスなし）、
      * startDigit=100 で検索したとき:
      *   - "12" → index 0 → findPos 100
      *   - "20" → index 1 → findPos 101
@@ -111,10 +111,10 @@ public class SearchThreadAlgorithmTest extends TestBase {
      * 結果: target="34", findPos=104 を期待する。
      */
     @Test
-    void run_SLアルゴリズム_制御テキストで正しい発見結果を返す() throws Exception {
-        // SurvivalList(2, 12, 34): ["12","13",...,"34"] → 共通プレフィックスなし → SL
+    void run_全位置走査_制御テキストで正しい発見結果を返す() throws Exception {
+        // SurvivalList(2, 12, 34): ["12","13",...,"34"] → 共通プレフィックスなし
         SurvivalList slSL = new SurvivalList(2, 12, 34);
-        assertEquals("", slSL.getCommonPrefix(), "前提: SLアルゴリズムが選ばれること");
+        assertEquals("", slSL.getCommonPrefix(), "前提: 共通プレフィックスが無いこと");
 
         // 制御済みテキスト: "120134"、startDigit=100
         YCD_SeqProvider.Unit unit = createUnit(100L, "120134");
@@ -123,7 +123,6 @@ public class SearchThreadAlgorithmTest extends TestBase {
         thread.start();
         thread.join();
 
-        assertEquals("SL", thread.getAlgorithm());
         assertNotNull(thread.getResult());
         // findPos 最大の "34" が index 4 → 100+4 = 104
         assertEquals("34", thread.getResult().getTarget(),
@@ -133,9 +132,9 @@ public class SearchThreadAlgorithmTest extends TestBase {
     }
 
     /**
-     * LC アルゴリズムで制御済みテキストから最も遅く初出するパターンが正しい位置で返される.
+     * 共通プレフィックスシークで制御済みテキストから最も遅く初出するパターンが正しい位置で返される.
      *
-     * テキスト "1230005000123456000987"、SurvivalList(4, 0, 9)（共通プレフィックス "000" → LC）、
+     * テキスト "1230005000123456000987"、SurvivalList(4, 0, 9)（共通プレフィックス "000"）、
      * startDigit=1 で検索したとき:
      *   - "0005" → index 3 → findPos 4
      *   - "0001" → index 7 → findPos 8
@@ -143,10 +142,10 @@ public class SearchThreadAlgorithmTest extends TestBase {
      * 結果: target="0009", findPos=17 を期待する。
      */
     @Test
-    void run_LCアルゴリズム_制御テキストで正しい発見結果を返す() throws Exception {
-        // SurvivalList(4, 0, 9) = ["0000",...,"0009"] → 共通プレフィックス "000" → LC
+    void run_共通プレフィックスシーク_制御テキストで正しい発見結果を返す() throws Exception {
+        // SurvivalList(4, 0, 9) = ["0000",...,"0009"] → 共通プレフィックス "000"
         SurvivalList sl = new SurvivalList(4, 0, 9);
-        assertEquals("000", sl.getCommonPrefix(), "前提: LCアルゴリズムが選ばれること");
+        assertEquals("000", sl.getCommonPrefix(), "前提: 共通プレフィックスがあること");
 
         // 制御済みテキスト: startDigit=1
         // "1230005000123456000987"
@@ -159,7 +158,6 @@ public class SearchThreadAlgorithmTest extends TestBase {
         thread.start();
         thread.join();
 
-        assertEquals("LC", thread.getAlgorithm());
         assertNotNull(thread.getResult());
         assertEquals("0009", thread.getResult().getTarget(),
                 "最も遅く初出したパターン \"0009\" が結果であること");
