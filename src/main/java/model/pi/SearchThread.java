@@ -4,6 +4,19 @@ import controller.StoreController;
 import lombok.Getter;
 import model.ycd.YCD_SeqProvider;
 
+/**
+ * 検索ロジックスレッド.
+ *
+ * カレントパイ文字列（ユニット）1つ分を検索し、サバイバルリストに残っている数を発見したら削除する。
+ *
+ * <p>
+ * アルゴリズム（左共通部分シーク）：
+ * サバイバルリストは昇順の連番なので、残っている要素には左側に共通部分（例：「00012」）があることが多い。
+ * その共通部分をボイヤー・ムーア法でシークし、見つかった位置の N 桁がサバイバルリストに含まれるかを確認する。
+ * 共通部分が空の場合（リストが広い範囲に散らばっている序盤）は、全位置を順に確認する。
+ * 発見のたびに共通部分を取り直すので、リストが減るほどシークは速くなる。
+ * </p>
+ */
 public class SearchThread extends Thread {
 
     private final SurvivalList survivalList;
@@ -11,9 +24,6 @@ public class SearchThread extends Thread {
 
     @Getter
     SurvivalResult result = null;
-
-    @Getter
-    String algorithm = "";
 
     /**
      * 検索ロジックスレッド.
@@ -27,135 +37,84 @@ public class SearchThread extends Thread {
 
     @Override
     public void run() {
-
-        // サバイバルリストに存在する値の左共通部分を取得
-        String leftCommonStr = survivalList.getCommonPrefix();
-
-        if (leftCommonStr.isEmpty()) {
-            // 左共通部分が無い
-            // サバイバルリストループ検索
-            result = searchSurvivalLoopAlgorithm(survivalList, pi);
-            algorithm = "SL";
-        } else {
-            // 左共通部分がある
-            // 左共通部分を使ってPi文字列基準のシーク検索
-            result = searchLeftCommonAlgorithm(survivalList, pi, leftCommonStr);
-            algorithm = "LC";
-        }
-
+        result = search(survivalList, pi);
     }
 
-    private SurvivalResult searchLeftCommonAlgorithm(SurvivalList survivalList,
-            YCD_SeqProvider.Unit currentPi, String leftCommonStr) {
+    /**
+     * ユニット1つ分を検索する.
+     *
+     * @param survivalList サバイバルリスト
+     * @param currentPi カレントパイ文字列ユニット
+     * @return このユニットで発見したもののうち最も深いもの（発見なしの場合は target="", findPos=-1）
+     */
+    private SurvivalResult search(SurvivalList survivalList, YCD_SeqProvider.Unit currentPi) {
 
-        int startPos = -1;
-        try {
-            if (leftCommonStr.isEmpty()) {
-                throw new RuntimeException("leftCommonStr is empty.");
+        SurvivalResult survivalResult = new SurvivalResult("", -1L);
+
+        if (survivalList.isEmpty()) {
+            return survivalResult;
+        }
+
+        final int n = survivalList.getLength();
+        final String data = currentPi.getData();
+        final int len = data.length();
+        if (len < n) {
+            return survivalResult;
+        }
+
+        // サバイバルリストに存在する値の左共通部分
+        String prefix = survivalList.getCommonPrefix();
+        int[] badCharTable = prefix.isEmpty() ? null : buildBadCharacterTable(prefix);
+
+        // このユニット内の検索開始位置（検索済み部分をスキップする）
+        int seekPos = 0;
+
+        while (true) {
+
+            // 次の候補位置を決める（共通部分があればそれをシーク、無ければ次の位置）
+            final int startPos = (badCharTable == null)
+                    ? seekPos
+                    : boyerMooreSearch(data, prefix, badCharTable, seekPos);
+
+            // 候補が無い、または N 桁分のデータが足りない場合はこのユニットは終わり
+            if (startPos < 0 || len < startPos + n) {
+                break;
             }
 
-            SurvivalResult survivalResult = new SurvivalResult("", -1L);
+            // 候補位置の N 桁がサバイバルリストに残っていれば発見
+            final String candidate = data.substring(startPos, startPos + n);
+            if (survivalList.contains(candidate)) {
 
-            // このユニットの検索スタート位置初期値（検索終了している部分をスキップするためのシーク位置）
-            int commonSeekPos = 0;
+                // カレントパイ文字列の中での発見位置を、全体位置に変換
+                final Long curFindPos = currentPi.getStartDigit() + startPos;
 
-            // カレントパイユニットが末尾に達するまで繰り返す
-            while (true) {
-
-                // スタート位置を確定（次の共通文字列を検索してシークする）
-                // int startPos = currentPi.indexOf(leftCommonStr, commonSeekPos);
-                startPos = boyerMooreSearch(currentPi.getData(), leftCommonStr, commonSeekPos);
-
-                // 共通左文字でシークができなかった（共通文字が見つからなかった）場合は次のユニットへ
-                if (startPos < 0) {
-                    break;
+                // 発見位置が今までで一番後ろだったらメモ記録（最遅候補とする）
+                if (survivalResult.getFindPos() < curFindPos) {
+                    survivalResult.setTarget(candidate);
+                    survivalResult.setFindPos(curFindPos);
                 }
 
-                // サバイバルリストが空になった場合（他スレッドによる discover で空になりうる）
+                // ヒットした要素をサバイバルリストから削除
+                survivalList.discover(candidate, curFindPos);
+
+                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
+
                 if (survivalList.isEmpty()) {
                     break;
                 }
 
-                // シーク位置を先頭にしたとき、データが足りない場合は、次のYCDユニットへ
-                if (startPos + survivalList.get(0).length() > currentPi.getData().length()) {
-                    break;
+                // リストが減ると共通部分が伸びることがあるので取り直す
+                final String newPrefix = survivalList.getCommonPrefix();
+                if (!newPrefix.equals(prefix)) {
+                    prefix = newPrefix;
+                    badCharTable = prefix.isEmpty() ? null : buildBadCharacterTable(prefix);
                 }
-
-                // カレントパイ文字列
-                final String currentPiStr = currentPi.getData().substring(startPos,
-                        startPos + survivalList.get(0).length());
-
-                // サバイバルリストからターゲットを探す
-                final int suvIndex = survivalList.indexOf(currentPiStr);
-
-                if (-1 < suvIndex) {
-                    // サバイバルリストヒット
-
-                    // カレントパイ文字列の中での発見位置を、全体位置に変換
-                    final Long curFindPos = currentPi.getStartDigit() + startPos;
-
-                    // 発見位置が今までで一番後ろだったらメモ記録（最遅候補とする）
-                    if (survivalResult.getFindPos() < curFindPos) {
-                        survivalResult.setTarget(currentPiStr); // 発見した対象
-                        survivalResult.setFindPos(curFindPos); // 発見位置
-                    }
-
-                    // ヒットした要素をサバイバルリストから削除
-                    survivalList.discover(currentPiStr, curFindPos);
-
-                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
-
-                }
-
-                // シーク位置を１文字ずらす。（共通部分発見位置の次の文字から再開する）
-                commonSeekPos = startPos + 1;
             }
 
-            return survivalResult;
-        } catch (Exception e) {
-            if (!survivalList.isEmpty()) {
-                System.out.println(survivalList.get(0).length());
-                System.out.println(survivalList.get(0));
-            }
-            if (startPos >= 0 && startPos < currentPi.getData().length()) {
-                System.out.println(currentPi.getData().substring(startPos));
-            }
-            e.printStackTrace();
+            // 候補位置の次の文字から再開する
+            seekPos = startPos + 1;
         }
 
-        return null;
-    }
-
-    private SurvivalResult searchSurvivalLoopAlgorithm(SurvivalList survivalList, YCD_SeqProvider.Unit currentPi) {
-
-        SurvivalResult survivalResult = new SurvivalResult("", -1L);
-
-        // カレントパイ文字列から、サバイバルリストのそれぞれを検索（サバイバルリストループ）
-        for (int i = survivalList.size() - 1; i >= 0; i--) {
-
-            String target = survivalList.get(i);
-
-            int pos = currentPi.indexOf(target);
-            if (0 <= pos) {
-                // ヒット
-                // ヒットしたら基本的にはサバイバルリストから削除する
-
-                // カレントパイ文字列の中での発見位置を、全体位置に変換
-                Long curFindPos = currentPi.getStartDigit() + pos;
-
-                // 発見位置が今までで一番後ろだったらメモ記録（最遅候補とする）
-                if (survivalResult.getFindPos() < curFindPos) {
-                    survivalResult.setTarget(target); // 発見した対象
-                    survivalResult.setFindPos(curFindPos); // 発見位置
-                }
-
-                // ヒットした要素をサバイバルリストから削除
-                survivalList.discover(target, curFindPos);
-
-                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
-
-            }
-        }
         return survivalResult;
     }
 
@@ -171,9 +130,13 @@ public class SearchThread extends Thread {
         return badCharTable;
     }
 
-    // ボイヤー・ムーア検索
+    // ボイヤー・ムーア検索（テーブルを毎回作る版。テスト用に残す）
     private int boyerMooreSearch(String text, String pattern, int startIndex) {
-        int[] badCharTable = buildBadCharacterTable(pattern);
+        return boyerMooreSearch(text, pattern, buildBadCharacterTable(pattern), startIndex);
+    }
+
+    // ボイヤー・ムーア検索
+    private int boyerMooreSearch(String text, String pattern, int[] badCharTable, int startIndex) {
         int m = pattern.length();
         int n = text.length();
         int shift = startIndex; // 開始位置を指定

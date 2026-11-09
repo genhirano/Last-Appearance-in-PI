@@ -16,12 +16,13 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 
 import model.ProgressReportBean;
 import model.TargetRange;
-import model.pi.SurvivalList.DiscoverdInfo;
+import model.pi.SurvivalList;
 import model.ycd.YCDFileUtil;
 
 public class StoreController {
@@ -30,7 +31,7 @@ public class StoreController {
     private static final String digitsLengthFormat = "%0" + digitsLength + "d";
     private static final int maxDigit = Integer.valueOf(StringUtils.repeat("9", digitsLength));
 
-    public static Map<String, Object> survivalProgressMap = new HashMap<>();
+    public static Map<String, Object> survivalProgressMap = new ConcurrentHashMap<>();
 
     @Getter
     @Setter
@@ -76,7 +77,8 @@ public class StoreController {
 
         List<TargetRange> retList = new ArrayList<>();
 
-        for (int i = 1; i <= maxDigit; i++) {
+        // 桁数は SurvivalList が扱える範囲（値が long に収まる 18 桁）まで
+        for (int i = 1; i <= Math.min(maxDigit, SurvivalList.MAX_LENGTH); i++) {
 
             String filename = String.format(digitsLengthFormat, i) + ".txt";
             File file = new File(storeFilePath + "/" + filename);
@@ -84,7 +86,7 @@ public class StoreController {
             // 次に実行すべき情報を作る
             // （すでにある保存データ最後の、その次として実行する情報を作る）
             String nextMin = StringUtils.repeat("0", i); // スタート桁は0桁目
-            String nextMax = String.format("%0" + nextMin.length() + "d", (0 + listSize - 1)); // 終了桁（スタート+指定の桁数）
+            String nextMax = String.format("%0" + nextMin.length() + "d", (long) (listSize - 1)); // 終了桁（スタート+指定の桁数）
             if (i < nextMax.length()) {
                 nextMax = StringUtils.repeat("9", i);
             }
@@ -122,12 +124,12 @@ public class StoreController {
                         continue;
                     }
 
-                    // 次のスタート桁は、最終行のMAX + 1 桁目
-                    Integer nextStart = Integer.valueOf(prevEndStr) + 1;
+                    // 次のスタート桁は、最終行のMAX + 1 桁目（10桁以上は int に収まらないため long）
+                    long nextStart = Long.parseLong(prevEndStr) + 1L;
                     nextMin = String.format("%0" + prevEndStr.length() + "d", nextStart);
 
                     // 次の終了桁は スタート桁位置 + 指定の桁数
-                    nextMax = String.format("%0" + prevEndStr.length() + "d", nextStart + listSize - 1);
+                    nextMax = String.format("%0" + prevEndStr.length() + "d", nextStart + listSize - 1L);
 
                     // 最大検索文字列が指定桁数を超えてしまう場合は、全桁9とする
                     if (i < nextMax.length()) {
@@ -233,7 +235,6 @@ public class StoreController {
 
     }
 
-    @SuppressWarnings("unchecked")
     public static ProgressReportBean getProgressReport() {
         ProgressReportBean prb = new ProgressReportBean();
 
@@ -241,59 +242,51 @@ public class StoreController {
 
         prb.setAllPiDataLength(allPiDataLength); // 検索対象のPIデータ全桁数
         prb.setAllFileInfo(allFileInfo);
+        TargetRange tr;
+        SurvivalList survivalList;
+        ZonedDateTime survivalStartTime;
+        synchronized (survivalProgressMap) {
+            tr = (TargetRange) survivalProgressMap.get("SURVIVAL_INITIAL_INFO");
+            survivalList = (SurvivalList) survivalProgressMap.get("SURVIVAL_LIST");
+            survivalStartTime = (ZonedDateTime) survivalProgressMap.get("SURVIVAL_CURRENT_START_TIME");
+        }
+        Map<String, String> currentSummary = null;
         for (Map<String, String> map : getSummary()) {
-            if (map.get("Finished").equals("false")) {
-
-                // 現在の検索対象の桁数
-                prb.setCurrentTargetLength(
-                        Integer.valueOf(survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH").toString()));
-
-
-                // 現在までに発見されたもののうち一番深いものとその位置
-                prb.setCurrentDeepestFindPosition(Long.valueOf(map.get("Depth")));
-                prb.setCurrentDeepestFind(map.get("Appearing"));
-
-
-                // 保存済みの探索終了数
-                Integer discoverdCount = Integer.valueOf(map.get("DiscoveredCount"));
-
-                // 現在のサバイバルリストの状況
-                TargetRange tr = ((TargetRange) survivalProgressMap.get("SURVIVAL_INITIAL_INFO"));
-                Integer initialSurviavalListSize = Integer.valueOf(tr.getEnd()) - Integer.valueOf(tr.getStart());
-                Integer currentSurviavalListSize = (Integer) survivalProgressMap.get("NOW_SURVIVAL_LIST_SIZE");
-                prb.setInitSurvivalInfo(tr);
-                prb.setCurenntSurvivalDiscoveredCount(initialSurviavalListSize - currentSurviavalListSize);
-
-                prb.setCurenntSurvivalDepth((Long) survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
-
-                ZonedDateTime survivalStartTime = (ZonedDateTime) survivalProgressMap
-                        .get("SURVIVAL_CURRENT_START_TIME");
-                prb.setCurenntSurvivalStartTime(survivalStartTime);
-                Long survivalSec = Duration.between(survivalStartTime, ZonedDateTime.now()).getSeconds();
-                prb.setCurrentSurvivalElapsedSeconds(survivalSec);
-
-                prb.setDiscoverd((ArrayList<DiscoverdInfo>)survivalProgressMap.get("SURVIVAL_DISCOVERD_LIST"));
-
-                // [全体]すでに発見された数
-                Integer nowDiscoverCount = discoverdCount + initialSurviavalListSize - currentSurviavalListSize;
-                prb.setCurrentDiscoveredCount(nowDiscoverCount);
-
-                // [全体]未発見の数
-                Integer allMax = Integer.valueOf(StringUtils.repeat("9", tr.getLength()));
-                Integer undiscoverCount = allMax - nowDiscoverCount;
-                prb.setCurrentUndiscoveredCount(undiscoverCount);
-
-                // 開始からの経過時間（秒）
-                // 処理開始と処理終了の時間差（実行時間）を計算
-                Long allSec = Long.valueOf(map.get("ProcessTimeSec"));
-                ZonedDateTime endTime = ZonedDateTime.now();
-                Long elapsedSec = Duration.between(survivalStartTime, endTime).getSeconds();
-                prb.setCurenntElapsedTimeInSeconds(allSec + elapsedSec);
-
-            } else {
+            if ("true".equals(map.get("Finished"))) {
                 prb.getResult().add(map);
             }
+            if (tr != null && String.valueOf(tr.getLength()).equals(map.get("digits"))) {
+                currentSummary = map;
+            }
         }
+        if (tr == null || survivalList == null || survivalStartTime == null) {
+            return prb;
+        }
+
+        long savedCount = currentSummary == null ? 0L : Long.parseLong(currentSummary.get("DiscoveredCount"));
+        long savedSeconds = currentSummary == null ? 0L : Long.parseLong(currentSummary.get("ProcessTimeSec"));
+        long currentCount = survivalList.getDiscoveredCount();
+        // The completed cycle may already be included in the saved summary.
+        boolean alreadySaved = savedCount > Long.parseLong(tr.getStart());
+        long total = savedCount + (alreadySaved ? 0L : currentCount);
+        ZonedDateTime stoppedAt = (ZonedDateTime) survivalProgressMap.get("SEARCH_STOPPED_AT");
+        long elapsed = Duration.between(survivalStartTime,
+                stoppedAt == null ? ZonedDateTime.now() : stoppedAt).getSeconds();
+
+        prb.setCurrentTargetLength(tr.getLength());
+        if (currentSummary != null) {
+            prb.setCurrentDeepestFindPosition(Long.valueOf(currentSummary.get("Depth")));
+            prb.setCurrentDeepestFind(currentSummary.get("Appearing"));
+        }
+        prb.setInitSurvivalInfo(tr);
+        prb.setCurenntSurvivalDiscoveredCount(currentCount);
+        prb.setCurenntSurvivalDepth((Long) survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
+        prb.setCurenntSurvivalStartTime(survivalStartTime);
+        prb.setCurrentSurvivalElapsedSeconds(elapsed);
+        prb.setDiscoverdPosList(survivalList.getDiscoveredPositions());
+        prb.setCurrentDiscoveredCount(total);
+        prb.setCurrentUndiscoveredCount(pow10(tr.getLength()) - total);
+        prb.setCurenntElapsedTimeInSeconds(savedSeconds + (alreadySaved ? 0L : elapsed));
         return prb;
     }
 
@@ -310,7 +303,7 @@ public class StoreController {
         List<Map<String, String>> retList = new ArrayList<>();
 
         // 全保存ファイルを対象。小さい順に処理。
-        for (int i = 1; i <= Integer.MAX_VALUE; i++) {
+        for (int i = 1; i <= SurvivalList.MAX_LENGTH; i++) {
 
             Map<String, String> map = new HashMap<>();
 
@@ -330,6 +323,11 @@ public class StoreController {
             List<String> lines = null;
             try {
                 lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+
+                // The writer may have created the file but not yet appended its first record.
+                if (lines.isEmpty()) {
+                    break;
+                }
 
                 String deepestStr = "";
                 Long deepestDepth = Long.MIN_VALUE;
@@ -365,8 +363,8 @@ public class StoreController {
                 String[] lastSplited = lastLine.split(",");
 
                 // 進捗状況
-                Integer allMax = Integer.valueOf(StringUtils.repeat("9", i));
-                if (allMax.equals(Integer.valueOf(lastSplited[1]))) {
+                long allMax = pow10(i) - 1L;
+                if (allMax == Long.parseLong(lastSplited[1])) {
                     // 最後まで到達しているもの
                     map.put("Finished", "true");
                 } else {
@@ -375,7 +373,8 @@ public class StoreController {
                 }
                 map.put("Appearing", deepestStr);
                 map.put("Depth", String.valueOf(deepestDepth));
-                map.put("DiscoveredCount", lastSplited[1]);
+                // 保存済み範囲 0〜end はすべて発見済みなので、その個数は end + 1
+                map.put("DiscoveredCount", String.valueOf(Long.parseLong(lastSplited[1]) + 1L));
                 map.put("ProcessTimeSec", String.valueOf(allSec));
 
                 // このファイルのサマリ（画面表示などで使える文字列）をリストに追加
@@ -391,13 +390,24 @@ public class StoreController {
 
     }
 
+    /**
+     * 10 の n 乗を返す（n は 0〜18）.
+     */
+    public static long pow10(int n) {
+        long v = 1L;
+        for (int i = 0; i < n; i++) {
+            v *= 10L;
+        }
+        return v;
+    }
+
     public void saveHTML() {
         // HttpClient インスタンスを作成
         HttpClient httpClient = HttpClient.newHttpClient();
 
         // URI を指定して HTTP リクエストを作成
         HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:8080"))
+                .uri(URI.create("http://localhost:" + Env.getInstance().getPortNo()))
                 .build();
 
         try {
