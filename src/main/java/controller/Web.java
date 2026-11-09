@@ -99,6 +99,7 @@ public class Web {
 
         model.put("YCD_MAX_DEPTH", String.format("%,d", pr.getAllPiDataLength()));
         model.put("SYSTEMSTART", startTime);
+        model.put("SEARCH_STOPPED", Searcher.getStoppedReason());
 
         final long elapsedSec = (null != pr.getCurenntElapsedTimeInSeconds()) ? pr.getCurenntElapsedTimeInSeconds() : 0L;
         model.put("RUNNING_TIME", elapsedSec);
@@ -135,27 +136,7 @@ public class Web {
         // 発見位置（昇順）から出現分布を作る。まだ発見が無い場合は空の分布
         long[] discoverdInfoList = (null != pr.getDiscoverdPosList()) ? pr.getDiscoverdPosList() : new long[0];
 
-        LinkedHashMap<Long, Long> discoverdPosMap = new LinkedHashMap<>();
-        long lastDiscoverPos = (0 < discoverdInfoList.length)
-                ? discoverdInfoList[discoverdInfoList.length - 1] : 0L;
-
-        // MAX検索深さをMAXとして10分割
-        long splitPos = Math.max(1L, lastDiscoverPos / 10);
-        long[] bounds = new long[10];
-        for (int i = 1; i <= 10; i++) {
-            bounds[i - 1] = splitPos * i;
-            discoverdPosMap.put(bounds[i - 1], 0L);
-        }
-
-        // 位置は昇順なので、区間の添字を進めながら数える
-        int bucket = 0;
-        for (long di : discoverdInfoList) {
-            while (bucket < 9 && bounds[bucket] < di) {
-                bucket++;
-            }
-            discoverdPosMap.put(bounds[bucket], discoverdPosMap.get(bounds[bucket]) + 1);
-        }
-        discoverdPosMap.put((lastDiscoverPos + splitPos), 0L);
+        LinkedHashMap<Long, Long> discoverdPosMap = distribution(discoverdInfoList);
 
         LinkedHashMap<String, String> formatedDiscoverdPosMap = new LinkedHashMap<>();
 
@@ -176,7 +157,6 @@ public class Web {
                     - Long.parseLong(pr.getInitSurvivalInfo().getStart());
         }
         model.put("CURRENT_SURVIVAL_INITIAL_COUNT", String.format("%,d", survivalListInitialSize));
-
         // サバイバルリストの現在発見数
         final long survivalListDiscoverdCount = (null != pr.getCurenntSurvivalDiscoveredCount())
                 ? pr.getCurenntSurvivalDiscoveredCount() : 0L;
@@ -249,4 +229,22 @@ public class Web {
         return modelAndView;
     }
 
+    static LinkedHashMap<Long, Long> distribution(long[] positions) {
+        LinkedHashMap<Long, Long> counts = new LinkedHashMap<>();
+        long last = positions.length == 0 ? 0L : positions[positions.length - 1];
+        long width = Math.max(1L, last / 10 + (last % 10 == 0 ? 0 : 1));
+        long[] bounds = new long[10];
+        for (int i = 0; i < bounds.length; i++) {
+            bounds[i] = width * (i + 1);
+            counts.put(bounds[i], 0L);
+        }
+        int bucket = 0;
+        for (long position : positions) {
+            while (bucket < 9 && bounds[bucket] < position) {
+                bucket++;
+            }
+            counts.put(bounds[bucket], counts.get(bounds[bucket]) + 1);
+        }
+        return counts;
+    }
 }

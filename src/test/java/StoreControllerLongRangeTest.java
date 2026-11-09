@@ -1,6 +1,8 @@
 import controller.Env;
 import controller.StoreController;
 import model.TargetRange;
+import model.pi.SurvivalList;
+import model.ProgressReportBean;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.time.ZonedDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -47,8 +50,31 @@ public class StoreControllerLongRangeTest {
 
     @AfterEach
     void クリーンアップ() throws Exception {
+        StoreController.survivalProgressMap.clear();
         resetEnv();
         Env.setPropFileName(null);
+    }
+
+    @Test
+    void 進捗は最初のサイクルと保存直後に正しい() throws Exception {
+        TargetRange range = new TargetRange(1, "0", "4");
+        SurvivalList list = new SurvivalList(1, 0, 4);
+        list.discover("0", 5L);
+        StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", range);
+        StoreController.survivalProgressMap.put("SURVIVAL_LIST", list);
+        StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
+
+        ProgressReportBean before = StoreController.getProgressReport();
+        assertEquals(1, before.getCurrentTargetLength());
+        assertEquals(1L, before.getCurrentDiscoveredCount());
+        assertEquals(9L, before.getCurrentUndiscoveredCount());
+
+        for (int i = 1; i <= 4; i++) list.discover(String.valueOf(i), 5L + i);
+        writeStore(1, "0,4,4,9,3");
+        ProgressReportBean saved = StoreController.getProgressReport();
+        assertEquals(5L, saved.getCurrentDiscoveredCount());
+        assertEquals(5L, saved.getCurrentUndiscoveredCount());
+        assertEquals(3L, saved.getCurenntElapsedTimeInSeconds());
     }
 
     /** Env はシングルトンなので、テストごとに作り直す */

@@ -49,7 +49,6 @@ public class Searcher extends Thread {
 
             // １サイクルの開始時間
             ZonedDateTime startTime = ZonedDateTime.now();
-            StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", startTime);
 
             // 処理範囲の決定（次の処理を定義をStoreControllerから得る）
             TargetRange targetRange = StoreController.getInstance().getCurrentTargetStartEnd(this.listSize);
@@ -58,8 +57,6 @@ public class Searcher extends Thread {
                 stop("All target lengths are finished (up to " + SurvivalList.MAX_LENGTH + " digits).");
                 return;
             }
-
-            StoreController.survivalProgressMap.put("SURVIVAL_DIGIT_LENGTH", String.valueOf(targetRange.getLength()));
 
             // 1サイクルのサバイバル実行
             SurvivalResult sr = survive(targetRange);
@@ -84,23 +81,21 @@ public class Searcher extends Thread {
 
     private SurvivalResult survive(TargetRange targetRange) {
 
-        // このサバイバルのスタート時間を記録
-        StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
-
         // プロセス内新記録の記録
         SurvivalResult processDeepest = new SurvivalResult("", -1L);
-
-        // このサバイバルリスト消化のスタート時間を記録
-        StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
 
         // サバイバルリスト作成
         SurvivalList survivalList = new SurvivalList(targetRange.getLength(), Long.parseLong(targetRange.getStart()),
                 Long.parseLong(targetRange.getEnd()));
 
         // 進捗情報用サバイバルリスト初期情報の登録
-        StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
-        StoreController.survivalProgressMap.put("SURVIVAL_LIST", survivalList);
-        StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
+        synchronized (StoreController.survivalProgressMap) {
+            StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
+            StoreController.survivalProgressMap.put("SURVIVAL_LIST", survivalList);
+            StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
+            StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
+            StoreController.survivalProgressMap.remove("NOW_SURVIVAL_DEPTH");
+        }
 
         // YCDデータプロバイダ（シーケンシャルにYCDデータをブロックで提供）を作成
         int overWrapLength = targetRange.getLength(); // ユニットの境目対応として一つ前のケツの部分を今回の先頭に重ねる桁の長さ
@@ -207,6 +202,8 @@ public class Searcher extends Thread {
         System.out.println();
         System.out.println("Search stopped: " + reason);
         StoreController.survivalProgressMap.put("SEARCH_STOPPED", reason);
+        StoreController.survivalProgressMap.put("SEARCH_STOPPED_AT", ZonedDateTime.now());
+        StoreController.getInstance().saveHTML();
     }
 
     /**

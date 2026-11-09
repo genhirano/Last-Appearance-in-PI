@@ -235,7 +235,6 @@ public class StoreController {
 
     }
 
-    @SuppressWarnings("unchecked")
     public static ProgressReportBean getProgressReport() {
         ProgressReportBean prb = new ProgressReportBean();
 
@@ -243,64 +242,51 @@ public class StoreController {
 
         prb.setAllPiDataLength(allPiDataLength); // 検索対象のPIデータ全桁数
         prb.setAllFileInfo(allFileInfo);
+        TargetRange tr;
+        SurvivalList survivalList;
+        ZonedDateTime survivalStartTime;
+        synchronized (survivalProgressMap) {
+            tr = (TargetRange) survivalProgressMap.get("SURVIVAL_INITIAL_INFO");
+            survivalList = (SurvivalList) survivalProgressMap.get("SURVIVAL_LIST");
+            survivalStartTime = (ZonedDateTime) survivalProgressMap.get("SURVIVAL_CURRENT_START_TIME");
+        }
+        Map<String, String> currentSummary = null;
         for (Map<String, String> map : getSummary()) {
-            if (map.get("Finished").equals("false")) {
-
-                // 検索スレッドが現在のサバイバルを登録する前（起動直後・桁の切り替わり直後）は、進行中情報なしとして返す
-                Object digitLength = survivalProgressMap.get("SURVIVAL_DIGIT_LENGTH");
-                TargetRange tr = ((TargetRange) survivalProgressMap.get("SURVIVAL_INITIAL_INFO"));
-                SurvivalList survivalList = (SurvivalList) survivalProgressMap.get("SURVIVAL_LIST");
-                ZonedDateTime survivalStartTime = (ZonedDateTime) survivalProgressMap
-                        .get("SURVIVAL_CURRENT_START_TIME");
-                if (null == digitLength || null == tr || null == survivalList || null == survivalStartTime) {
-                    continue;
-                }
-
-                // 現在の検索対象の桁数
-                prb.setCurrentTargetLength(Integer.valueOf(digitLength.toString()));
-
-
-                // 現在までに発見されたもののうち一番深いものとその位置
-                prb.setCurrentDeepestFindPosition(Long.valueOf(map.get("Depth")));
-                prb.setCurrentDeepestFind(map.get("Appearing"));
-
-
-                // 保存済みの探索終了数（保存済み範囲 0〜end の個数）
-                long savedDiscoveredCount = Long.parseLong(map.get("DiscoveredCount"));
-
-                // 現在のサバイバルリストの状況
-                long currentSurvivalDiscoveredCount = survivalList.getDiscoveredCount();
-                prb.setInitSurvivalInfo(tr);
-                prb.setCurenntSurvivalDiscoveredCount(currentSurvivalDiscoveredCount);
-
-                prb.setCurenntSurvivalDepth((Long) survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
-
-                prb.setCurenntSurvivalStartTime(survivalStartTime);
-                Long survivalSec = Duration.between(survivalStartTime, ZonedDateTime.now()).getSeconds();
-                prb.setCurrentSurvivalElapsedSeconds(survivalSec);
-
-                // 発見位置（昇順）のスナップショット
-                prb.setDiscoverdPosList(survivalList.getDiscoveredPositions());
-
-                // [全体]すでに発見された数
-                long nowDiscoverCount = savedDiscoveredCount + currentSurvivalDiscoveredCount;
-                prb.setCurrentDiscoveredCount(nowDiscoverCount);
-
-                // [全体]未発見の数（対象桁の全個数 10^N から発見数を引く）
-                long allCount = pow10(tr.getLength());
-                prb.setCurrentUndiscoveredCount(allCount - nowDiscoverCount);
-
-                // 開始からの経過時間（秒）
-                // 処理開始と処理終了の時間差（実行時間）を計算
-                Long allSec = Long.valueOf(map.get("ProcessTimeSec"));
-                ZonedDateTime endTime = ZonedDateTime.now();
-                Long elapsedSec = Duration.between(survivalStartTime, endTime).getSeconds();
-                prb.setCurenntElapsedTimeInSeconds(allSec + elapsedSec);
-
-            } else {
+            if ("true".equals(map.get("Finished"))) {
                 prb.getResult().add(map);
             }
+            if (tr != null && String.valueOf(tr.getLength()).equals(map.get("digits"))) {
+                currentSummary = map;
+            }
         }
+        if (tr == null || survivalList == null || survivalStartTime == null) {
+            return prb;
+        }
+
+        long savedCount = currentSummary == null ? 0L : Long.parseLong(currentSummary.get("DiscoveredCount"));
+        long savedSeconds = currentSummary == null ? 0L : Long.parseLong(currentSummary.get("ProcessTimeSec"));
+        long currentCount = survivalList.getDiscoveredCount();
+        // The completed cycle may already be included in the saved summary.
+        boolean alreadySaved = savedCount > Long.parseLong(tr.getStart());
+        long total = savedCount + (alreadySaved ? 0L : currentCount);
+        ZonedDateTime stoppedAt = (ZonedDateTime) survivalProgressMap.get("SEARCH_STOPPED_AT");
+        long elapsed = Duration.between(survivalStartTime,
+                stoppedAt == null ? ZonedDateTime.now() : stoppedAt).getSeconds();
+
+        prb.setCurrentTargetLength(tr.getLength());
+        if (currentSummary != null) {
+            prb.setCurrentDeepestFindPosition(Long.valueOf(currentSummary.get("Depth")));
+            prb.setCurrentDeepestFind(currentSummary.get("Appearing"));
+        }
+        prb.setInitSurvivalInfo(tr);
+        prb.setCurenntSurvivalDiscoveredCount(currentCount);
+        prb.setCurenntSurvivalDepth((Long) survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
+        prb.setCurenntSurvivalStartTime(survivalStartTime);
+        prb.setCurrentSurvivalElapsedSeconds(elapsed);
+        prb.setDiscoverdPosList(survivalList.getDiscoveredPositions());
+        prb.setCurrentDiscoveredCount(total);
+        prb.setCurrentUndiscoveredCount(pow10(tr.getLength()) - total);
+        prb.setCurenntElapsedTimeInSeconds(savedSeconds + (alreadySaved ? 0L : elapsed));
         return prb;
     }
 
@@ -337,6 +323,11 @@ public class StoreController {
             List<String> lines = null;
             try {
                 lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+
+                // The writer may have created the file but not yet appended its first record.
+                if (lines.isEmpty()) {
+                    break;
+                }
 
                 String deepestStr = "";
                 Long deepestDepth = Long.MIN_VALUE;

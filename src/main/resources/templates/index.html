@@ -46,14 +46,15 @@
         <article class="box media">
             <div class="media-content">
                 <div class="content">
-                    <h2>Now <span style="font-weight: bold; font-size: 90px;"
+                    <h2 th:if="${SEARCH_STOPPED == null}">Now <span style="font-weight: bold; font-size: 90px;"
                             th:text=" '&quot;' +  ${CURRENT_DIGITS} + '&quot;'">&quot;9&quot;</span> Digits Processing..
                     </h2>
                     "<span th:text="${CURRENT_DIGITS_MIN}">000000000</span>"
                     -
                     "<span th:text="${CURRENT_DIGITS_MAX}">999999999</span>"
                     <br />
-                    現在 "<span th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..
+                    <span th:if="${SEARCH_STOPPED == null}">現在 "<span th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..</span>
+                    <span th:if="${SEARCH_STOPPED != null}">検索停止: <span th:text="${SEARCH_STOPPED}"></span></span>
                     <br />
                     <p style="font-size: smaller;">
                         update:

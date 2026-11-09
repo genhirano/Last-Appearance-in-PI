@@ -1,6 +1,7 @@
 import controller.Env;
 import controller.Main;
 import controller.Searcher;
+import controller.StoreController;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -108,6 +109,9 @@ public class WebIntegrationTest {
         assertEquals(200, res.code);
         assertTrue(res.body.contains("Discoverd"), "発見数の項目があること");
         assertTrue(res.body.contains("Appearance Distribution"), "出現分布の項目があること");
+        assertTrue(res.body.contains("検索停止:"), "停止理由が表示されること");
+        assertEquals(7, StoreController.getProgressReport().getCurrentTargetLength(), "保存ファイルがない最初のサイクルの桁数");
+        assertTrue(res.body.contains("0000000"), "停止した探索範囲が表示されること");
         assertTrue(res.body.contains("1,369,560"), "5桁の最遅出現位置 1,369,560 が結果表に表示されること");
         assertTrue(res.body.contains("14,118,307"), "6桁の最遅出現位置 14,118,307 が結果表に表示されること");
 
