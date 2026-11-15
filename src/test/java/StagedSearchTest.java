@@ -1,10 +1,25 @@
 import model.pi.StagedSearch;
 import model.pi.SurvivalList;
 import model.pi.SurvivalResult;
+import controller.StoreController;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class StagedSearchTest {
+    @Test void 同一ブロックの複数閾値から最小位置を選び先行発見を再探索する() throws Exception {
+        StoreController.survivalProgressMap.clear();
+        SurvivalList combined = new SurvivalList(1, 0, 2);
+        SurvivalResult result = new StagedSearch(SearchThreadRealDataTest.ycdFileList(1), 190, 3, 1, 5)
+                .search(1, 0, 2, combined);
+        // π先頭の 1, 2, 0 は同じユニット内でそれぞれ1, 6, 32桁目に初出する。
+        assertEquals(1L, StoreController.survivalProgressMap.get("STAGE1_DEPTH"));
+        assertNotNull(result);
+        assertEquals("0", result.getTarget());
+        assertEquals(32L, result.getFindPos());
+        assertArrayEquals(new long[] {1, 6, 32}, combined.getDiscoveredPositions());
+        assertTrue(combined.isEmpty());
+        StoreController.survivalProgressMap.clear();
+    }
     @Test void variedPartitionsAndThresholdsMatchExistingSearch() throws Exception {
         int[][] cases = {{2, 30, 69, 1, 1, 100}, {2, 11, 23, 4, 5, 5},
                 {3, 100, 159, 3, 4, 10}, {1, 0, 0, 4, 10, 5}};

@@ -1,5 +1,6 @@
 import controller.Env;
 import controller.StoreController;
+import controller.Searcher;
 import model.TargetRange;
 import model.pi.SurvivalList;
 import model.pi.SurvivalResult;
@@ -54,6 +55,23 @@ public class StoreControllerLongRangeTest {
         StoreController.survivalProgressMap.clear();
         resetEnv();
         Env.setPropFileName(null);
+    }
+
+    @Test
+    void 入力不足なら保存せず同じ候補範囲から再開する() throws Exception {
+        for (int i = 1; i < 18; i++) {
+            writeStore(i, "0".repeat(i) + "," + "9".repeat(i) + "," + "0".repeat(i) + ",1,1");
+        }
+        Env.getInstance().setPortNo(1);
+        TargetRange before = StoreController.getInstance().getCurrentTargetStartEnd(1);
+        assertEquals(18, before.getLength());
+        new Searcher(SearchThreadRealDataTest.ycdFileList(1), 1, 19000).run();
+        assertFalse(Files.exists(tempDir.resolve("018.txt")), "未発見なら結果を保存しない");
+        TargetRange after = StoreController.getInstance().getCurrentTargetStartEnd(1);
+        assertEquals(before.getLength(), after.getLength());
+        assertEquals(before.getStart(), after.getStart());
+        assertEquals(before.getEnd(), after.getEnd());
+        assertTrue(Searcher.getStoppedReason().contains("too short"));
     }
 
     @Test
