@@ -27,7 +27,9 @@ public final class StagedSearch {
     /** Returns null when the available input cannot resolve every candidate. */
     public SurvivalResult search(int length, long start, long end, SurvivalList combined) throws Exception {
         StageOnePartition partition = new StageOnePartition(start, end, threads, batches);
-        ExecutorService workers = Executors.newFixedThreadPool(Math.min(threads, partition.groupCount()));
+        java.util.concurrent.atomic.AtomicInteger workerNumber = new java.util.concurrent.atomic.AtomicInteger();
+        ExecutorService workers = Executors.newFixedThreadPool(Math.min(threads, partition.groupCount()), task ->
+                new Thread(task, "staged-search-worker-" + workerNumber.incrementAndGet()));
         SurvivalResult deepest = new SurvivalResult("", -1L);
         try {
             List<SurvivalList> pilot = groups(partition, length, 0);
@@ -85,6 +87,7 @@ public final class StagedSearch {
     private long scanInternal(List<SurvivalList> lists, int length, long from, long end, boolean pilot,
             ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest) throws Exception {
         int[] thresholds = new int[lists.size()];
+        long started = System.nanoTime();
         for (int i = 0; i < lists.size(); i++) thresholds[i] = (int) Math.floor(lists.get(i).size() * survivalPercent / 100.0);
         long availableEnd = 0;
         try (YCD_SeqProvider provider = new YCD_SeqProvider(5, files, length, unitLength)) {
@@ -103,6 +106,14 @@ public final class StagedSearch {
                     futures.add(workers.submit(task::run));
                 }
                 for (Future<?> future : futures) future.get();
+                if (pilot) {
+                    List<Integer> remaining = new ArrayList<>();
+                    for (SurvivalList list : lists) remaining.add(list.size());
+                    StoreController.survivalProgressMap.put("STAGE1_WORKERS", remaining);
+                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", availableEnd);
+                    double seconds = (System.nanoTime() - started) / 1_000_000_000.0;
+                    StoreController.survivalProgressMap.put("STAGE1_SPEED", seconds > 0 ? availableEnd / seconds : 0.0);
+                }
                 if (!pilot && listener != null) {
                     List<Integer> remaining = new ArrayList<>();
                     for (SurvivalList list : lists) remaining.add(list.size());

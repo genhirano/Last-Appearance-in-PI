@@ -57,6 +57,22 @@ public class StoreControllerLongRangeTest {
     }
 
     @Test
+    void 不完全な末尾を除いて最後の完了範囲から再開する() throws Exception {
+        Files.write(tempDir.resolve("002.txt"), "00,09,01,5,1\n10,19,1".getBytes(StandardCharsets.UTF_8));
+        TargetRange next = rangeOf(StoreController.getInstance().getNextList(10), 2);
+        assertEquals("10", next.getStart());
+        assertEquals("00,09,01,5,1\n", new String(Files.readAllBytes(tempDir.resolve("002.txt")), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void 改行なしの完全に見える末尾は失わず停止する() throws Exception {
+        String data = "00,09,01,5,1";
+        Files.write(tempDir.resolve("002.txt"), data.getBytes(StandardCharsets.UTF_8));
+        assertThrows(RuntimeException.class, () -> StoreController.getInstance().getNextList(10));
+        assertEquals(data, new String(Files.readAllBytes(tempDir.resolve("002.txt")), StandardCharsets.UTF_8));
+    }
+
+    @Test
     void 実データの最遅結果を既存形式と一始まり位置で保存する() throws Exception {
         SurvivalResult result = SearchThreadRealDataTest.runSurvival(
                 1, 0, 9, 19, SearchThreadRealDataTest.ycdFileList(1));

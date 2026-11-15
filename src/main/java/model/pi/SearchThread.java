@@ -100,6 +100,10 @@ public class SearchThread extends Thread {
         long offset = Math.max(0L, fromWindow - unitStart);
         if (offset >= len || unitStart >= toWindow) return survivalResult;
         int seekPos = (int) offset;
+        if (thresholdCount >= 0 && survivalList.size() <= thresholdCount
+                && seekPos <= len - n && unitStart + seekPos < toWindow) {
+            thresholdWindow = unitStart + seekPos;
+        }
 
         while (true) {
             if (Thread.currentThread().isInterrupted()) return survivalResult;

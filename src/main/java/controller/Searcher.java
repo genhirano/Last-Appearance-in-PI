@@ -16,8 +16,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class Searcher extends Thread {
+    private volatile boolean stopRequested;
 
     public void requestStop() {
+        stopRequested = true;
         StoreController.survivalProgressMap.put("SEARCH_STOPPING", true);
         interrupt();
     }
@@ -51,6 +53,10 @@ public class Searcher extends Thread {
 
         // 検索処理のメインループ
         while (true) {
+            if (stopRequested) {
+                stop("Search interrupted; unfinished range will be retried.");
+                return;
+            }
 
             // １サイクルの開始時間
             ZonedDateTime startTime = ZonedDateTime.now();
@@ -69,7 +75,7 @@ public class Searcher extends Thread {
                 // YCDデータが尽きて探しきれなかった。検索スレッドだけ終了し、WEB画面は残す
                 return;
             }
-            if (isInterrupted()) {
+            if (stopRequested || isInterrupted()) {
                 stop("Search interrupted; unfinished range will be retried.");
                 return;
             }
@@ -117,6 +123,10 @@ public class Searcher extends Thread {
             stop("Search interrupted; unfinished range will be retried.");
             return null;
         } catch (Exception e) {
+            if (stopRequested) {
+                stop("Search interrupted; unfinished range will be retried.");
+                return null;
+            }
             throw new RuntimeException(e);
         }
     }

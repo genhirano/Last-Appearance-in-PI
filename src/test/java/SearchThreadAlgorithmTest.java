@@ -30,6 +30,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SearchThreadAlgorithmTest extends TestBase {
 
     @Test
+    void 百パーセント閾値は候補発見前の最初の窓で到達する() throws Exception {
+        SurvivalList list = new SurvivalList(2, 30, 69);
+        SearchThread search = new SearchThread(list, createUnit(1L, "14159265"), 0, Long.MAX_VALUE, 40);
+        search.run();
+        assertEquals(0L, search.getThresholdWindow());
+    }
+
+    @Test
     void 半開窓境界で二段階検索しても発見位置は一始まり() throws Exception {
         SurvivalList list = new SurvivalList(2, 12, 34);
         YCD_SeqProvider.Unit unit = createUnit(1L, "120134");
