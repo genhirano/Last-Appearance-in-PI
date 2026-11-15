@@ -1,7 +1,9 @@
 import controller.Env;
 import controller.StoreController;
+import controller.Searcher;
 import model.TargetRange;
 import model.pi.SurvivalList;
+import model.pi.SurvivalResult;
 import model.ProgressReportBean;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +55,66 @@ public class StoreControllerLongRangeTest {
         StoreController.survivalProgressMap.clear();
         resetEnv();
         Env.setPropFileName(null);
+    }
+
+    @Test
+    void 入力不足なら保存せず同じ候補範囲から再開する() throws Exception {
+        for (int i = 1; i < 18; i++) {
+            writeStore(i, "0".repeat(i) + "," + "9".repeat(i) + "," + "0".repeat(i) + ",1,1");
+        }
+        Env.getInstance().setPortNo(1);
+        TargetRange before = StoreController.getInstance().getCurrentTargetStartEnd(1);
+        assertEquals(18, before.getLength());
+        new Searcher(SearchThreadRealDataTest.ycdFileList(1), 1, 19000).run();
+        assertFalse(Files.exists(tempDir.resolve("018.txt")), "未発見なら結果を保存しない");
+        TargetRange after = StoreController.getInstance().getCurrentTargetStartEnd(1);
+        assertEquals(before.getLength(), after.getLength());
+        assertEquals(before.getStart(), after.getStart());
+        assertEquals(before.getEnd(), after.getEnd());
+        assertTrue(Searcher.getStoppedReason().contains("too short"));
+    }
+
+    @Test
+    void 不完全な末尾を除いて最後の完了範囲から再開する() throws Exception {
+        Files.write(tempDir.resolve("002.txt"), "00,09,01,5,1\n10,19,1".getBytes(StandardCharsets.UTF_8));
+        TargetRange next = rangeOf(StoreController.getInstance().getNextList(10), 2);
+        assertEquals("10", next.getStart());
+        assertEquals("00,09,01,5,1\n", new String(Files.readAllBytes(tempDir.resolve("002.txt")), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void 改行なしの完全に見える末尾は失わず停止する() throws Exception {
+        String data = "00,09,01,5,1";
+        Files.write(tempDir.resolve("002.txt"), data.getBytes(StandardCharsets.UTF_8));
+        assertThrows(RuntimeException.class, () -> StoreController.getInstance().getNextList(10));
+        assertEquals(data, new String(Files.readAllBytes(tempDir.resolve("002.txt")), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void 実データの最遅結果を既存形式と一始まり位置で保存する() throws Exception {
+        SurvivalResult result = SearchThreadRealDataTest.runSurvival(
+                1, 0, 9, 19, SearchThreadRealDataTest.ycdFileList(1));
+        ZonedDateTime start = ZonedDateTime.parse("2024-01-01T00:00:00Z");
+        StoreController.getInstance().saveFile(1, "0", "9", result.getTarget(),
+                result.getFindPos(), start, start.plusSeconds(7));
+        assertEquals("0,9,0,32,7", Files.readAllLines(tempDir.resolve("001.txt"),
+                StandardCharsets.UTF_8).get(0));
+        assertEquals("32", StoreController.getSummary().get(0).get("Depth"));
+        assertEquals("", rangeOf(StoreController.getInstance().getNextList(10), 1).getStart());
+    }
+
+    @Test
+    void 発見詳細は直近百件だが全位置と生存状態は保持される() {
+        SurvivalList list = new SurvivalList(3, 0, 149);
+        for (int i = 0; i < 150; i++) list.discover(String.format("%03d", i), (long) i + 1);
+        assertTrue(list.isEmpty());
+        assertEquals(150, list.getDiscoveredCount());
+        assertEquals(150, list.getDiscoveredPositions().length);
+        assertEquals(1L, list.getDiscoveredPositions()[0]);
+        assertEquals(150L, list.getDiscoveredPositions()[149]);
+        assertEquals(100, list.getDiscoverdInfo().size());
+        assertEquals("050", list.getDiscoverdInfo().get(0).getTarget());
+        assertEquals("149", list.getDiscoverdInfo().get(99).getTarget());
     }
 
     @Test

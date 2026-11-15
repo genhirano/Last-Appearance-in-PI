@@ -21,6 +21,16 @@ public class SearchThread extends Thread {
 
     private final SurvivalList survivalList;
     private final YCD_SeqProvider.Unit pi;
+    private final long fromWindow;
+    private final long toWindow;
+    private final int thresholdCount;
+    @Getter
+    private long thresholdWindow = -1;
+    private java.util.function.BiConsumer<String, Long> discoveryListener;
+
+    public void setDiscoveryListener(java.util.function.BiConsumer<String, Long> listener) {
+        this.discoveryListener = listener;
+    }
 
     @Getter
     SurvivalResult result = null;
@@ -31,8 +41,27 @@ public class SearchThread extends Thread {
      * @param pi 文字列ユニット
      */
     public SearchThread(SurvivalList survivalList, final YCD_SeqProvider.Unit pi) {
+        this(survivalList, pi, 0, Long.MAX_VALUE);
+    }
+
+    /** 窓開始位置を0始まりの半開区間で制限する。保存する発見位置は従来どおり1始まり。 */
+    public SearchThread(SurvivalList survivalList, final YCD_SeqProvider.Unit pi,
+            long fromWindow, long toWindow) {
+        this(survivalList, pi, fromWindow, toWindow, -1);
+    }
+
+    /** thresholdCount はこのユニット内で初めて到達する生存数（無効時は -1）。 */
+    public SearchThread(SurvivalList survivalList, final YCD_SeqProvider.Unit pi,
+            long fromWindow, long toWindow, int thresholdCount) {
+        if (fromWindow < 0 || toWindow < fromWindow) {
+            throw new IllegalArgumentException("Invalid window range");
+        }
+        if (thresholdCount < -1) throw new IllegalArgumentException("Invalid threshold");
         this.survivalList = survivalList;
         this.pi = pi;
+        this.fromWindow = fromWindow;
+        this.toWindow = toWindow;
+        this.thresholdCount = thresholdCount;
     }
 
     @Override
@@ -67,9 +96,17 @@ public class SearchThread extends Thread {
         int[] badCharTable = prefix.isEmpty() ? null : buildBadCharacterTable(prefix);
 
         // このユニット内の検索開始位置（検索済み部分をスキップする）
-        int seekPos = 0;
+        long unitStart = currentPi.getStartDigit() - 1;
+        long offset = Math.max(0L, fromWindow - unitStart);
+        if (offset >= len || unitStart >= toWindow) return survivalResult;
+        int seekPos = (int) offset;
+        if (thresholdCount >= 0 && survivalList.size() <= thresholdCount
+                && seekPos <= len - n && unitStart + seekPos < toWindow) {
+            thresholdWindow = unitStart + seekPos;
+        }
 
         while (true) {
+            if (Thread.currentThread().isInterrupted()) return survivalResult;
 
             // 次の候補位置を決める（共通部分があればそれをシーク、無ければ次の位置）
             final int startPos = (badCharTable == null)
@@ -77,7 +114,7 @@ public class SearchThread extends Thread {
                     : boyerMooreSearch(data, prefix, badCharTable, seekPos);
 
             // 候補が無い、または N 桁分のデータが足りない場合はこのユニットは終わり
-            if (startPos < 0 || len < startPos + n) {
+            if (startPos < 0 || len < startPos + n || unitStart + startPos >= toWindow) {
                 break;
             }
 
@@ -96,6 +133,11 @@ public class SearchThread extends Thread {
 
                 // ヒットした要素をサバイバルリストから削除
                 survivalList.discover(candidate, curFindPos);
+                if (discoveryListener != null) discoveryListener.accept(candidate, curFindPos);
+
+                if (thresholdCount >= 0 && thresholdWindow < 0 && survivalList.size() <= thresholdCount) {
+                    thresholdWindow = curFindPos - 1;
+                }
 
                 StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
 

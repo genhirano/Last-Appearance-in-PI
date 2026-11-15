@@ -29,6 +29,38 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class SearchThreadAlgorithmTest extends TestBase {
 
+    @Test
+    void 百パーセント閾値は候補発見前の最初の窓で到達する() throws Exception {
+        SurvivalList list = new SurvivalList(2, 30, 69);
+        SearchThread search = new SearchThread(list, createUnit(1L, "14159265"), 0, Long.MAX_VALUE, 40);
+        search.run();
+        assertEquals(0L, search.getThresholdWindow());
+    }
+
+    @Test
+    void 半開窓境界で二段階検索しても発見位置は一始まり() throws Exception {
+        SurvivalList list = new SurvivalList(2, 12, 34);
+        YCD_SeqProvider.Unit unit = createUnit(1L, "120134");
+        SearchThread first = new SearchThread(list, unit, 0, 4);
+        first.run();
+        assertFalse(list.contains("12"));
+        assertTrue(list.contains("34"));
+        SearchThread second = new SearchThread(list, unit, 4, 5);
+        second.run();
+        assertFalse(list.contains("34"));
+        assertEquals(5L, second.getResult().getFindPos());
+    }
+
+    @Test
+    void 共通接頭辞探索も半開窓境界を守る() throws Exception {
+        SurvivalList list = new SurvivalList(2, 10, 19);
+        YCD_SeqProvider.Unit unit = createUnit(11L, "111213");
+        new SearchThread(list, unit, 12, 13).run();
+        assertTrue(list.contains("11"));
+        assertFalse(list.contains("12"));
+        assertTrue(list.contains("13"));
+    }
+
     /** テスト用 YCD_SeqProvider（Unit インスタンス生成の外部クラス参照として使用） */
     private static YCD_SeqProvider testProvider;
 

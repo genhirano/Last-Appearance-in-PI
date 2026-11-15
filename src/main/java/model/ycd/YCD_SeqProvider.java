@@ -104,7 +104,8 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
                 System.out.println("YCD_SeqProvider create error. Retry after 5 seconds.");
                 Thread.sleep(5000);
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while opening YCD data", ex);
             }
 
             if (attemptsLeft > 1) {

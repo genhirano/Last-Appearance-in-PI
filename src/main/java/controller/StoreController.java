@@ -97,7 +97,10 @@ public class StoreController {
                 // 保存用ファイルから全データ読み込み
                 List<String> lines = null;
                 try {
-                    lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+                    synchronized (StoreController.class) {
+                        recoverIncompleteTail(file.toPath());
+                        lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException("fatal file read! " + file.getName(), e);
                 }
@@ -202,37 +205,52 @@ public class StoreController {
         // 保存用Fileオブジェクトの生成
         File file = new File(storeFilePath + "/" + filename);
 
-        // 保存対象ファイルがなければ作る
-        if (!file.exists()) {
+        java.nio.file.Path destination = file.toPath().toAbsolutePath();
+        long seconds = Duration.between(startTime, endTime).getSeconds();
+        String record = start + "," + end + "," + lastData + "," + lastFoundPos + "," + seconds + "\n";
+        synchronized (StoreController.class) {
             try {
-                file.createNewFile();
-                System.out.println();
-                System.out.println(filename + "create!");
+                recoverIncompleteTail(destination);
+                try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(destination,
+                        java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE,
+                        java.nio.file.StandardOpenOption.APPEND)) {
+                    java.nio.ByteBuffer bytes = StandardCharsets.UTF_8.encode(record);
+                    while (bytes.hasRemaining()) channel.write(bytes);
+                    channel.force(true);
+                }
             } catch (IOException e) {
-                throw new RuntimeException(file.getPath(), e);
+                throw new RuntimeException("File Write Error", e);
             }
         }
 
-        // 保存対象ファイルをアペンドモードで
-        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath(), true)));) {
+    }
 
-            // 処理開始と処理終了の時間差（実行時間）を計算
-            Duration summerVacationDuration = Duration.between(startTime, endTime);
-
-            // 今回分データ作成
-            String recordStr = start
-                    + "," + end
-                    + "," + lastData
-                    + "," + lastFoundPos
-                    + "," + summerVacationDuration.getSeconds();
-
-            // 書き込み（アペンドモード）
-            pw.println(recordStr);
-
-        } catch (IOException e) {
-            throw new RuntimeException("File Write Error", e);
+    /** A final line without a newline is not committed. Never guess if it looks complete. */
+    private static void recoverIncompleteTail(java.nio.file.Path path) throws IOException {
+        if (!Files.exists(path)) return;
+        try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "rw")) {
+            long length = file.length();
+            if (length == 0) return;
+            file.seek(length - 1);
+            if (file.read() == '\n') return;
+            long pos = length - 1;
+            while (pos >= 0) {
+                file.seek(pos);
+                if (file.read() == '\n') break;
+                pos--;
+            }
+            long start = pos + 1;
+            if (length - start > 1024) throw new IOException("Ambiguous result tail: " + path);
+            byte[] tail = new byte[(int) (length - start)];
+            file.seek(start);
+            file.readFully(tail);
+            String text = new String(tail, StandardCharsets.UTF_8).trim();
+            if (text.matches("[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+")) {
+                throw new IOException("Result tail lacks newline and may be a legacy complete record: " + path);
+            }
+            file.setLength(start);
+            file.getChannel().force(true);
         }
-
     }
 
     public static ProgressReportBean getProgressReport() {
@@ -295,7 +313,7 @@ public class StoreController {
      *
      * @return サマリー表現文字列リスト(画面表示用にフォーマットされた文字列リスト)
      */
-    public static List<Map<String, String>> getSummary() {
+    public static synchronized List<Map<String, String>> getSummary() {
 
         // 結果保存先パスを取得
         String storeFilePath = Env.getInstance().getProp().getProperty(Env.PropKey.outputPath.getKeyName());
@@ -322,6 +340,7 @@ public class StoreController {
             // 保存用ファイルから全データ読み込み
             List<String> lines = null;
             try {
+                recoverIncompleteTail(file.toPath());
                 lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
 
                 // The writer may have created the file but not yet appended its first record.
@@ -420,6 +439,8 @@ public class StoreController {
                 throw new RuntimeException("HTTP Request Error! " + statusCode);
             }
             
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             // エラーが発生した場合の処理
             e.printStackTrace();
