@@ -202,35 +202,30 @@ public class StoreController {
         // 保存用Fileオブジェクトの生成
         File file = new File(storeFilePath + "/" + filename);
 
-        // 保存対象ファイルがなければ作る
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-                System.out.println();
-                System.out.println(filename + "create!");
-            } catch (IOException e) {
-                throw new RuntimeException(file.getPath(), e);
+        java.nio.file.Path destination = file.toPath().toAbsolutePath();
+        java.nio.file.Path parent = destination.getParent();
+        java.nio.file.Path temporary = null;
+        try {
+            temporary = Files.createTempFile(parent, ".result-", ".tmp");
+            if (Files.exists(destination)) {
+                Files.copy(destination, temporary, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
-        }
-
-        // 保存対象ファイルをアペンドモードで
-        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath(), true)));) {
-
-            // 処理開始と処理終了の時間差（実行時間）を計算
-            Duration summerVacationDuration = Duration.between(startTime, endTime);
-
-            // 今回分データ作成
-            String recordStr = start
-                    + "," + end
-                    + "," + lastData
-                    + "," + lastFoundPos
-                    + "," + summerVacationDuration.getSeconds();
-
-            // 書き込み（アペンドモード）
-            pw.println(recordStr);
-
+            long seconds = Duration.between(startTime, endTime).getSeconds();
+            String record = start + "," + end + "," + lastData + "," + lastFoundPos + "," + seconds + System.lineSeparator();
+            try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(temporary,
+                    java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.APPEND)) {
+                java.nio.ByteBuffer bytes = StandardCharsets.UTF_8.encode(record);
+                while (bytes.hasRemaining()) channel.write(bytes);
+                channel.force(true);
+            }
+            Files.move(temporary, destination, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException("File Write Error", e);
+        } finally {
+            if (temporary != null) {
+                try { Files.deleteIfExists(temporary); } catch (IOException ignored) { }
+            }
         }
 
     }

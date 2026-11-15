@@ -26,6 +26,9 @@ import static spark.debug.DebugScreen.enableDebugScreen;
 
 public class Web {
 
+    private static volatile Searcher searcher;
+    public static void setSearcher(Searcher value) { searcher = value; }
+
     // ThymeleafTemplateEngine
     private static TemplateEngine templateEngine;
 
@@ -55,6 +58,17 @@ public class Web {
         // WEB-------------------------------------
         port(Env.getInstance().getPortNo());
         staticFiles.location("/public/");
+        post("/stop", (req, resp) -> {
+            String remote = req.raw().getRemoteAddr();
+            if (!("127.0.0.1".equals(remote) || "::1".equals(remote) || "0:0:0:0:0:0:0:1".equals(remote))) {
+                resp.status(403);
+                return "Forbidden";
+            }
+            Searcher current = searcher;
+            if (current != null && current.isAlive()) current.requestStop();
+            resp.redirect("/");
+            return "";
+        });
         get("/", new TemplateViewRoute() {
             @Override
             public ModelAndView handle(Request req, Response resp) throws Exception {
@@ -100,6 +114,13 @@ public class Web {
         model.put("YCD_MAX_DEPTH", String.format("%,d", pr.getAllPiDataLength()));
         model.put("SYSTEMSTART", startTime);
         model.put("SEARCH_STOPPED", Searcher.getStoppedReason());
+        model.put("SEARCH_STOPPING", StoreController.survivalProgressMap.get("SEARCH_STOPPING"));
+        model.put("SEARCH_STAGE", StoreController.survivalProgressMap.get("SEARCH_STAGE"));
+        model.put("STAGE1_BATCH", StoreController.survivalProgressMap.get("STAGE1_BATCH"));
+        model.put("STAGE1_BATCHES", StoreController.survivalProgressMap.get("STAGE1_BATCHES"));
+        model.put("STAGE1_DEPTH", StoreController.survivalProgressMap.get("STAGE1_DEPTH"));
+        model.put("STAGE1_PROGRESS", StoreController.survivalProgressMap.get("STAGE1_PROGRESS"));
+        model.put("STAGE1_WORKERS", StoreController.survivalProgressMap.get("STAGE1_WORKERS"));
 
         final long elapsedSec = (null != pr.getCurenntElapsedTimeInSeconds()) ? pr.getCurenntElapsedTimeInSeconds() : 0L;
         model.put("RUNNING_TIME", elapsedSec);

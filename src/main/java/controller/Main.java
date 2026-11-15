@@ -41,6 +41,7 @@ public class Main {
 
             // バックグラウンドで検索処理開始
             Searcher searcher = new Searcher(piFileList, env.getListSize(), env.getUnitLength());
+            Web.setSearcher(searcher);
             searcher.start();
 
         } catch (Exception e) {
