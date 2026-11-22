@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="ja" xmlns:th="http://www.w3.org/1999/xhtml">
 
 <head>
-    <link rel="icon" href="https://icongr.am/octicons/sync.svg">
+    <link rel="icon" href="https://icongr.am/octicons/sync.svg" />
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BQGPL86FVT"></script>
@@ -10,419 +10,2101 @@
         window.dataLayer = window.dataLayer || [];
         function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
-
         gtag('config', 'G-BQGPL86FVT');
     </script>
 
     <meta charset="utf-8" />
-    <title>Last Appearance in PI Project</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="google" content="notranslate">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.css">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.10.0/css/all.css">
+    <title>Last Appearance in PI // Mission Control Telemetry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="google" content="notranslate" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.10.0/css/all.css" />
+
+    <style>
+        :root {
+            --bg-deep: #060a12;
+            --bg-panel: rgba(15, 23, 42, 0.82);
+            --bg-panel-strong: rgba(17, 27, 48, 0.94);
+            --bg-card: rgba(22, 34, 59, 0.72);
+            --border-subtle: rgba(148, 163, 184, 0.16);
+            --border-glow: rgba(56, 189, 248, 0.42);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --accent-cyan: #38bdf8;
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-rose: #f43f5e;
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-deep);
+            background-image:
+                radial-gradient(circle at 12% 10%, rgba(56, 189, 248, 0.12), transparent 34%),
+                radial-gradient(circle at 88% 15%, rgba(168, 85, 247, 0.10), transparent 36%),
+                radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.08), transparent 40%),
+                linear-gradient(180deg, #050811 0%, #0b1324 50%, #060a12 100%);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.5;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        .mono {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ====== HEADER & LIVE TELEMETRY BAR ====== */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(6, 10, 18, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 10px 16px;
+        }
+
+        .top-bar-inner {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pi-emblem {
+            width: 40px;
+            height: 40px;
+            border-radius: 11px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(168, 85, 247, 0.28));
+            border: 1px solid var(--border-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--accent-cyan);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.25);
+            flex-shrink: 0;
+        }
+
+        .brand-titles h1 {
+            margin: 0;
+            font-size: clamp(1rem, 2.2vw, 1.35rem);
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .brand-titles p {
+            margin: 0;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        .live-controls {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 11px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            background: rgba(16, 185, 129, 0.14);
+            border: 1px solid rgba(16, 185, 129, 0.45);
+            color: #34d399;
+        }
+
+        .status-pill.is-stopped {
+            background: rgba(244, 63, 94, 0.16);
+            border-color: rgba(244, 63, 94, 0.5);
+            color: #fb7185;
+        }
+
+        .status-pill.is-stopping {
+            background: rgba(245, 158, 11, 0.16);
+            border-color: rgba(245, 158, 11, 0.5);
+            color: #fbbf24;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+            animation: pulseGlow 1.4s infinite ease-in-out;
+        }
+
+        .status-pill.is-stopped .pulse-dot {
+            animation: none;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.45); opacity: 0.45; }
+        }
+
+        .control-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(30, 41, 59, 0.78);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+
+        .control-chip select,
+        .control-chip button {
+            background: transparent;
+            border: none;
+            color: var(--accent-cyan);
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 2px 4px;
+        }
+
+        .control-chip select option {
+            background: #0f172a;
+            color: var(--text-main);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #e11d48, #be123c);
+            color: #fff;
+            border: 1px solid rgba(251, 113, 133, 0.5);
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .btn-stop:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 12px rgba(244, 63, 94, 0.45);
+        }
+
+        /* ====== MAIN LAYOUT CONTAINER ====== */
+        .dashboard {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-glow-cyan {
+            border-color: rgba(56, 189, 248, 0.32);
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(56, 189, 248, 0.15);
+        }
+
+        .panel-glow-amber {
+            border-color: rgba(245, 158, 11, 0.35);
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(245, 158, 11, 0.18);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .panel-title i {
+            color: var(--accent-cyan);
+        }
+
+        .panel-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* ====== 18-DIGIT MISSION ROADMAP ====== */
+        .roadmap-grid {
+            display: grid;
+            grid-template-columns: repeat(18, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .roadmap-cell {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 10px;
+            padding: 7px 4px;
+            text-align: center;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .roadmap-cell.is-completed {
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.18), rgba(6, 78, 59, 0.28));
+            border-color: rgba(16, 185, 129, 0.45);
+        }
+
+        .roadmap-cell.is-active {
+            background: linear-gradient(180deg, rgba(56, 189, 248, 0.28), rgba(30, 58, 138, 0.45));
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .roadmap-cell.is-stopped {
+            background: linear-gradient(180deg, rgba(244, 63, 94, 0.24), rgba(136, 19, 55, 0.35));
+            border-color: rgba(244, 63, 94, 0.6);
+        }
+
+        .roadmap-digit {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .roadmap-badge {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .roadmap-cell.is-completed .roadmap-badge { color: #34d399; }
+        .roadmap-cell.is-active .roadmap-badge { color: #38bdf8; }
+        .roadmap-cell.is-stopped .roadmap-badge { color: #fb7185; }
+        .roadmap-cell.is-pending .roadmap-badge { color: var(--text-dim); }
+
+        .roadmap-mini-bar {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 99px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .roadmap-mini-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-emerald));
+            transition: width 0.5s ease;
+        }
+
+        /* ====== HERO COCKPIT GRID (3 COLUMNS ON PC, 1 ON MOBILE) ====== */
+        .cockpit-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr 360px;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        /* Target Digit & Dual Circular Gauge */
+        .target-hero-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .gauge-wrapper {
+            position: relative;
+            width: 210px;
+            height: 210px;
+            margin: 4px auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(148, 163, 184, 0.12);
+        }
+
+        .gauge-ring-outer {
+            fill: none;
+            stroke: url(#gradOuter);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .gauge-ring-inner {
+            fill: none;
+            stroke: url(#gradInner);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .gauge-center-label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .gauge-digit-num {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(135deg, #fff 0%, #38bdf8 60%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.35));
+        }
+
+        .gauge-digit-unit {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-top: 3px;
+        }
+
+        .gauge-legend {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .range-pill-box {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 0.76rem;
+            overflow-wrap: anywhere;
+        }
+
+        /* Overall Progress & Space Map */
+        .kpi-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .kpi-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .kpi-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .kpi-value {
+            font-size: clamp(1.05rem, 1.8vw, 1.45rem);
+            font-weight: 800;
+            color: var(--text-main);
+            margin-top: 4px;
+            overflow-wrap: anywhere;
+        }
+
+        .kpi-value.is-cyan { color: var(--accent-cyan); }
+        .kpi-value.is-emerald { color: #34d399; }
+        .kpi-value.is-amber { color: #fbbf24; }
+        .kpi-value.is-purple { color: #c084fc; }
+
+        .kpi-sub {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        /* Progress Bar Component */
+        .meter-box {
+            margin: 10px 0;
+        }
+
+        .meter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.78rem;
+            margin-bottom: 5px;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .meter-track {
+            width: 100%;
+            height: 14px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .meter-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #0284c7, #38bdf8, #10b981);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+            transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+        }
+
+        .meter-fill::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.28) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2.2s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Candidate Space Map Track */
+        .space-map-track {
+            width: 100%;
+            height: 18px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .space-map-done {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            background: rgba(16, 185, 129, 0.38);
+            border-right: 1px solid #34d399;
+            transition: width 0.5s ease;
+        }
+
+        .space-map-active {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            box-shadow: 0 0 12px var(--accent-cyan);
+            min-width: 4px;
+            transition: left 0.5s ease, width 0.5s ease;
+        }
+
+        /* Provisional Champion Card */
+        .champion-box {
+            background: linear-gradient(145deg, rgba(245, 158, 11, 0.14), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(245, 158, 11, 0.42);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+
+        .champion-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #fbbf24;
+            background: rgba(245, 158, 11, 0.18);
+            padding: 3px 9px;
+            border-radius: 999px;
+            margin-bottom: 8px;
+        }
+
+        .champion-number {
+            font-size: clamp(1.35rem, 2.4vw, 2rem);
+            font-weight: 900;
+            color: #fef08a;
+            text-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
+            letter-spacing: 0.04em;
+            overflow-wrap: anywhere;
+            margin: 4px 0;
+        }
+
+        .champion-pos {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* ====== 2-STAGE PIPELINE & WORKER TELEMETRY ====== */
+        .pipeline-steps {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .step-card {
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 10px 12px;
+            position: relative;
+            transition: all 0.25s ease;
+        }
+
+        .step-card.is-current {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(30, 58, 138, 0.35));
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.25);
+        }
+
+        .step-card.is-done {
+            border-color: rgba(16, 185, 129, 0.45);
+            background: rgba(16, 185, 129, 0.09);
+        }
+
+        .step-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.73rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .step-card.is-current .step-head {
+            color: var(--accent-cyan);
+        }
+
+        .step-card.is-done .step-head {
+            color: #34d399;
+        }
+
+        .step-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .step-desc {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .engine-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 16px;
+        }
+
+        .worker-list {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .worker-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 9px 12px;
+        }
+
+        .worker-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            margin-bottom: 5px;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .worker-name {
+            font-weight: 800;
+            color: var(--accent-cyan);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .worker-bar-track {
+            height: 9px;
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .worker-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #38bdf8, #818cf8, #34d399);
+            border-radius: 999px;
+            transition: width 0.45s ease;
+        }
+
+        /* ====== CURRENT UNIT SURVIVAL & LIVE DISCOVERY TICKER ====== */
+        .two-col-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .prefix-display {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin: 10px 0;
+        }
+
+        .prefix-badge {
+            background: rgba(168, 85, 247, 0.25);
+            color: #e9d5ff;
+            border: 1px solid rgba(168, 85, 247, 0.6);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+
+        .survivor-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .survivor-chip {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #bae6fd;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            font-weight: 600;
+        }
+
+        .ticker-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            max-height: 410px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .ticker-item {
+            background: rgba(15, 23, 42, 0.78);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--accent-emerald);
+            border-radius: 8px;
+            padding: 7px 10px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.78rem;
+        }
+
+        .ticker-target {
+            font-weight: 800;
+            color: #6ee7b7;
+            background: rgba(16, 185, 129, 0.12);
+            padding: 2px 7px;
+            border-radius: 5px;
+        }
+
+        .ticker-bar-wrap {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            height: 6px;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .ticker-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #38bdf8);
+            border-radius: 99px;
+        }
+
+        /* ====== APPEARANCE DISTRIBUTION HISTOGRAM ====== */
+        .histogram-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hist-row {
+            display: grid;
+            grid-template-columns: 230px 1fr 125px;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.78rem;
+            padding: 4px 6px;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.45);
+        }
+
+        .hist-range {
+            color: var(--text-muted);
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hist-bar-track {
+            width: 100%;
+            height: 16px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hist-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.75), rgba(168, 85, 247, 0.85));
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .hist-count {
+            text-align: right;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .hist-share {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            margin-left: 4px;
+        }
+
+        /* ====== TABLES & COLLAPSIBLE DETAILS ====== */
+        .table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table.telemetry-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        table.telemetry-table th,
+        table.telemetry-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+            text-align: left;
+        }
+
+        table.telemetry-table th {
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.73rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: rgba(15, 23, 42, 0.65);
+        }
+
+        table.telemetry-table tr:hover td {
+            background: rgba(56, 189, 248, 0.06);
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        details.telemetry-details {
+            margin-top: 12px;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 10px 14px;
+        }
+
+        details.telemetry-details summary {
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: var(--accent-cyan);
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        details.telemetry-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .alert-banner {
+            background: rgba(244, 63, 94, 0.16);
+            border: 1px solid rgba(244, 63, 94, 0.55);
+            color: #fecdd3;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-bar {
+            text-align: center;
+            padding: 24px 16px 36px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .footer-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .footer-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* ====== RESPONSIVE BREAKPOINTS (TABLET & SMARTPHONE PORTRAIT) ====== */
+        @media (max-width: 1120px) {
+            .cockpit-grid {
+                grid-template-columns: 1fr;
+            }
+            .engine-grid,
+            .two-col-grid {
+                grid-template-columns: 1fr;
+            }
+            .roadmap-grid {
+                grid-template-columns: repeat(9, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 680px) {
+            .top-bar {
+                padding: 8px 12px;
+            }
+            .dashboard {
+                padding: 10px;
+                gap: 12px;
+            }
+            .panel {
+                padding: 12px;
+                border-radius: 14px;
+            }
+            .roadmap-grid {
+                grid-template-columns: repeat(6, minmax(0, 1fr));
+                gap: 5px;
+            }
+            .pipeline-steps {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .kpi-grid-3 {
+                grid-template-columns: 1fr;
+            }
+            .hist-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+                padding: 8px;
+            }
+            .hist-range {
+                text-align: left;
+                font-size: 0.73rem;
+            }
+            .hist-count {
+                text-align: left;
+            }
+            .gauge-wrapper {
+                width: 180px;
+                height: 180px;
+            }
+            .gauge-digit-num {
+                font-size: 2.9rem;
+            }
+        }
+    </style>
 </head>
 
-<!-- ヘッダー -->
-<header>
-    <!-- タイトル・サブタイトル -->
-    <section class="hero is-small is-primary has-background-primary-dark">
-        <div align="center" class="hero-body">
-            <h1 class="title">
-                Last Appearance in PI
-            </h1>
-            <p>
-                Search for the latest appearing number in pi.<br>
-                円周率の中で最も遅く出現する数値の探索
-            </p>
-    </section>
-</header>
-
-<!-- ボディ -->
 <body>
-    <!-- メインコンテンツ -->
-    <div align="center" class="column">
+    <!-- ====== STICKY TOP MISSION CONTROL BAR ====== -->
+    <header class="top-bar">
+        <div class="top-bar-inner">
+            <div class="brand-group">
+                <div class="pi-emblem">&pi;</div>
+                <div class="brand-titles">
+                    <h1>
+                        <span>Last Appearance in PI</span>
+                    </h1>
+                    <p>円周率の中で最も遅く出現する自然数の探索 // Real-Time Observatory</p>
+                </div>
+            </div>
 
-        <!-- 本文 -->
-        <article class="box media">
-            <div class="media-content">
-                <div class="content">
-                    <h2 th:if="${SEARCH_STOPPED == null}">Now <span style="font-weight: bold; font-size: 90px;"
-                            th:text=" '&quot;' +  ${CURRENT_DIGITS} + '&quot;'">&quot;9&quot;</span> Digits Processing..
-                    </h2>
-                    "<span th:text="${CURRENT_DIGITS_MIN}">000000000</span>"
-                    -
-                    "<span th:text="${CURRENT_DIGITS_MAX}">999999999</span>"
-                    <br />
-                    <span th:if="${SEARCH_STOPPED == null}">現在 "<span th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..</span>
-                    <span th:if="${SEARCH_STOPPED != null}">検索停止: <span th:text="${SEARCH_STOPPED}"></span></span>
-                    <div th:if="${SEARCH_STOPPING != null}">停止中</div>
-                    <div th:if="${SEARCH_STAGE != null}">探索段階: <span th:text="${SEARCH_STAGE}"></span>
-                        <span th:if="${STAGE1_BATCH != null and SEARCH_STAGE == 1}">
-                            セット <span th:text="${STAGE1_BATCH}"></span> / <span th:text="${STAGE1_BATCHES}"></span>
-                            終了位置 <span th:text="${STAGE1_DEPTH}"></span>
-                            第一段階進捗 <span th:text="${STAGE1_PROGRESS}"></span>% 探索位置 <span th:text="${STAGE1_POSITION}"></span> 桁/秒 <span th:text="${STAGE1_SPEED}"></span>
-                            スレッド別残数 <span th:text="${STAGE1_WORKERS}"></span>
-                        </span>
-                        <span th:if="${STAGE1_BATCH == null and SEARCH_STAGE == 1}">
-                            進捗算定中 探索位置 <span th:text="${STAGE1_POSITION}"></span> 桁/秒 <span th:text="${STAGE1_SPEED}"></span>
-                            スレッド別残数 <span th:text="${STAGE1_WORKERS}"></span>
-                        </span>
-                        <span th:if="${SEARCH_STAGE == 2}">
-                            探索位置 <span th:text="${STAGE1_POSITION}"></span> 桁/秒 <span th:text="${STAGE1_SPEED}"></span>
-                            生存候補残数 <span th:text="${STAGE1_WORKERS}"></span>
-                        </span>
-                    </div>
-                    <form action="/stop" method="post" th:if="${STOP_TOKEN != null and SEARCH_STOPPED == null and SEARCH_STOPPING == null}">
-                        <input type="hidden" name="token" th:value="${STOP_TOKEN}" />
-                        <button type="submit">探索を停止</button>
-                    </form>
-                    <br />
-                    <p style="font-size: smaller;">
-                        update:
-                        <span th:text="${SERVER_TIME}">yyyy/mm/dd HH:MM:SS</span>
-                        (please reload)
-                    </p>
-
+            <div class="live-controls">
+                <!-- 稼働ステータスピル -->
+                <div id="live-status-pill" class="status-pill"
+                     th:classappend="${SEARCH_STOPPED != null} ? ' is-stopped' : (${SEARCH_STOPPING != null} ? ' is-stopping' : '')">
+                    <span class="pulse-dot"></span>
+                    <span id="live-status-text"
+                          th:text="${SEARCH_STOPPED != null} ? 'HALTED (停止)' : (${SEARCH_STOPPING != null} ? 'STOPPING (停止中)' : 'LIVE SCANNING')">LIVE SCANNING</span>
                 </div>
 
-                <table style="width:0; white-space:nowrap;" class="table is-narrow ">
+                <!-- 自動更新コントロール -->
+                <div class="control-chip">
+                    <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;">
+                        <input id="auto-refresh-toggle" type="checkbox" checked="checked" />
+                        <span>AUTO</span>
+                    </label>
+                    <select id="refresh-interval-select" title="更新間隔">
+                        <option value="2000" selected="selected">2s</option>
+                        <option value="5000">5s</option>
+                        <option value="10000">10s</option>
+                    </select>
+                    <button id="manual-refresh-btn" type="button" title="今すぐ更新">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
 
-                    <tr>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            Appeared Count:
-                        </td>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            <div class="has-text-weight-bold" th:text="${CURRENT_DISCOVERD_COUNT}">
-                                9999999</div>
-                        </td>
-                        <td>
-                            出現確認済数
-                        </td>
-                    </tr>
+                <!-- サーバー更新時刻 -->
+                <div class="control-chip mono">
+                    <i class="far fa-clock" style="color:var(--accent-cyan);"></i>
+                    <span id="val-server-time" th:text="${SERVER_TIME}">2026-11-22 22:00:00</span>
+                </div>
 
-                    <tr>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            Yet Appeared Count:
-                        </td>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            <div class="has-text-weight-bold" th:text="${CURRENT_UNDISCOVERD_COUNT}">
-                                9999999</div>
-                        </td>
-                        <td>
-                            残り候補数
-                        </td>
-                    </tr>
+                <!-- ローカル専用・探索停止フォーム（静的HTMLおよび非ループバック時は出力されない） -->
+                <form action="/stop" method="post"
+                      th:if="${STOP_TOKEN != null and SEARCH_STOPPED == null and SEARCH_STOPPING == null}"
+                      style="margin:0;">
+                    <input type="hidden" name="token" th:value="${STOP_TOKEN}" />
+                    <button type="submit" class="btn-stop">
+                        <i class="fas fa-stop-circle"></i> 探索を停止
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
 
+    <!-- ====== MAIN DASHBOARD ====== -->
+    <main id="telemetry-dashboard" class="dashboard">
 
-                    <tr>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            Progress:
-                        </td>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            <div class="has-text-weight-bold" th:text="${CURRENT_PROGRESS_RATE}+'%'">
-                                9999999%</div>
-                        </td>
-                        <td>
-                            進捗率
-                        </td>
+        <!-- 停止・停止中バナー -->
+        <div id="stopped-banner" class="alert-banner" th:if="${SEARCH_STOPPED != null}">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>検索停止: <span id="val-search-stopped" th:text="${SEARCH_STOPPED}"></span></span>
+        </div>
+        <div id="stopping-banner" class="alert-banner"
+             style="background:rgba(245,158,11,0.16);border-color:rgba(245,158,11,0.55);color:#fde68a;"
+             th:if="${SEARCH_STOPPING != null}">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>停止中 (安全にスレッドを停止しています...)</span>
+        </div>
 
-                    </tr>
+        <!-- ====== SECTION 1: 1〜18桁 ミッション・ロードマップ ====== -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <i class="fas fa-satellite-dish"></i>
+                    <span>1〜18 Digits Mission Roadmap // 桁別制覇ロードマップ</span>
+                </h2>
+                <span class="panel-subtitle">
+                    総データ量: <strong class="mono" style="color:var(--accent-cyan);" id="val-ycd-max-depth" th:text="${YCD_MAX_DEPTH}">22,600,000,000,000</strong> 桁
+                </span>
+            </div>
 
-                    <tr>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            Process Time(sec):
-                        </td>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            <div class="has-text-weight-bold" th:text="${CURRENT_ELAPSED_TIME}">9999999
+            <div id="roadmap-grid" class="roadmap-grid">
+                <div th:each="item : ${DIGIT_ROADMAP}"
+                     class="roadmap-cell"
+                     th:classappend="' is-' + ${item.get('status')}"
+                     th:title="${item.get('digits')} + '桁 | 最遅: ' + ${item.get('appearing')} + ' @ ' + ${item.get('depth')}">
+                    <div class="roadmap-digit mono" th:text="${item.get('digits')} + '桁'">9桁</div>
+                    <span class="roadmap-badge mono" th:text="${item.get('statusLabel')}">LIVE</span>
+                    <div class="roadmap-mini-bar">
+                        <div class="roadmap-mini-fill" th:style="'width:' + ${item.get('progressPct')} + '%;'"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== SECTION 2: メイン・コックピット (ターゲット桁 + 全体進捗 + 暫定最遅チャンピオン) ====== -->
+        <section class="cockpit-grid">
+
+            <!-- Left: ターゲット桁 & 2重同心円ゲージ -->
+            <article class="panel panel-glow-cyan target-hero-card">
+                <div style="width:100%;">
+                    <div class="panel-header" style="margin-bottom:8px;">
+                        <h2 class="panel-title">
+                            <i class="fas fa-crosshairs"></i>
+                            <span>Active Target Digits</span>
+                        </h2>
+                        <span class="panel-subtitle" th:if="${SEARCH_STOPPED == null}">
+                            現在 "<span id="val-current-digits-inline" th:text="${CURRENT_DIGITS}">9</span>" 桁を探索中..
+                        </span>
+                    </div>
+
+                    <div style="font-size:0.78rem;color:var(--text-muted);" th:if="${SEARCH_STOPPED == null}">
+                        Now <strong class="mono" style="color:var(--accent-cyan);"
+                                    th:text="'&quot;' + ${CURRENT_DIGITS} + '&quot;'">"9"</strong> Digits Processing..
+                    </div>
+                </div>
+
+                <!-- SVG Dual Ring Gauge (Outer = Digit Overall Progress, Inner = Current Cycle Elimination) -->
+                <div class="gauge-wrapper">
+                    <svg class="gauge-svg" viewBox="0 0 200 200">
+                        <defs>
+                            <linearGradient id="gradOuter" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#38bdf8" />
+                                <stop offset="100%" stop-color="#10b981" />
+                            </linearGradient>
+                            <linearGradient id="gradInner" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#a855f7" />
+                                <stop offset="100%" stop-color="#38bdf8" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Outer Track (r=84, circumference=527.79) -->
+                        <circle class="gauge-bg" cx="100" cy="100" r="84" stroke-width="12" />
+                        <circle id="svg-ring-outer" class="gauge-ring-outer" cx="100" cy="100" r="84" stroke-width="12"
+                                stroke-dasharray="527.79"
+                                th:attr="stroke-dashoffset=${527.79 - (527.79 * CURRENT_PROGRESS_RATE / 100.0)}" />
+                        <!-- Inner Track (r=66, circumference=414.69) -->
+                        <circle class="gauge-bg" cx="100" cy="100" r="66" stroke-width="9" />
+                        <circle id="svg-ring-inner" class="gauge-ring-inner" cx="100" cy="100" r="66" stroke-width="9"
+                                stroke-dasharray="414.69"
+                                th:attr="stroke-dashoffset=${414.69 - (414.69 * CURRENT_SURVIVAL_DISCOVERD_RATE / 100.0)}" />
+                    </svg>
+                    <div class="gauge-center-label">
+                        <div id="val-current-digits" class="gauge-digit-num mono" th:text="${CURRENT_DIGITS}">9</div>
+                        <div class="gauge-digit-unit">DIGITS TARGET</div>
+                        <div id="val-gauge-pct" class="mono" style="font-size:0.86rem;font-weight:800;color:#34d399;margin-top:4px;"
+                             th:text="${CURRENT_PROGRESS_RATE} + '%'">0.0%</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="gauge-legend">
+                        <span><i class="legend-dot" style="background:#10b981;"></i>外周: 桁全体進捗</span>
+                        <span><i class="legend-dot" style="background:#a855f7;"></i>内周: 現サイクル消去率</span>
+                    </div>
+
+                    <div class="range-pill-box mono">
+                        <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:2px;">TARGET NUMBER SPACE (全 <span id="val-all-count" th:text="${CURRENT_ALL_COUNT}">1,000,000,000</span> 通り)</div>
+                        "<span id="val-digits-min" th:text="${CURRENT_DIGITS_MIN}">000000000</span>"
+                        &sim;
+                        "<span id="val-digits-max" th:text="${CURRENT_DIGITS_MAX}">999999999</span>"
+                    </div>
+                </div>
+            </article>
+
+            <!-- Center: 桁全体の進捗カウンター & 全候補空間マップ -->
+            <article class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Overall Digit Progress // 対象桁の全体進捗</span>
+                    </h2>
+                    <span class="panel-subtitle mono">
+                        Cycle <strong id="val-cycle-num" style="color:var(--accent-cyan);" th:text="${CYCLE_CURRENT_NUMBER}">1</strong>
+                        / <span id="val-cycle-total" th:text="${CYCLE_TOTAL_COUNT}">10,000</span>
+                    </span>
+                </div>
+
+                <!-- 出現確認済数 vs 残り候補数 -->
+                <div class="kpi-grid-2">
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            <span>Appeared Count // 出現確認済数</span>
+                            <i class="fas fa-check-circle" style="color:#34d399;"></i>
+                        </div>
+                        <div id="val-discovered-count" class="kpi-value is-emerald mono" th:text="${CURRENT_DISCOVERD_COUNT}">0</div>
+                        <div class="kpi-sub">円周率内での出現が確定した自然数</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            <span>Yet Appeared Count // 残り候補数</span>
+                            <i class="fas fa-hourglass-half" style="color:var(--accent-cyan);"></i>
+                        </div>
+                        <div id="val-undiscovered-count" class="kpi-value is-cyan mono" th:text="${CURRENT_UNDISCOVERD_COUNT}">0</div>
+                        <div class="kpi-sub">まだ出現位置が未確定の自然数</div>
+                    </div>
+                </div>
+
+                <!-- 全体プログレスバー -->
+                <div class="meter-box">
+                    <div class="meter-header">
+                        <span><strong>Overall Progress // 全体進捗率</strong></span>
+                        <span id="val-progress-rate" class="mono" style="font-size:1.05rem;font-weight:800;color:#34d399;"
+                              th:text="${CURRENT_PROGRESS_RATE} + '%'">0.0%</span>
+                    </div>
+                    <div class="meter-track">
+                        <div id="bar-overall-progress" class="meter-fill"
+                             th:style="'width:' + ${CURRENT_PROGRESS_PCT_STR} + '%;'"></div>
+                    </div>
+                </div>
+
+                <!-- 全候補空間 (00..0 〜 99..9) のレンジマップ -->
+                <div class="meter-box">
+                    <div class="meter-header">
+                        <span style="color:var(--text-muted);font-size:0.74rem;">
+                            <i class="fas fa-map-marked-alt" style="color:var(--accent-purple);"></i>
+                            候補空間スキャン領域マップ ("<span id="val-map-cur-start" class="mono" th:text="${CURRENT_SURVIVAL_START}">000</span>" &sim; "<span id="val-map-cur-end" class="mono" th:text="${CURRENT_SURVIVAL_END}">999</span>")
+                        </span>
+                    </div>
+                    <div class="space-map-track">
+                        <div id="bar-space-done" class="space-map-done"
+                             th:style="'width:' + ${CYCLE_RANGE_START_PCT} + '%;'"></div>
+                        <div id="bar-space-active" class="space-map-active"
+                             th:style="'left:' + ${CYCLE_RANGE_START_PCT} + '%;width:' + ${CYCLE_RANGE_WIDTH_PCT} + '%;'"></div>
+                    </div>
+                </div>
+
+                <!-- 時間・速度・ETA の3連カード -->
+                <div class="kpi-grid-3">
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            <span>Process Time // 処理時間</span>
+                            <i class="far fa-clock"></i>
+                        </div>
+                        <div id="val-elapsed-hms" class="kpi-value mono" style="font-size:1.05rem;" th:text="${CURRENT_ELAPSED_HMS}">00h 00m 00s</div>
+                        <div class="kpi-sub mono"><span id="val-elapsed-sec" th:text="${CURRENT_ELAPSED_TIME}">0</span> sec</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            <span>One Discovery / sec</span>
+                            <i class="fas fa-bolt" style="color:#fbbf24;"></i>
+                        </div>
+                        <div id="val-current-speed" class="kpi-value is-amber mono" style="font-size:1.05rem;"
+                             th:text="${CURRENT_SPEED} + '/sec'">0.0/sec</div>
+                        <div class="kpi-sub">平均出現確認ペース (個/秒)</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            <span>Estimated Remaining // 残り予想</span>
+                            <i class="fas fa-flag-checkered" style="color:#c084fc;"></i>
+                        </div>
+                        <div id="val-eta-text" class="kpi-value is-purple mono" style="font-size:1.05rem;"
+                             th:text="${CURRENT_ETA_TEXT}">計測中...</div>
+                        <div class="kpi-sub">現ペースでの該当桁完了予測</div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Right: 現在までに見つけた最遅出現（暫定チャンピオン） -->
+            <article class="panel panel-glow-amber">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <i class="fas fa-trophy" style="color:#fbbf24;"></i>
+                        <span>Now Latest Appearing // 暫定最遅記録</span>
+                    </h2>
+                    <span class="panel-subtitle">現在までに見つけた最遅出現</span>
+                </div>
+
+                <div class="champion-box">
+                    <div class="champion-tag">
+                        <i class="fas fa-crown"></i>
+                        <span id="val-deepest-badge"
+                              th:text="${DEEPEST_SOURCE == 'LIVE_CYCLE'} ? 'LIVE NEW RECORD (現サイクルで更新中!)' : 'PROVISIONAL CHAMPION (暫定最遅候補)'">PROVISIONAL CHAMPION</span>
+                    </div>
+                    <div style="font-size:0.74rem;color:var(--text-muted);">Now Deepest // 現在候補（最深出現）</div>
+                    <div class="champion-number mono">
+                        "<span id="val-deepest-find" th:text="${CURRENT_DEEPEST_FIND != '' ? CURRENT_DEEPEST_FIND : '-'}">-</span>"
+                    </div>
+                    <div style="font-size:0.74rem;color:var(--text-muted);margin-top:8px;">Appearing Position // 出現場所（小数点以下）</div>
+                    <div class="champion-pos mono">
+                        <span id="val-deepest-pos" th:text="${CURRENT_DEEPEST_FIND_POSITION != '' ? CURRENT_DEEPEST_FIND_POSITION : '-'}">-</span>
+                        <span style="font-size:0.78rem;color:var(--text-muted);">桁目</span>
+                    </div>
+                </div>
+
+                <!-- 現サイクル内の最深記録 -->
+                <div class="kpi-card" style="margin-bottom:10px;">
+                    <div class="kpi-label">
+                        <span>Current Cycle Deepest // 現サイクル内最深</span>
+                        <i class="fas fa-water" style="color:var(--accent-cyan);"></i>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-top:4px;">
+                        <span class="mono" style="font-weight:800;color:var(--accent-cyan);">
+                            "<span id="val-cycle-deepest-find" th:text="${CYCLE_DEEPEST_FIND != '' ? CYCLE_DEEPEST_FIND : '-'}">-</span>"
+                        </span>
+                        <span class="mono" style="font-size:0.82rem;color:var(--text-main);">
+                            @ <span id="val-cycle-deepest-pos" th:text="${CYCLE_DEEPEST_FIND_POSITION != '' ? CYCLE_DEEPEST_FIND_POSITION : '-'}">-</span> 桁目
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 保有円周率データ総量に対する深さメーター -->
+                <div class="meter-box" style="margin-bottom:0;">
+                    <div class="meter-header" style="font-size:0.73rem;">
+                        <span style="color:var(--text-muted);">保有πデータ (<span th:text="${YCD_MAX_DEPTH}"></span>桁) に対する最深到達率</span>
+                        <span id="val-deepest-pi-pct" class="mono" style="font-weight:700;color:#fbbf24;"
+                              th:text="${DEEPEST_VS_PI_PCT} + '%'">0.00%</span>
+                    </div>
+                    <div class="meter-track" style="height:8px;">
+                        <div id="bar-deepest-pi" class="meter-fill"
+                             style="background:linear-gradient(90deg,#f59e0b,#ef4444);"
+                             th:style="'background:linear-gradient(90deg,#f59e0b,#ef4444);width:' + ${DEEPEST_VS_PI_PCT} + '%;'"></div>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- ====== SECTION 3: 2段階探索パイプライン & 並列ワーカー・スキャンレーダー ====== -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <i class="fas fa-microchip"></i>
+                    <span>Two-Stage Parallel Search Engine // 2段階探索パイプライン＆スキャンレーダー</span>
+                </h2>
+                <span id="val-phase-title" class="panel-subtitle mono" style="color:var(--accent-cyan);font-weight:700;"
+                      th:text="${STAGE_PHASE_TITLE}">STAGE 1</span>
+            </div>
+
+            <!-- 3ステップ・パイプラインインジケータ -->
+            <div class="pipeline-steps">
+                <div id="step-card-pilot" class="step-card"
+                     th:classappend="${STAGE_PHASE_CODE == 'PILOT'} ? ' is-current' : (${STAGE_PHASE_CODE == 'BATCH' or STAGE_PHASE_CODE == 'STAGE2'} ? ' is-done' : '')">
+                    <div class="step-head">
+                        <span>PHASE 1-A // PILOT</span>
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <div class="step-title">パイロット基準深さ測定</div>
+                    <div class="step-desc">
+                        基準深さ: <strong id="val-stage1-depth" class="mono" style="color:var(--text-main);"
+                                       th:text="${STAGE1_DEPTH != null ? STAGE1_DEPTH : '算定中...'}">算定中...</strong> 桁
+                    </div>
+                </div>
+
+                <div id="step-card-batch" class="step-card"
+                     th:classappend="${STAGE_PHASE_CODE == 'BATCH'} ? ' is-current' : (${STAGE_PHASE_CODE == 'STAGE2'} ? ' is-done' : '')">
+                    <div class="step-head">
+                        <span>PHASE 1-B // BATCH FILTER</span>
+                        <i class="fas fa-filter"></i>
+                    </div>
+                    <div class="step-title">
+                        Stage 1 並列バッチ消去
+                        <span class="mono" style="color:var(--accent-cyan);">
+                            (<span id="val-stage1-batch" th:text="${STAGE1_BATCH != null ? STAGE1_BATCH : '-'}">-</span>
+                            /
+                            <span id="val-stage1-batches" th:text="${STAGE1_BATCHES != null ? STAGE1_BATCHES : '-'}">-</span>)
+                        </span>
+                    </div>
+                    <div class="step-desc">
+                        第一段階進捗: <strong id="val-stage1-progress" class="mono" style="color:#34d399;"
+                                         th:text="${STAGE1_PROGRESS != null ? STAGE1_PROGRESS : '0.00'}">0.00</strong>%
+                    </div>
+                </div>
+
+                <div id="step-card-stage2" class="step-card"
+                     th:classappend="${STAGE_PHASE_CODE == 'STAGE2'} ? ' is-current' : ''">
+                    <div class="step-head">
+                        <span>PHASE 2 // FINAL SWEEP</span>
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="step-title">Stage 2 最終確定スイープ</div>
+                    <div class="step-desc">基準深さ以降を走査し最後の1個を特定</div>
+                </div>
+            </div>
+
+            <div class="engine-grid">
+                <!-- Left: 円周率スキャン位置レーダー & スピードメーター -->
+                <div>
+                    <div class="kpi-grid-2">
+                        <div class="kpi-card">
+                            <div class="kpi-label">
+                                <span>Scan Position // 現在走査位置 (Reach Depth)</span>
+                                <i class="fas fa-broadcast-tower" style="color:var(--accent-cyan);"></i>
                             </div>
-                        </td>
-                        <td>
-                            処理時間(秒)
-                        </td>
-                    </tr>
+                            <div id="val-stage1-position" class="kpi-value is-cyan mono"
+                                 th:text="${STAGE1_POSITION != null ? STAGE1_POSITION : (CURRENT_SURVIVAL_DEPTH != '' ? CURRENT_SURVIVAL_DEPTH : '0')}">0</div>
+                            <div class="kpi-sub">円周率の先頭から現在スキャン中の桁位置</div>
+                        </div>
 
-                    <tr>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            One Discovery / sec:
-                        </td>
-                        <td align="right" style="width:0; white-space:nowrap;">
-                            <span class="has-text-weight-bold" th:text="${CURRENT_SPEED} + '/sec'">9999/sec</span>
-                        </td>
-                        <td>
-                            出現 個/秒
-                        </td>
-                    </tr>
+                        <div class="kpi-card">
+                            <div class="kpi-label">
+                                <span>Scan Speed // 走査速度</span>
+                                <i class="fas fa-tachometer-alt" style="color:#34d399;"></i>
+                            </div>
+                            <div id="val-stage1-speed-human" class="kpi-value is-emerald mono"
+                                 th:text="${STAGE1_SPEED_HUMAN}">0 桁/s</div>
+                            <div class="kpi-sub mono">
+                                <span id="val-stage1-speed-raw" th:text="${STAGE1_SPEED != null ? STAGE1_SPEED : '0'}">0</span> 桁/秒
+                            </div>
+                        </div>
+                    </div>
 
-                </table>
-                <table style="width:0; white-space:nowrap;" class="table is-narrow ">
-                    <caption><b>Now latest appearing</b><br />現在までに見つけた最遅出現</caption>
+                    <!-- Stage 1 バッチ進捗メーター -->
+                    <div class="meter-box">
+                        <div class="meter-header">
+                            <span><i class="fas fa-layer-group" style="color:var(--accent-cyan);"></i> <strong>Stage 1 Batch Progress // 第一段階総合進捗</strong></span>
+                            <span id="val-stage1-progress-bar-label" class="mono" style="font-weight:800;color:var(--accent-cyan);"
+                                  th:text="(${STAGE1_PROGRESS != null ? STAGE1_PROGRESS : '0.00'}) + '%'">0.00%</span>
+                        </div>
+                        <div class="meter-track">
+                            <div id="bar-stage1-progress" class="meter-fill"
+                                 th:style="'width:' + ${STAGE1_PROGRESS_PCT} + '%;'"></div>
+                        </div>
+                    </div>
 
-                    <tr>
-                        <td align="right">
-                            Now Deepest:<br />
-                            Appearing Position:</br>
-                        </td>
-                        <td align="right">
-                            "<span th:text="${CURRENT_DEEPEST_FIND}">9999999</span>"<br />
-                            <span th:text="${CURRENT_DEEPEST_FIND_POSITION}">9,999,999</span>
-                        </td>
-                        <td>
-                            現在候補（最深出現）<br />
-                            出現場所
-                        </td>
-                    </tr>
+                    <!-- 現フェーズのスキャン深さレーダーバー -->
+                    <div class="meter-box">
+                        <div class="meter-header">
+                            <span><i class="fas fa-satellite" style="color:var(--accent-purple);"></i> <strong>Current Scan Depth Radar // 現フェーズ走査深さインジケータ</strong></span>
+                            <span id="val-scan-radar-pct" class="mono" style="font-weight:800;color:#c084fc;"
+                                  th:text="${SCAN_RADAR_PCT} + '%'">0.00%</span>
+                        </div>
+                        <div class="meter-track" style="height:10px;">
+                            <div id="bar-scan-radar" class="meter-fill"
+                                 style="background:linear-gradient(90deg,#6366f1,#a855f7,#ec4899);"
+                                 th:style="'background:linear-gradient(90deg,#6366f1,#a855f7,#ec4899);width:' + ${SCAN_RADAR_PCT} + '%;'"></div>
+                        </div>
+                    </div>
 
-                </table>
+                    <!-- スキャン速度ゲージバー -->
+                    <div class="meter-box" style="margin-bottom:0;">
+                        <div class="meter-header" style="font-size:0.73rem;">
+                            <span style="color:var(--text-muted);"><i class="fas fa-bolt" style="color:#fbbf24;"></i> スループット・ゲージ (Log Scale: 1K &sim; 1G 桁/秒)</span>
+                            <span id="val-speed-gauge-pct" class="mono" style="color:#fbbf24;" th:text="${STAGE1_SPEED_GAUGE_PCT} + '%'">0.0%</span>
+                        </div>
+                        <div class="meter-track" style="height:8px;">
+                            <div id="bar-speed-gauge" class="meter-fill"
+                                 style="background:linear-gradient(90deg,#10b981,#f59e0b);"
+                                 th:style="'background:linear-gradient(90deg,#10b981,#f59e0b);width:' + ${STAGE1_SPEED_GAUGE_PCT} + '%;'"></div>
+                        </div>
+                    </div>
+                </div>
 
-                <details>
-                    <summary class="button is-info is-light">
-                        <i class="fas fa-arrow-down">&nbsp;<b>Show Internal progress status</b></i>
-                    </summary>
-                    <br />
-                    <br />
+                <!-- Right: 並列ワーカースレッド別・残存候補メーター -->
+                <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:0.8rem;font-weight:800;color:var(--text-main);">
+                            <i class="fas fa-server" style="color:var(--accent-cyan);"></i>
+                            Parallel Workers // スレッド別残数・消去インジケータ
+                        </span>
+                        <span id="val-workers-raw" class="mono" style="font-size:0.73rem;color:var(--text-muted);"
+                              th:text="${STAGE1_WORKERS}">[]</span>
+                    </div>
 
-                    <h2><span style="font-weight: bold; font-size: 30px;">The Current Unit</span></h2>
-                    <br />
-                    <table style="width:0; white-space:nowrap;" class="table is-narrow ">
-                        <caption><b>Progress of current search unit</b><br />現在検索実行中ユニットの進捗</caption>
+                    <div id="worker-cards-container" class="worker-list">
+                        <div th:each="w : ${WORKER_CARDS}" class="worker-card">
+                            <div class="worker-top">
+                                <span class="worker-name mono">
+                                    <i class="fas fa-cog fa-spin"></i>
+                                    <span th:text="${w.get('name')}">Worker #1</span>
+                                </span>
+                                <span class="mono" style="font-size:0.75rem;">
+                                    残り <strong style="color:var(--accent-cyan);" th:text="${w.get('remaining')}">0</strong>
+                                    / <span style="color:var(--text-muted);" th:text="${w.get('initial')}">0</span>
+                                    (<strong style="color:#34d399;" th:text="${w.get('eliminatedPct')} + '% 消去'">0% 消去</strong>)
+                                </span>
+                            </div>
+                            <div class="worker-bar-track">
+                                <div class="worker-bar-fill" th:style="'width:' + ${w.get('eliminatedPct')} + '%;'"></div>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(WORKER_CARDS)}" class="kpi-card" style="text-align:center;color:var(--text-muted);font-size:0.8rem;">
+                            現在アクティブなワーカースレッド情報はありません
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                        <tr>
-                            <td align="right">
-                                Process Rate:
-                            </td>
-                            <td align="right">
-                                <span th:text="${CURRENT_SURVIVAL_DISCOVERD_RATE}">9999999</span>%
-                            </td>
-                            <td>
-                                進捗率
-                            </td>
-                        </tr>
+        <!-- ====== SECTION 4: カレントサイクル詳細 (The Current Unit) & 直近発見ライブティッカー ====== -->
+        <section class="two-col-grid">
 
-                        <tr>
-                            <td align="right">
-                                Reach Depth:
-                            </td>
-                            <td align="right">
-                                <span th:text="${CURRENT_SURVIVAL_DEPTH}">9999999</span>
-                            </td>
-                            <td>
-                                到達深さ
-                            </td>
-                        </tr>
+            <!-- Left: The Current Unit サバイバルリスト状態 & 共通プレフィックス & 生存候補サンプル -->
+            <article class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <i class="fas fa-dna"></i>
+                        <span>The Current Unit // 現在検索実行中ユニットの進捗</span>
+                    </h2>
+                    <span class="panel-subtitle mono">
+                        Started: <span id="val-unit-start-date" th:text="${CURRENT_SURVIVAL_START_DATE}"></span>
+                        <span id="val-unit-start-time" th:text="${CURRENT_SURVIVAL_START_TIME}"></span>
+                    </span>
+                </div>
 
-                        <tr>
-                            <td align="right">
-                                Target start:<br />
-                                end:
-                            </td>
-                            <td align="right">
-                                "<span th:text="${CURRENT_SURVIVAL_START}">9999999</span>"
-                                <br />
-                                "<span th:text="${CURRENT_SURVIVAL_END}">9999999</span>"
-                            </td>
-                            <td>
-                                ここから<br />
-                                ここまで
-                            </td>
-                        </tr>
+                <!-- ユニット消去率バー -->
+                <div class="meter-box" style="margin-top:0;">
+                    <div class="meter-header">
+                        <span><strong>Unit Process Rate // 現サイクル消去率</strong></span>
+                        <span id="val-unit-rate" class="mono" style="font-size:1rem;font-weight:800;color:var(--accent-cyan);"
+                              th:text="${CURRENT_SURVIVAL_DISCOVERD_RATE} + '%'">0.0%</span>
+                    </div>
+                    <div class="meter-track">
+                        <div id="bar-unit-rate" class="meter-fill"
+                             style="background:linear-gradient(90deg,#8b5cf6,#38bdf8,#10b981);"
+                             th:style="'background:linear-gradient(90deg,#8b5cf6,#38bdf8,#10b981);width:' + ${CURRENT_SURVIVAL_DISCOVERD_PCT_STR} + '%;'"></div>
+                    </div>
+                </div>
 
-                        <tr>
-                            <td align="right">
-                                Size:
-                            </td>
-                            <td align="right">
-                                <span th:text="${CURRENT_SURVIVAL_INITIAL_COUNT}">9999999</span>
-                            </td>
-                            <td>
-                                対象数
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td align="right">
-                                Discoverd:
-                            </td>
-                            <td align="right">
-                                <span th:text="${CURRENT_SURVIVAL_DISCOVERD_COUNT}">9999999</span>
-                            </td>
-                            <td>
-                                発見数
-                            </td>
-                        </tr>
-
-
-                        <tr>
-                            <td align="right">
-                                Start Datetime:
-                            </td>
-                            <td align="right">
-                                <span th:text="${CURRENT_SURVIVAL_START_DATE}">YYYY-MM-DD</span><br />
-                                <span th:text="${CURRENT_SURVIVAL_START_TIME}">HH:mm:SS</span>
-                            </td>
-                            <td>
-                                開始日時
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td align="right">
-                                Process Time(sec):
-                            </td>
-                            <td align="right">
-                                <span th:text="${CURRENT_SURVIVAL_ELAPSED_TIME}">9999999</span>
-                            </td>
-                            <td>
-                                経過時間(秒)
-                            </td>
-                        </tr>
-                    </table>
-
-                    <table class="table is-narrow">
-                        <caption><b>The Current Unit Appearance Distribution</b><br />現在検索実行中ユニットの出現分布</caption>
-                        <thead>
-                            <th style="text-align:right;">Search Range<br />探索範囲</th>
-                            <th>Within Count<br />出現個数</th>
-                        </thead>
+                <!-- ユニット主要数値テーブル (テスト互換ラベル Discoverd / Process Rate / Reach Depth を保持) -->
+                <div class="table-scroll">
+                    <table class="telemetry-table">
                         <tbody>
-                            <tr th:each="entry : ${SURVIVAL_DISCOVERD_POS_MAP}">
-                                <td align="right" th:text="${entry.key}">999,999,999,999 - 999,999,999,999
+                            <tr>
+                                <td>Target Range (探索範囲)</td>
+                                <td class="text-right mono">
+                                    "<strong id="val-unit-start" style="color:var(--accent-cyan);" th:text="${CURRENT_SURVIVAL_START}">000</strong>"
+                                    &sim;
+                                    "<strong id="val-unit-end" style="color:var(--accent-cyan);" th:text="${CURRENT_SURVIVAL_END}">999</strong>"
                                 </td>
-                                <td th:text="${entry.value}">999,999,9999</td>
+                            </tr>
+                            <tr>
+                                <td>Size (対象数) / Discoverd (発見数)</td>
+                                <td class="text-right mono">
+                                    対象 <strong id="val-unit-size" th:text="${CURRENT_SURVIVAL_INITIAL_COUNT}">0</strong>
+                                    / 発見 <strong id="val-unit-discovered" style="color:#34d399;" th:text="${CURRENT_SURVIVAL_DISCOVERD_COUNT}">0</strong>
+                                    (残り <strong id="val-unit-remaining" style="color:#fbbf24;" th:text="${CURRENT_SURVIVAL_REMAINING_COUNT}">0</strong>)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Reach Depth (到達深さ)</td>
+                                <td class="text-right mono">
+                                    <strong id="val-unit-depth" th:text="${CURRENT_SURVIVAL_DEPTH != '' ? CURRENT_SURVIVAL_DEPTH : '0'}">0</strong> 桁目
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Unit Process Time (経過時間)</td>
+                                <td class="text-right mono">
+                                    <strong id="val-unit-elapsed-hms" th:text="${CURRENT_SURVIVAL_ELAPSED_HMS}">00h 00m 00s</strong>
+                                    (<span id="val-unit-elapsed-sec" th:text="${CURRENT_SURVIVAL_ELAPSED_TIME}">0</span> sec)
+                                </td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
 
+                <!-- Boyer-Moore 左共通プレフィックス・ロック状況 -->
+                <div class="prefix-display">
+                    <div style="font-size:0.75rem;color:var(--text-muted);width:100%;display:flex;justify-content:space-between;">
+                        <span><i class="fas fa-key" style="color:#c084fc;"></i> <strong>Boyer-Moore Common Prefix Lock // 左共通部分シーク</strong></span>
+                        <span class="mono"><span id="val-prefix-len" th:text="${CURRENT_COMMON_PREFIX_LEN}">0</span> / <span th:text="${CURRENT_DIGITS}">0</span> 桁ロック中</span>
+                    </div>
+                    <span id="val-common-prefix" class="prefix-badge mono"
+                          th:text="${CURRENT_COMMON_PREFIX != '' ? CURRENT_COMMON_PREFIX : '(共通部分なし / 全位置走査)'}">(共通部分なし)</span>
+                    <span style="font-size:0.72rem;color:var(--text-muted);">
+                        残り候補が絞られるほど共通部分が伸び、ボイヤー・ムーア法によるジャンプ距離が加速します
+                    </span>
+                </div>
 
-                </details>
+                <!-- 未発見サバイバー候補サンプル -->
+                <div style="margin-top:10px;">
+                    <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);">
+                        <i class="fas fa-user-shield" style="color:var(--accent-cyan);"></i>
+                        Surviving Candidates Sample // 現在まだ見つかっていない生存候補サンプル
+                    </div>
+                    <div id="survivor-samples-box" class="survivor-chips mono">
+                        <span th:each="s : ${SURVIVOR_HEAD_SAMPLES}" class="survivor-chip" th:text="'&quot;' + ${s} + '&quot;'">"000"</span>
+                        <span th:if="${!#lists.isEmpty(SURVIVOR_TAIL_SAMPLES)}" style="color:var(--text-muted);align-self:center;">...</span>
+                        <span th:each="s : ${SURVIVOR_TAIL_SAMPLES}" class="survivor-chip" th:text="'&quot;' + ${s} + '&quot;'">"999"</span>
+                        <span th:if="${#lists.isEmpty(SURVIVOR_HEAD_SAMPLES)}" style="font-size:0.75rem;color:var(--text-dim);">
+                            (現在生存中の候補はありません)
+                        </span>
+                    </div>
+                </div>
+            </article>
 
+            <!-- Right: 直近発見リアルタイム・ティッカー -->
+            <article class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <i class="fas fa-stream"></i>
+                        <span>Live Discovery Feed // 直近発見リアルタイム・ティッカー</span>
+                    </h2>
+                    <span class="panel-subtitle">最新の発見（消去）ログ</span>
+                </div>
+
+                <div id="recent-discoveries-box" class="ticker-list">
+                    <div th:each="item : ${RECENT_DISCOVERIES}" class="ticker-item">
+                        <span class="ticker-target mono" th:text="'&quot;' + ${item.get('target')} + '&quot;'">"000"</span>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;font-size:0.73rem;margin-bottom:3px;">
+                                <span class="mono" style="color:var(--text-main);">
+                                    <strong th:text="${item.get('findPos')}">0</strong> 桁目で発見
+                                </span>
+                                <span class="mono" style="color:var(--text-muted);" th:text="${item.get('time')}">00:00:00</span>
+                            </div>
+                            <div class="ticker-bar-wrap">
+                                <div class="ticker-bar-fill" th:style="'width:' + ${item.get('barPct')} + '%;'"></div>
+                            </div>
+                        </div>
+                        <i class="fas fa-check" style="color:#34d399;"></i>
+                    </div>
+                    <div th:if="${#lists.isEmpty(RECENT_DISCOVERIES)}"
+                         style="text-align:center;padding:32px 12px;color:var(--text-muted);font-size:0.82rem;">
+                        <i class="fas fa-satellite-dish fa-2x" style="margin-bottom:8px;color:var(--text-dim);display:block;"></i>
+                        現在サイクルの直近発見データを待機中です...
+                    </div>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- ====== SECTION 5: 現在ユニットの出現分布ヒストグラム (The Current Unit Appearance Distribution) ====== -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>The Current Unit Appearance Distribution // 現在検索実行中ユニットの出現分布</span>
+                </h2>
+                <span class="panel-subtitle">円周率の深さ区間（10分割）ごとの候補発見数ヒストグラム</span>
             </div>
 
-
-
-        </article>
-
-
-        <section class="section">
-            <div class="container">
-                <div class="columns is-centered">
-                    <div class="column is-half">
-
-                        <div class="content  is-centered">
-
-                            <h2>Completed Result</h2>
-                            探索結果
-                            <table bclass="table is-narrow">
-                                <thead>
-                                    <th>Target<br />Digits<br />桁</th>
-                                    <th>Last<br />Appeared<br />最遅出現</th>
-                                    <th>Appeared<br />Position<br />出現桁</th>
-                                    <th>Process<br />Time(Sec)<br />処理時間(秒)</th>
-                                </thead>
-
-                                <tbody>
-                                    <tr th:each="map : ${DATA}">
-                                        <td th:text="${map.get('digits')}">999</td>
-                                        <td align="right" th:text="'&quot;'+ ${map.get('Appearing')}+'&quot;'">999999
-                                        </td>
-                                        <td th:text="${map.get('Depth')}">999,999,999</td>
-                                        <td th:text="${map.get('ProcessTimeSec')}">999,999,999</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                        </div>
+            <div id="distribution-histogram" class="histogram-list">
+                <div th:each="bar : ${DISTRIBUTION_BARS}" class="hist-row">
+                    <div class="hist-range mono" th:text="${bar.get('range')}">1 - 100</div>
+                    <div class="hist-bar-track">
+                        <div class="hist-bar-fill" th:style="'width:' + ${bar.get('barPct')} + '%;'"></div>
+                    </div>
+                    <div class="hist-count mono">
+                        <span th:text="${bar.get('count')}">0</span>
+                        <span class="hist-share" th:text="'(' + ${bar.get('sharePct')} + '%)'">(0.0%)</span>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- ====== SECTION 6: 完了した桁の探索結果 & 対数スケール深さチャート (Completed Result) ====== -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <i class="fas fa-medal"></i>
+                    <span>Completed Result // 完了した桁の探索結果＆最遅出現位置（Log10 スケール）</span>
+                </h2>
+                <span class="panel-subtitle">桁数が1つ増えるごとに最遅出現位置が約10倍ずつ深くなります</span>
+            </div>
 
-
-        <section class="section">
-            <div class="container">
-                <div class="columns is-centered">
-                    <div class="column is-half">
-                        <div class="content">
-                            <p style="font-size: smaller;">
-                                I have pi data with
-                                <span class="has-text-weight-bold" th:text="${YCD_MAX_DEPTH}">999,999,999,999</span>
-                                digits.
-                            </p>
-                            <details>
-                                <summary class="button  is-info is-light">
-                                    <i class="fas fa-arrow-down">&nbsp; Show Using Ycd File List</i>
-                                </summary>
-                                <h3>Using YCD(Pi) File List</h3>
-                                <table class="table is-bordered">
-                                    <thead>
-                                        <th>File<br />Index</th>
-                                        <th>First Digit</th>
-                                        <th>End Digit</th>
-                                        <th>File<br /> Size</th>
-                                    </thead>
-
-                                    <tbody>
-                                        <tr th:each="files : ${YCD_FILES_INFO}">
-                                            <td style="font-size: smaller;" align="right"
-                                                th:text="${files.get('BLOCK_INDEX')}">
-                                                00000</td>
-                                            <td style="font-size: smaller;" align="right"
-                                                th:text="${files.get('FIRST_DIGIT')}">
-                                                00000000000</td>
-                                            <td style="font-size: smaller;" align="right"
-                                                th:text="${files.get('END_DIGIT')}">
-                                                999999999</td>
-                                            <td style="font-size: smaller;" align="right"
-                                                th:text="${files.get('PRINT_FILE_SIZE')}">999999999
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                            </details>
-
-
-
-                        </div>
-                    </div>
-                </div>
+            <div class="table-scroll">
+                <table class="telemetry-table">
+                    <thead>
+                        <tr>
+                            <th>Target Digits (桁)</th>
+                            <th>Last Appeared (最遅出現)</th>
+                            <th class="text-right">Appeared Position (出現桁)</th>
+                            <th>Log10 Depth Scale (対数深さバー)</th>
+                            <th class="text-right">Process Time(Sec) / 処理時間</th>
+                        </tr>
+                    </thead>
+                    <tbody id="completed-results-tbody">
+                        <tr th:each="map : ${DATA}">
+                            <td class="mono" style="font-weight:800;color:var(--accent-cyan);">
+                                <span th:text="${map.get('digits')}">1</span> 桁
+                            </td>
+                            <td class="mono" style="font-weight:800;color:#fef08a;"
+                                th:text="'&quot;' + ${map.get('Appearing')} + '&quot;'">"0"</td>
+                            <td class="text-right mono" style="font-weight:700;"
+                                th:text="${map.get('Depth')}">32</td>
+                            <td style="min-width:160px;">
+                                <div class="hist-bar-track" style="height:12px;">
+                                    <div class="hist-bar-fill"
+                                         style="background:linear-gradient(90deg,#10b981,#38bdf8,#f59e0b);"
+                                         th:style="'background:linear-gradient(90deg,#10b981,#38bdf8,#f59e0b);width:' + ${map.get('LogPct')} + '%;'"></div>
+                                </div>
+                            </td>
+                            <td class="text-right mono">
+                                <span th:text="${map.get('ProcessTimeSec')}">0</span>s
+                                <span style="color:var(--text-muted);font-size:0.72rem;"
+                                      th:text="'(' + ${map.get('FormattedTime')} + ')'">(00h 00m 00s)</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
+        <!-- ====== SECTION 7: 使用中の円周率データファイル一覧 (Using YCD File List) ====== -->
+        <section class="panel">
+            <div class="panel-header" style="margin-bottom:4px;border-bottom:none;padding-bottom:0;">
+                <h2 class="panel-title">
+                    <i class="fas fa-database"></i>
+                    <span>Pi Data Storage // 円周率データファイル（YCD）スキャン状況</span>
+                </h2>
+                <span class="panel-subtitle">
+                    I have pi data with <strong class="mono" style="color:var(--accent-cyan);" th:text="${YCD_MAX_DEPTH}">0</strong> digits
+                    (<span th:text="${YCD_FILES_COUNT}">0</span> files)
+                </span>
+            </div>
 
+            <details class="telemetry-details">
+                <summary>
+                    <span><i class="fas fa-folder-open"></i>&nbsp; Show Using Ycd File List // YCDファイル一覧と走査位置を表示</span>
+                    <span class="mono" style="font-size:0.75rem;color:var(--text-muted);">クリックして展開</span>
+                </summary>
+                <div class="table-scroll" style="margin-top:10px;">
+                    <table class="telemetry-table">
+                        <thead>
+                            <tr>
+                                <th>File Index</th>
+                                <th class="text-right">First Digit</th>
+                                <th class="text-right">End Digit</th>
+                                <th class="text-right">File Size</th>
+                                <th>Scan Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ycd-files-tbody">
+                            <tr th:each="files : ${YCD_FILES_INFO}">
+                                <td class="mono" th:text="${files.get('BLOCK_INDEX')}">0</td>
+                                <td class="text-right mono" th:text="${files.get('FIRST_DIGIT')}">1</td>
+                                <td class="text-right mono" th:text="${files.get('END_DIGIT')}">100,000,000,000</td>
+                                <td class="text-right mono" th:text="${files.get('PRINT_FILE_SIZE')}">41.4GB</td>
+                                <td style="min-width:130px;">
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <span class="mono" style="font-size:0.7rem;font-weight:700;"
+                                              th:style="${files.get('SCAN_STATUS') == 'DONE'} ? 'color:#34d399;font-size:0.7rem;font-weight:700;' : (${files.get('SCAN_STATUS') == 'ACTIVE'} ? 'color:#38bdf8;font-size:0.7rem;font-weight:700;' : 'color:#64748b;font-size:0.7rem;font-weight:700;')"
+                                              th:text="${files.get('SCAN_STATUS')}">WAIT</span>
+                                        <div class="hist-bar-track" style="height:7px;flex:1;">
+                                            <div class="hist-bar-fill"
+                                                 th:style="'width:' + ${files.get('SCAN_PCT')} + '%;'"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        </section>
 
-    </div>
+    </main>
 
-
-    <!-- フッター -->
-    <footer class="footer has-background-primary-dark has-text-white">
-
-        <p class="has-text-centered">
-            <a class="button is-black" href="https://github.com/genhirano/Last-Appearance-in-PI" target="_blank">
-                project github : <span class="icon"><i class="fab fa-github"></i></span>
+    <!-- ====== FOOTER ====== -->
+    <footer class="footer-bar">
+        <div class="footer-links">
+            <a class="footer-btn" href="https://github.com/genhirano/Last-Appearance-in-PI" target="_blank" rel="noopener">
+                <i class="fab fa-github"></i> Project GitHub
             </a>
-        </p>
-        <br />
-
-        <p class="has-text-centered">
-            Copyright © 2022-2024 genhirano
-        </p>
-        <p class="has-text-centered">
-            All Rights Reserved
-        </p>
-        <p align="center">
-            <a class="button is-link" href="https://www.facebook.com/genhirano" target="_blank">
-                contact : <span class="icon"><i class="fab fa-facebook"></i></span>
+            <a class="footer-btn" href="https://www.facebook.com/genhirano" target="_blank" rel="noopener">
+                <i class="fab fa-facebook"></i> Contact (Facebook)
             </a>
-            <a class="button is-black" href="https://github.com/genhirano" target="_blank">
-                contact : <span class="icon"><i class="fab fa-github"></i></span>
+            <a class="footer-btn" href="https://github.com/genhirano" target="_blank" rel="noopener">
+                <i class="fab fa-github"></i> @genhirano
             </a>
-        </p>
+        </div>
+        <div>Copyright &copy; 2022-2026 genhirano. All Rights Reserved.</div>
     </footer>
 
+    <!-- ====== LIVE TELEMETRY AUTO-UPDATER SCRIPT ====== -->
+    <script>
+        (function () {
+            var toggleEl = document.getElementById('auto-refresh-toggle');
+            var selectEl = document.getElementById('refresh-interval-select');
+            var btnEl = document.getElementById('manual-refresh-btn');
+            var timerId = null;
+            var useStaticFallback = false;
 
+            function setText(id, val) {
+                var el = document.getElementById(id);
+                if (el && val !== undefined && val !== null) {
+                    el.textContent = String(val);
+                }
+            }
 
+            function setWidth(id, pct) {
+                var el = document.getElementById(id);
+                if (el && pct !== undefined && pct !== null) {
+                    el.style.width = pct + '%';
+                }
+            }
 
+            function escapeHtml(s) {
+                return String(s === undefined || s === null ? '' : s)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function updateFromJson(d) {
+                if (!d) return;
+
+                setText('val-server-time', d.SERVER_TIME);
+                setText('val-ycd-max-depth', d.YCD_MAX_DEPTH);
+                setText('val-current-digits', d.CURRENT_DIGITS);
+                setText('val-current-digits-inline', d.CURRENT_DIGITS);
+                setText('val-gauge-pct', d.CURRENT_PROGRESS_RATE + '%');
+                setText('val-all-count', d.CURRENT_ALL_COUNT);
+                setText('val-digits-min', d.CURRENT_DIGITS_MIN);
+                setText('val-digits-max', d.CURRENT_DIGITS_MAX);
+
+                // Status pill
+                var pill = document.getElementById('live-status-pill');
+                if (pill) {
+                    pill.className = 'status-pill' + (d.SEARCH_STOPPED ? ' is-stopped' : (d.SEARCH_STOPPING ? ' is-stopping' : ''));
+                }
+                setText('live-status-text', d.SEARCH_STOPPED ? 'HALTED (停止)' : (d.SEARCH_STOPPING ? 'STOPPING (停止中)' : 'LIVE SCANNING'));
+
+                // SVG Rings
+                var outerRing = document.getElementById('svg-ring-outer');
+                if (outerRing) {
+                    var outerPct = Math.max(0, Math.min(100, Number(d.CURRENT_PROGRESS_RATE) || 0));
+                    outerRing.setAttribute('stroke-dashoffset', String(527.79 - (527.79 * outerPct / 100.0)));
+                }
+                var innerRing = document.getElementById('svg-ring-inner');
+                if (innerRing) {
+                    var innerPct = Math.max(0, Math.min(100, Number(d.CURRENT_SURVIVAL_DISCOVERD_RATE) || 0));
+                    innerRing.setAttribute('stroke-dashoffset', String(414.69 - (414.69 * innerPct / 100.0)));
+                }
+
+                // Overall counters
+                setText('val-cycle-num', d.CYCLE_CURRENT_NUMBER);
+                setText('val-cycle-total', d.CYCLE_TOTAL_COUNT);
+                setText('val-discovered-count', d.CURRENT_DISCOVERD_COUNT);
+                setText('val-undiscovered-count', d.CURRENT_UNDISCOVERD_COUNT);
+                setText('val-progress-rate', d.CURRENT_PROGRESS_RATE + '%');
+                setWidth('bar-overall-progress', d.CURRENT_PROGRESS_PCT_STR);
+
+                setText('val-map-cur-start', d.CURRENT_SURVIVAL_START);
+                setText('val-map-cur-end', d.CURRENT_SURVIVAL_END);
+                setWidth('bar-space-done', d.CYCLE_RANGE_START_PCT);
+                var activeMap = document.getElementById('bar-space-active');
+                if (activeMap) {
+                    activeMap.style.left = d.CYCLE_RANGE_START_PCT + '%';
+                    activeMap.style.width = d.CYCLE_RANGE_WIDTH_PCT + '%';
+                }
+
+                setText('val-elapsed-hms', d.CURRENT_ELAPSED_HMS);
+                setText('val-elapsed-sec', d.CURRENT_ELAPSED_TIME);
+                setText('val-current-speed', d.CURRENT_SPEED + '/sec');
+                setText('val-eta-text', d.CURRENT_ETA_TEXT);
+
+                // Champion
+                setText('val-deepest-badge', d.DEEPEST_SOURCE === 'LIVE_CYCLE' ? 'LIVE NEW RECORD (現サイクルで更新中!)' : 'PROVISIONAL CHAMPION (暫定最遅候補)');
+                setText('val-deepest-find', d.CURRENT_DEEPEST_FIND || '-');
+                setText('val-deepest-pos', d.CURRENT_DEEPEST_FIND_POSITION || '-');
+                setText('val-cycle-deepest-find', d.CYCLE_DEEPEST_FIND || '-');
+                setText('val-cycle-deepest-pos', d.CYCLE_DEEPEST_FIND_POSITION || '-');
+                setText('val-deepest-pi-pct', d.DEEPEST_VS_PI_PCT + '%');
+                setWidth('bar-deepest-pi', d.DEEPEST_VS_PI_PCT);
+
+                // Stage 1 / 2 Pipeline
+                setText('val-phase-title', d.STAGE_PHASE_TITLE);
+                setText('val-stage1-depth', d.STAGE1_DEPTH || '算定中...');
+                setText('val-stage1-batch', d.STAGE1_BATCH || '-');
+                setText('val-stage1-batches', d.STAGE1_BATCHES || '-');
+                setText('val-stage1-progress', d.STAGE1_PROGRESS || '0.00');
+                setText('val-stage1-progress-bar-label', (d.STAGE1_PROGRESS || '0.00') + '%');
+                setWidth('bar-stage1-progress', d.STAGE1_PROGRESS_PCT);
+
+                var cPilot = document.getElementById('step-card-pilot');
+                var cBatch = document.getElementById('step-card-batch');
+                var cStage2 = document.getElementById('step-card-stage2');
+                if (cPilot && cBatch && cStage2) {
+                    cPilot.className = 'step-card' + (d.STAGE_PHASE_CODE === 'PILOT' ? ' is-current' : ((d.STAGE_PHASE_CODE === 'BATCH' || d.STAGE_PHASE_CODE === 'STAGE2') ? ' is-done' : ''));
+                    cBatch.className = 'step-card' + (d.STAGE_PHASE_CODE === 'BATCH' ? ' is-current' : (d.STAGE_PHASE_CODE === 'STAGE2' ? ' is-done' : ''));
+                    cStage2.className = 'step-card' + (d.STAGE_PHASE_CODE === 'STAGE2' ? ' is-current' : '');
+                }
+
+                setText('val-stage1-position', d.STAGE1_POSITION || d.CURRENT_SURVIVAL_DEPTH || '0');
+                setText('val-stage1-speed-human', d.STAGE1_SPEED_HUMAN);
+                setText('val-stage1-speed-raw', d.STAGE1_SPEED || '0');
+                setText('val-scan-radar-pct', d.SCAN_RADAR_PCT + '%');
+                setWidth('bar-scan-radar', d.SCAN_RADAR_PCT);
+                setText('val-speed-gauge-pct', d.STAGE1_SPEED_GAUGE_PCT + '%');
+                setWidth('bar-speed-gauge', d.STAGE1_SPEED_GAUGE_PCT);
+
+                // Workers
+                if (Array.isArray(d.WORKER_CARDS)) {
+                    setText('val-workers-raw', JSON.stringify(d.STAGE1_WORKERS || []));
+                    var wBox = document.getElementById('worker-cards-container');
+                    if (wBox) {
+                        if (d.WORKER_CARDS.length === 0) {
+                            wBox.innerHTML = '<div class="kpi-card" style="text-align:center;color:var(--text-muted);font-size:0.8rem;">現在アクティブなワーカースレッド情報はありません</div>';
+                        } else {
+                            var wHtml = '';
+                            for (var i = 0; i < d.WORKER_CARDS.length; i++) {
+                                var w = d.WORKER_CARDS[i];
+                                wHtml += '<div class="worker-card">' +
+                                    '<div class="worker-top">' +
+                                    '<span class="worker-name mono"><i class="fas fa-cog fa-spin"></i> <span>' + escapeHtml(w.name) + '</span></span>' +
+                                    '<span class="mono" style="font-size:0.75rem;">残り <strong style="color:var(--accent-cyan);">' + escapeHtml(w.remaining) + '</strong> / <span style="color:var(--text-muted);">' + escapeHtml(w.initial) + '</span> (<strong style="color:#34d399;">' + escapeHtml(w.eliminatedPct) + '% 消去</strong>)</span>' +
+                                    '</div>' +
+                                    '<div class="worker-bar-track"><div class="worker-bar-fill" style="width:' + escapeHtml(w.eliminatedPct) + '%;"></div></div>' +
+                                    '</div>';
+                            }
+                            wBox.innerHTML = wHtml;
+                        }
+                    }
+                }
+
+                // Unit details
+                setText('val-unit-start-date', d.CURRENT_SURVIVAL_START_DATE);
+                setText('val-unit-start-time', d.CURRENT_SURVIVAL_START_TIME);
+                setText('val-unit-rate', d.CURRENT_SURVIVAL_DISCOVERD_RATE + '%');
+                setWidth('bar-unit-rate', d.CURRENT_SURVIVAL_DISCOVERD_PCT_STR);
+                setText('val-unit-start', d.CURRENT_SURVIVAL_START);
+                setText('val-unit-end', d.CURRENT_SURVIVAL_END);
+                setText('val-unit-size', d.CURRENT_SURVIVAL_INITIAL_COUNT);
+                setText('val-unit-discovered', d.CURRENT_SURVIVAL_DISCOVERD_COUNT);
+                setText('val-unit-remaining', d.CURRENT_SURVIVAL_REMAINING_COUNT);
+                setText('val-unit-depth', d.CURRENT_SURVIVAL_DEPTH || '0');
+                setText('val-unit-elapsed-hms', d.CURRENT_SURVIVAL_ELAPSED_HMS);
+                setText('val-unit-elapsed-sec', d.CURRENT_SURVIVAL_ELAPSED_TIME);
+                setText('val-prefix-len', d.CURRENT_COMMON_PREFIX_LEN);
+                setText('val-common-prefix', d.CURRENT_COMMON_PREFIX || '(共通部分なし / 全位置走査)');
+
+                // Survivor samples
+                var sBox = document.getElementById('survivor-samples-box');
+                if (sBox && Array.isArray(d.SURVIVOR_HEAD_SAMPLES)) {
+                    var sHtml = '';
+                    for (var h = 0; h < d.SURVIVOR_HEAD_SAMPLES.length; h++) {
+                        sHtml += '<span class="survivor-chip">&quot;' + escapeHtml(d.SURVIVOR_HEAD_SAMPLES[h]) + '&quot;</span>';
+                    }
+                    if (Array.isArray(d.SURVIVOR_TAIL_SAMPLES) && d.SURVIVOR_TAIL_SAMPLES.length > 0) {
+                        sHtml += '<span style="color:var(--text-muted);align-self:center;">...</span>';
+                        for (var t = 0; t < d.SURVIVOR_TAIL_SAMPLES.length; t++) {
+                            sHtml += '<span class="survivor-chip">&quot;' + escapeHtml(d.SURVIVOR_TAIL_SAMPLES[t]) + '&quot;</span>';
+                        }
+                    }
+                    if (!sHtml) {
+                        sHtml = '<span style="font-size:0.75rem;color:var(--text-dim);">(現在生存中の候補はありません)</span>';
+                    }
+                    sBox.innerHTML = sHtml;
+                }
+
+                // Recent discoveries ticker
+                var rBox = document.getElementById('recent-discoveries-box');
+                if (rBox && Array.isArray(d.RECENT_DISCOVERIES)) {
+                    if (d.RECENT_DISCOVERIES.length === 0) {
+                        rBox.innerHTML = '<div style="text-align:center;padding:32px 12px;color:var(--text-muted);font-size:0.82rem;">現在サイクルの直近発見データを待機中です...</div>';
+                    } else {
+                        var rHtml = '';
+                        for (var r = 0; r < d.RECENT_DISCOVERIES.length; r++) {
+                            var item = d.RECENT_DISCOVERIES[r];
+                            rHtml += '<div class="ticker-item">' +
+                                '<span class="ticker-target mono">&quot;' + escapeHtml(item.target) + '&quot;</span>' +
+                                '<div>' +
+                                '<div style="display:flex;justify-content:space-between;font-size:0.73rem;margin-bottom:3px;">' +
+                                '<span class="mono" style="color:var(--text-main);"><strong>' + escapeHtml(item.findPos) + '</strong> 桁目で発見</span>' +
+                                '<span class="mono" style="color:var(--text-muted);">' + escapeHtml(item.time) + '</span>' +
+                                '</div>' +
+                                '<div class="ticker-bar-wrap"><div class="ticker-bar-fill" style="width:' + escapeHtml(item.barPct) + '%;"></div></div>' +
+                                '</div>' +
+                                '<i class="fas fa-check" style="color:#34d399;"></i>' +
+                                '</div>';
+                        }
+                        rBox.innerHTML = rHtml;
+                    }
+                }
+
+                // Distribution histogram
+                var distBox = document.getElementById('distribution-histogram');
+                if (distBox && Array.isArray(d.DISTRIBUTION_BARS)) {
+                    var distHtml = '';
+                    for (var b = 0; b < d.DISTRIBUTION_BARS.length; b++) {
+                        var bar = d.DISTRIBUTION_BARS[b];
+                        distHtml += '<div class="hist-row">' +
+                            '<div class="hist-range mono">' + escapeHtml(bar.range) + '</div>' +
+                            '<div class="hist-bar-track"><div class="hist-bar-fill" style="width:' + escapeHtml(bar.barPct) + '%;"></div></div>' +
+                            '<div class="hist-count mono"><span>' + escapeHtml(bar.count) + '</span><span class="hist-share">(' + escapeHtml(bar.sharePct) + '%)</span></div>' +
+                            '</div>';
+                    }
+                    distBox.innerHTML = distHtml;
+                }
+            }
+
+            function pollStaticHtmlFallback() {
+                fetch(window.location.href, { cache: 'no-store' })
+                    .then(function (res) { return res.ok ? res.text() : null; })
+                    .then(function (html) {
+                        if (!html) return;
+                        var parser = new DOMParser();
+                        var doc = parser.parseFromString(html, 'text/html');
+                        var newMain = doc.getElementById('telemetry-dashboard');
+                        var curMain = document.getElementById('telemetry-dashboard');
+                        if (newMain && curMain) {
+                            curMain.innerHTML = newMain.innerHTML;
+                        }
+                        var newTime = doc.getElementById('val-server-time');
+                        if (newTime) {
+                            setText('val-server-time', newTime.textContent);
+                        }
+                    })
+                    .catch(function () {});
+            }
+
+            function pollTelemetry() {
+                if (useStaticFallback) {
+                    pollStaticHtmlFallback();
+                    return;
+                }
+                fetch('/api/status', { cache: 'no-store' })
+                    .then(function (res) {
+                        if (!res.ok) {
+                            useStaticFallback = true;
+                            pollStaticHtmlFallback();
+                            return null;
+                        }
+                        return res.json();
+                    })
+                    .then(function (data) {
+                        if (data) updateFromJson(data);
+                    })
+                    .catch(function () {
+                        useStaticFallback = true;
+                        pollStaticHtmlFallback();
+                    });
+            }
+
+            function scheduleTimer() {
+                if (timerId) {
+                    clearInterval(timerId);
+                    timerId = null;
+                }
+                if (toggleEl && toggleEl.checked) {
+                    var ms = Number(selectEl ? selectEl.value : 2000) || 2000;
+                    timerId = setInterval(pollTelemetry, ms);
+                }
+            }
+
+            if (toggleEl) toggleEl.addEventListener('change', scheduleTimer);
+            if (selectEl) selectEl.addEventListener('change', scheduleTimer);
+            if (btnEl) btnEl.addEventListener('click', pollTelemetry);
+
+            scheduleTimer();
+        })();
+    </script>
 </body>
-
 
 </html>

@@ -122,6 +122,14 @@ public class WebIntegrationTest {
         assertTrue(res.body.contains("1,369,560"), "5桁の最遅出現位置 1,369,560 が結果表に表示されること");
         assertTrue(res.body.contains("14,118,307"), "6桁の最遅出現位置 14,118,307 が結果表に表示されること");
 
+        // 2-b. リアルタイム更新用 JSON API (/api/status) が進捗テレメトリを返し、STOP_TOKEN を漏洩しない
+        Response apiRes = get("/api/status");
+        assertEquals(200, apiRes.code);
+        assertTrue(apiRes.body.contains("\"CURRENT_DIGITS\":7"), "JSON API に現在探索桁が含まれること");
+        assertTrue(apiRes.body.contains("\"DISTRIBUTION_BARS\":"), "JSON API に出現分布グラフ情報が含まれること");
+        assertTrue(apiRes.body.contains("\"DIGIT_ROADMAP\":"), "JSON API に18桁ロードマップが含まれること");
+        assertFalse(apiRes.body.contains("\"STOP_TOKEN\""), "JSON API にはCSRFトークンを含めないこと");
+
         // 3. 保存ファイルの内容が OEIS と一致する
         assertEquals("0,9,0,32", firstFields(out.resolve("001.txt"), 4));
         assertEquals("00,99,68,605", firstFields(out.resolve("002.txt"), 4));

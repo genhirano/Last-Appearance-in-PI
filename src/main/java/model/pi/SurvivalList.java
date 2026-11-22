@@ -103,6 +103,10 @@ public class SurvivalList extends AbstractList<String> implements RandomAccess {
     /** 直近の発見詳細（古いものから捨てる） */
     private final ArrayDeque<DiscoverdInfo> recentDiscovered = new ArrayDeque<>();
 
+    /** このリスト内で現在までに発見された最も深い対象と位置 */
+    private String deepestTarget = "";
+    private long deepestPos = -1L;
+
     /**
      * コンストラクタ.
      *
@@ -324,6 +328,47 @@ public class SurvivalList extends AbstractList<String> implements RandomAccess {
     }
 
     /**
+     * このリスト内で現在までに発見された最も深い対象文字列を返す.
+     *
+     * @return 最深対象文字列（未発見時は空文字）
+     */
+    public synchronized String getDeepestTarget() {
+        return this.deepestTarget;
+    }
+
+    /**
+     * このリスト内で現在までに発見された最も深い位置を返す.
+     *
+     * @return 最深位置（未発見時は -1）
+     */
+    public synchronized long getDeepestPos() {
+        return this.deepestPos;
+    }
+
+    /**
+     * 現在生存している先頭および末尾の要素サンプルを安全に取得する.
+     *
+     * @param headCount 先頭から取得する最大件数
+     * @param tailCount 末尾から取得する最大件数
+     * @return 先頭サンプルと末尾サンプルの2要素配列（[0]=先頭リスト, [1]=末尾リスト）
+     */
+    @SuppressWarnings("unchecked")
+    public synchronized java.util.List<String>[] getSurvivorSamples(int headCount, int tailCount) {
+        ArrayList<String> head = new ArrayList<>();
+        ArrayList<String> tail = new ArrayList<>();
+        int n = this.aliveCount;
+        int h = Math.min(Math.max(0, headCount), n);
+        for (int i = 0; i < h; i++) {
+            head.add(this.get(i));
+        }
+        int tStart = Math.max(h, n - Math.max(0, tailCount));
+        for (int i = tStart; i < n; i++) {
+            tail.add(this.get(i));
+        }
+        return new java.util.List[]{head, tail};
+    }
+
+    /**
      * 保持中の要素文字列を左からみて全てに共通する部分を返す.
      *
      * 例：「000000」「000001」「000002」の場合、左共通部分の「00000」を返す
@@ -367,7 +412,12 @@ public class SurvivalList extends AbstractList<String> implements RandomAccess {
         discoveredPos[discoveredCount++] = findPos;
 
         // 詳細は直近分のみ保持
-        recentDiscovered.addLast(new DiscoverdInfo(format(startValue + slot), findPos, ZonedDateTime.now()));
+        String targetStr = format(startValue + slot);
+        if (findPos != null && findPos > deepestPos) {
+            deepestPos = findPos;
+            deepestTarget = targetStr;
+        }
+        recentDiscovered.addLast(new DiscoverdInfo(targetStr, findPos, ZonedDateTime.now()));
         if (RECENT_DISCOVERED_CAPACITY < recentDiscovered.size()) {
             recentDiscovered.removeFirst();
         }

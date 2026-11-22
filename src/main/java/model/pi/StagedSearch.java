@@ -60,10 +60,12 @@ public final class StagedSearch {
             checkStop();
             List<SurvivalList> pilot = groups(partition, length, 0);
             System.out.println("  -> Stage 1: パイロット測定中...");
+            StoreController.survivalProgressMap.put("STAGE1_PHASE", "PILOT");
+            StoreController.survivalProgressMap.put("STAGE1_BATCHES", partition.batchCount());
             long depth = scan(pilot, length, Long.MAX_VALUE, true, workers, null, deepest);
             System.out.printf("  -> Stage 1: パイロット完了 (基準深さ: %,d 桁)%n", depth);
             StoreController.survivalProgressMap.put("STAGE1_DEPTH", depth);
-            StoreController.survivalProgressMap.put("STAGE1_BATCHES", partition.batchCount());
+            StoreController.survivalProgressMap.put("STAGE1_PHASE", "BATCH");
             BiConsumer<String, Long> record = (target, position) -> {
                 synchronized (combined) { combined.discover(target, position); }
             };
@@ -80,6 +82,7 @@ public final class StagedSearch {
             if (!combined.isEmpty()) {
                 checkStop();
                 StoreController.survivalProgressMap.put("SEARCH_STAGE", 2);
+                StoreController.survivalProgressMap.put("STAGE1_PHASE", "STAGE2");
                 System.out.printf("  -> Stage 2: 残り候補 %,d 件の最終確定走査中...%n", combined.size());
                 List<SurvivalList> all = new ArrayList<>();
                 all.add(combined);
@@ -134,6 +137,7 @@ public final class StagedSearch {
             thresholds[i] = (int) Math.floor(lists.get(i).size() * survivalPercent / 100.0);
             initialRemaining.add(lists.get(i).size());
         }
+        StoreController.survivalProgressMap.put("STAGE1_WORKER_INITIALS", initialRemaining);
         StoreController.survivalProgressMap.put("STAGE1_WORKERS", initialRemaining);
         if (pilot) {
             StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", 0L);
