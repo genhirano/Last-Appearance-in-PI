@@ -58,16 +58,23 @@ public final class StagedSearch {
         SurvivalResult deepest = new SurvivalResult("", -1L);
         try {
             checkStop();
-            List<SurvivalList> pilot = groups(partition, length, 0);
-            System.out.println("  -> Stage 1: パイロット測定中...");
-            long depth = scan(pilot, length, Long.MAX_VALUE, true, workers, null, deepest);
-            System.out.printf("  -> Stage 1: パイロット完了 (基準深さ: %,d 桁)%n", depth);
-            StoreController.survivalProgressMap.put("STAGE1_DEPTH", depth);
-            StoreController.survivalProgressMap.put("STAGE1_BATCHES", partition.batchCount());
             BiConsumer<String, Long> record = (target, position) -> {
                 synchronized (combined) { combined.discover(target, position); }
             };
-            for (int batch = 0; batch < partition.batchCount(); batch++) {
+            // パイロットはバッチ1（バッチ番号0）の候補を走査し、その発見を combined に反映して
+            // バッチ1の役目を兼ねる（同じ候補を二重に走査しない）。
+            List<SurvivalList> pilot = groups(partition, length, 0);
+            StoreController.survivalProgressMap.put("STAGE1_BATCHES", partition.batchCount());
+            StoreController.survivalProgressMap.put("STAGE1_BATCH", 1);
+            StoreController.survivalProgressMap.put("STAGE1_PROGRESS", 0.0);
+            System.out.println("  -> Stage 1: パイロット測定中 (バッチ 1 を兼ねる)...");
+            long depth = scan(pilot, length, Long.MAX_VALUE, true, workers, record, deepest);
+            System.out.printf("  -> Stage 1: パイロット完了 (基準深さ: %,d 桁)%n", depth);
+            StoreController.survivalProgressMap.put("STAGE1_DEPTH", depth);
+            StoreController.survivalProgressMap.put("STAGE1_PROGRESS", 100.0 / partition.batchCount());
+            System.out.printf("  -> Stage 1: バッチ %d/%d 処理完了 (残り候補: %,d)%n",
+                    1, partition.batchCount(), combined.size());
+            for (int batch = 1; batch < partition.batchCount(); batch++) {
                 checkStop();
                 StoreController.survivalProgressMap.put("STAGE1_BATCH", batch + 1);
                 StoreController.survivalProgressMap.put("STAGE1_PROGRESS", 100.0 * batch / partition.batchCount());
@@ -186,11 +193,27 @@ public final class StagedSearch {
                 }
                 long reached = Long.MAX_VALUE;
                 for (SearchThread task : tasks) {
-                    if (!pilot && task.getResult().compareTo(deepest) > 0) deepest.update(task.getResult());
+                    if (task.getResult().compareTo(deepest) > 0) deepest.update(task.getResult());
                     if (task.getThresholdWindow() >= 0) reached = Math.min(reached, task.getThresholdWindow());
                 }
                 if (pilot && reached != Long.MAX_VALUE) {
                     long resolvedDepth = reached + 1;
+                    // パイロットをバッチ1として扱うため、全リストが窓 [0, resolvedDepth) を走査済みであることを保証する。
+                    // 閾値到達前にユニット先頭で打ち切られたリスト（生存率100%など）があり得るので、
+                    // このユニット内の不足分を閾値なしで補完走査する。走査済みのリストでは新たな発見は起きない。
+                    List<SearchThread> topUps = new ArrayList<>();
+                    futures.clear();
+                    for (SurvivalList list : lists) {
+                        SearchThread task = new SearchThread(list, unit, Math.max(from, unitStart), resolvedDepth, -1);
+                        task.setDiscoveryListener(listener);
+                        topUps.add(task);
+                        futures.add(workers.submit(task::run));
+                    }
+                    for (Future<?> future : futures) future.get();
+                    checkStop();
+                    for (SearchThread task : topUps) {
+                        if (task.getResult().compareTo(deepest) > 0) deepest.update(task.getResult());
+                    }
                     StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", resolvedDepth);
                     return resolvedDepth;
                 }

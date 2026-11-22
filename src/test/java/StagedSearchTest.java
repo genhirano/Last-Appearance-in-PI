@@ -50,6 +50,26 @@ class StagedSearchTest {
         }
     }
 
+    @Test void パイロットがバッチ1を兼ねても生存率100パーセントで先頭位置を取りこぼさない() throws Exception {
+        // 生存率100%では各スレッドが窓0を走査せずに閾値到達とみなすため、パイロットの補完走査が必要になる。
+        // π小数部先頭は "1415..." なので、"1" / "14" は1桁目に初出する。各ケースでこれらの候補がパイロット（バッチ1）側に入るようにする。
+        int[][] cases = {{2, 14, 23, 2, 3}, {2, 13, 99, 3, 10}, {1, 0, 9, 1, 1}, {1, 1, 9, 4, 10}};
+        for (int[] c : cases) {
+            StoreController.survivalProgressMap.clear();
+            SurvivalResult expected = SearchThreadRealDataTest.runSurvival(c[0], c[1], c[2], 190,
+                    SearchThreadRealDataTest.ycdFileList(1));
+            SurvivalList combined = new SurvivalList(c[0], c[1], c[2]);
+            SurvivalResult actual = new StagedSearch(SearchThreadRealDataTest.ycdFileList(1), 190, c[3], c[4], 100)
+                    .search(c[0], c[1], c[2], combined);
+            assertNotNull(actual);
+            assertEquals(expected.getTarget(), actual.getTarget());
+            assertEquals(expected.getFindPos(), actual.getFindPos());
+            assertTrue(combined.isEmpty());
+            assertEquals(1L, combined.getDiscoveredPositions()[0]);
+        }
+        StoreController.survivalProgressMap.clear();
+    }
+
     @Test void invalidCombinedOrBoundsAreRejected() throws Exception {
         StagedSearch search = new StagedSearch(SearchThreadRealDataTest.ycdFileList(1), 190, 3, 10, 5);
         assertThrows(IllegalArgumentException.class, () -> search.search(1, 0, 9, null));
