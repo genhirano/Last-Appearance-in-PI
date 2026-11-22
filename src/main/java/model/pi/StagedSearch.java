@@ -81,9 +81,8 @@ public final class StagedSearch {
                 checkStop();
                 StoreController.survivalProgressMap.put("SEARCH_STAGE", 2);
                 System.out.printf("  -> Stage 2: 残り候補 %,d 件の最終確定走査中...%n", combined.size());
-                List<SurvivalList> all = new ArrayList<>();
-                all.add(combined);
-                scanFrom(all, length, depth, Long.MAX_VALUE, workers, null, deepest);
+                List<SurvivalList> all = combined.splitSurvivors(threads);
+                scanFrom(all, length, depth, Long.MAX_VALUE, workers, record, deepest);
             }
             return combined.isEmpty() ? deepest : null;
         } finally {
@@ -116,15 +115,15 @@ public final class StagedSearch {
 
     private long scan(List<SurvivalList> lists, int length, long end, boolean pilot,
             ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest) throws Exception {
-        return scanInternal(lists, length, 0, end, pilot, workers, listener, deepest);
+        return scanInternal(lists, length, 0, end, pilot, !pilot, workers, listener, deepest);
     }
 
     private long scanFrom(List<SurvivalList> lists, int length, long from, long end,
             ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest) throws Exception {
-        return scanInternal(lists, length, from, end, false, workers, listener, deepest);
+        return scanInternal(lists, length, from, end, false, false, workers, listener, deepest);
     }
 
-    private long scanInternal(List<SurvivalList> lists, int length, long from, long end, boolean pilot,
+    private long scanInternal(List<SurvivalList> lists, int length, long from, long end, boolean pilot, boolean batchProgress,
             ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest) throws Exception {
         int[] thresholds = new int[lists.size()];
         long started = System.nanoTime();
@@ -153,6 +152,7 @@ public final class StagedSearch {
                 List<SearchThread> tasks = new ArrayList<>();
                 List<Future<?>> futures = new ArrayList<>();
                 for (int i = 0; i < lists.size(); i++) {
+                    if (!pilot && lists.get(i).isEmpty()) continue;
                     SearchThread task = new SearchThread(lists.get(i), unit, from, end, pilot ? thresholds[i] : -1);
                     task.setDiscoveryListener(listener);
                     tasks.add(task);
@@ -175,7 +175,7 @@ public final class StagedSearch {
                 long currentPos = pilot ? availableEnd : Math.min(availableEnd, end);
                 StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", currentPos);
                 StoreController.survivalProgressMap.put("STAGE1_SPEED", seconds > 0 ? Math.max(0L, currentPos - from) / seconds : 0.0);
-                if (!pilot && listener != null) {
+                if (batchProgress) {
                     Object batch = StoreController.survivalProgressMap.get("STAGE1_BATCH");
                     Object count = StoreController.survivalProgressMap.get("STAGE1_BATCHES");
                     if (end > 0 && batch instanceof Integer && count instanceof Integer) {
