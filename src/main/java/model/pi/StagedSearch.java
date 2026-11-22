@@ -33,7 +33,9 @@ public final class StagedSearch {
         SurvivalResult deepest = new SurvivalResult("", -1L);
         try {
             List<SurvivalList> pilot = groups(partition, length, 0);
+            System.out.println("  -> Stage 1: パイロット測定中...");
             long depth = scan(pilot, length, Long.MAX_VALUE, true, workers, null, deepest);
+            System.out.printf("  -> Stage 1: パイロット完了 (基準深さ: %,d 桁)%n", depth);
             StoreController.survivalProgressMap.put("STAGE1_DEPTH", depth);
             StoreController.survivalProgressMap.put("STAGE1_BATCHES", partition.batchCount());
             BiConsumer<String, Long> record = (target, position) -> {
@@ -43,10 +45,14 @@ public final class StagedSearch {
                 StoreController.survivalProgressMap.put("STAGE1_BATCH", batch + 1);
                 StoreController.survivalProgressMap.put("STAGE1_PROGRESS", 100.0 * batch / partition.batchCount());
                 scan(groups(partition, length, batch), length, depth, false, workers, record, deepest);
+                System.out.printf("  -> Stage 1: バッチ %d/%d 処理完了 (残り候補: %,d)%n",
+                        batch + 1, partition.batchCount(), combined.size());
             }
             StoreController.survivalProgressMap.put("STAGE1_PROGRESS", 100.0);
+            System.out.printf("  -> Stage 1: 全バッチ完了 (Stage 2 へ引き継ぐ候補: %,d 件)%n", combined.size());
             if (!combined.isEmpty()) {
                 StoreController.survivalProgressMap.put("SEARCH_STAGE", 2);
+                System.out.printf("  -> Stage 2: 残り候補 %,d 件の最終確定走査中...%n", combined.size());
                 List<SurvivalList> all = new ArrayList<>();
                 all.add(combined);
                 scanFrom(all, length, depth, Long.MAX_VALUE, workers, null, deepest);
@@ -88,6 +94,7 @@ public final class StagedSearch {
             ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest) throws Exception {
         int[] thresholds = new int[lists.size()];
         long started = System.nanoTime();
+        long lastLog = started;
         for (int i = 0; i < lists.size(); i++) thresholds[i] = (int) Math.floor(lists.get(i).size() * survivalPercent / 100.0);
         long availableEnd = 0;
         try (YCD_SeqProvider provider = new YCD_SeqProvider(5, files, length, unitLength)) {
@@ -106,6 +113,14 @@ public final class StagedSearch {
                     futures.add(workers.submit(task::run));
                 }
                 for (Future<?> future : futures) future.get();
+                long now = System.nanoTime();
+                if (now - lastLog >= TimeUnit.SECONDS.toNanos(5)) {
+                    long remaining = 0;
+                    for (SurvivalList list : lists) remaining += list.size();
+                    System.out.printf("     ... 走査中 (現在深さ: %,d 桁 / このフェーズの残り候補: %,d)%n",
+                            Math.min(availableEnd, end), remaining);
+                    lastLog = now;
+                }
                 if (pilot) {
                     List<Integer> remaining = new ArrayList<>();
                     for (SurvivalList list : lists) remaining.add(list.size());

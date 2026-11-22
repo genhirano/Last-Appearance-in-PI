@@ -11,6 +11,7 @@ import model.ycd.YCD_SeqProvider;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -50,6 +51,8 @@ public class Searcher extends Thread {
 
     @Override
     public void run() {
+        System.out.printf("[準備] 円周率ファイル %,d 件を読み込みました (総桁数: %,d 桁)%n",
+                um_piFileList.size(), StoreController.getAllPiDataLength());
 
         // 検索処理のメインループ
         while (true) {
@@ -82,6 +85,10 @@ public class Searcher extends Thread {
 
             // １サイクルの終了時間
             ZonedDateTime endTime = ZonedDateTime.now();
+            long elapsedSeconds = Duration.between(startTime, endTime).getSeconds();
+            System.out.printf("  -> [完了] %d 桁 (%s ～ %s) | 最遅出現: \"%s\" (位置: %,d 桁目) [所要時間: %,d秒]%n",
+                    targetRange.getLength(), targetRange.getStart(), targetRange.getEnd(),
+                    sr.getTarget(), sr.getFindPos(), elapsedSeconds);
 
             // １サイクルの結果保存
             StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
@@ -98,6 +105,8 @@ public class Searcher extends Thread {
 
         SurvivalList survivalList = new SurvivalList(targetRange.getLength(), Long.parseLong(targetRange.getStart()),
                 Long.parseLong(targetRange.getEnd()));
+        System.out.printf("%n[探索開始] %d 桁 (%s ～ %s / 候補数: %,d)%n",
+                targetRange.getLength(), targetRange.getStart(), targetRange.getEnd(), survivalList.size());
         synchronized (StoreController.survivalProgressMap) {
             StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
             StoreController.survivalProgressMap.put("SURVIVAL_LIST", survivalList);
@@ -116,7 +125,20 @@ public class Searcher extends Thread {
                     Double.parseDouble(settings.getProperty("stage1SurvivalRate", "5")));
             SurvivalResult result = search.search(targetRange.getLength(), Long.parseLong(targetRange.getStart()),
                     Long.parseLong(targetRange.getEnd()), survivalList);
-            if (result == null) stop("The file was too short to finalize all candidates.");
+            if (result == null) {
+                String sample = survivalList.isEmpty() ? "-" : survivalList.get(0);
+                System.out.println("----------------------------------------------------------------------");
+                System.out.println("[停止] 円周率データが不足したため探索を停止しました");
+                System.out.printf("  - 対象: %d 桁 (%s ～ %s)%n",
+                        targetRange.getLength(), targetRange.getStart(), targetRange.getEnd());
+                System.out.printf("  - 理由: 全 %,d ファイル (%,d 桁) を走査し終えましたが、%n",
+                        um_piFileList.size(), StoreController.getAllPiDataLength());
+                System.out.printf("          未確定の候補が %,d 件残っています (未発見例: \"%s\")%n",
+                        survivalList.size(), sample);
+                System.out.println("  - メモ: この桁数を確定するには、より長い円周率データが必要です。");
+                System.out.println("----------------------------------------------------------------------");
+                stop("The file was too short to finalize all candidates.");
+            }
             return result;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

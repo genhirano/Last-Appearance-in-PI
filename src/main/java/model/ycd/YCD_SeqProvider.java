@@ -125,8 +125,8 @@ public class YCD_SeqProvider implements AutoCloseable, Iterable<YCD_SeqProvider.
      * @throws IOException
      */
     private YCD_SeqBlockStream createStream(File ycdFile, Integer unitLength) throws IOException {
-        System.out.println();
-        System.out.println("Next file: " + this.currentFile.getName());
+
+
         return new YCD_SeqBlockStream(ycdFile.getPath(), unitLength);
     }
 

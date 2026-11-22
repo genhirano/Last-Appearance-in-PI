@@ -65,7 +65,21 @@ public class StoreControllerLongRangeTest {
         Env.getInstance().setPortNo(1);
         TargetRange before = StoreController.getInstance().getCurrentTargetStartEnd(1);
         assertEquals(18, before.getLength());
-        new Searcher(SearchThreadRealDataTest.ycdFileList(1), 1, 19000).run();
+        java.io.PrintStream originalOut = System.out;
+        java.io.ByteArrayOutputStream captured = new java.io.ByteArrayOutputStream();
+        try (java.io.PrintStream ps = new java.io.PrintStream(captured, true, StandardCharsets.UTF_8.name())) {
+            System.setOut(ps);
+            new Searcher(SearchThreadRealDataTest.ycdFileList(1), 1, 19000).run();
+        } finally {
+            System.setOut(originalOut);
+        }
+        String console = new String(captured.toByteArray(), StandardCharsets.UTF_8);
+        originalOut.print(console);
+        assertTrue(console.contains("[準備] 円周率ファイル 1 件を読み込みました"));
+        assertTrue(console.contains("[探索開始] 18 桁 (000000000000000000 ～ 000000000000000000 / 候補数: 1)"));
+        assertTrue(console.contains("Stage 1: バッチ 1/1 処理完了"));
+        assertTrue(console.contains("[停止] 円周率データが不足したため探索を停止しました"));
+        assertTrue(console.contains("未確定の候補が 1 件残っています (未発見例: \"000000000000000000\")"));
         assertFalse(Files.exists(tempDir.resolve("018.txt")), "未発見なら結果を保存しない");
         TargetRange after = StoreController.getInstance().getCurrentTargetStartEnd(1);
         assertEquals(before.getLength(), after.getLength());
