@@ -157,6 +157,9 @@ public class WebIntegrationTest {
         Matcher tokenMatcher = Pattern.compile("name=\"token\"\\s+value=\"([^\"]+)\"").matcher(runningPage.body);
         assertTrue(tokenMatcher.find(), "停止フォームにCSRFトークンが含まれること");
         String validToken = tokenMatcher.group(1);
+        String runningExportedHtml = new String(Files.readAllBytes(INDEX_HTML), StandardCharsets.UTF_8);
+        assertFalse(runningExportedHtml.contains(validToken), "静的 index.html にはCSRFトークンを出力しないこと");
+        assertFalse(runningExportedHtml.contains("action=\"/stop\""), "静的 index.html には停止フォームを出力しないこと");
 
         // トークン欠落は 403 で拒否され、検索は停止しない
         Response missingTokenRes = post("/stop", Collections.emptyMap());
@@ -184,6 +187,8 @@ public class WebIntegrationTest {
         assertFalse(activeSearcher.isAlive(), "停止要求後に検索スレッドが終了すること");
         assertEquals("Search interrupted; unfinished range will be retried.", Searcher.getStoppedReason());
         assertNull(StoreController.survivalProgressMap.get("SEARCH_STOPPING"), "SEARCH_STOPPING が解除されること");
+        activeSearcher.requestStop();
+        assertNull(StoreController.survivalProgressMap.get("SEARCH_STOPPING"), "停止済みSearcherへのrequestStopでSEARCH_STOPPINGが再設定されないこと");
         String exportedHtml = new String(Files.readAllBytes(INDEX_HTML), StandardCharsets.UTF_8);
         assertTrue(exportedHtml.contains("Search interrupted; unfinished range will be retried."),
                 "割り込み停止時でも最終的な index.html が停止状態で更新されること");

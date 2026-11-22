@@ -35,6 +35,18 @@ public class SearchThreadAlgorithmTest extends TestBase {
         SearchThread search = new SearchThread(list, createUnit(1L, "14159265"), 0, Long.MAX_VALUE, 40);
         search.run();
         assertEquals(0L, search.getThresholdWindow());
+        assertTrue(list.contains("65"), "閾値到達後は残りユニット走査を打ち切ること");
+    }
+
+    @Test
+    void 閾値到達時に残りユニット走査を早期終了する() throws Exception {
+        SurvivalList list = new SurvivalList(2, 14, 65);
+        int threshold = list.size() - 1;
+        SearchThread search = new SearchThread(list, createUnit(1L, "14159265"), 0, Long.MAX_VALUE, threshold);
+        search.run();
+        assertEquals(0L, search.getThresholdWindow());
+        assertFalse(list.contains("14"));
+        assertTrue(list.contains("65"), "閾値到達後の後半は走査しないこと");
     }
 
     @Test

@@ -63,10 +63,16 @@
                             第一段階進捗 <span th:text="${STAGE1_PROGRESS}"></span>% 探索位置 <span th:text="${STAGE1_POSITION}"></span> 桁/秒 <span th:text="${STAGE1_SPEED}"></span>
                             スレッド別残数 <span th:text="${STAGE1_WORKERS}"></span>
                         </span>
-                        <span th:if="${STAGE1_DEPTH == null and SEARCH_STAGE == 1}">進捗算定中</span>
-                        <span th:if="${STAGE1_DEPTH == null and SEARCH_STAGE == 1}">探索位置 <span th:text="${STAGE1_POSITION}"></span> 桁/秒 <span th:text="${STAGE1_SPEED}"></span> スレッド別残数 <span th:text="${STAGE1_WORKERS}"></span></span><span th:if="${SEARCH_STAGE == 2}">探索位置 <span th:text="${STAGE1_POSITION}"></span> 桁/秒 <span th:text="${STAGE1_SPEED}"></span> 生存候補残数 <span th:text="${STAGE1_WORKERS}"></span></span>
+                        <span th:if="${STAGE1_BATCH == null and SEARCH_STAGE == 1}">
+                            進捗算定中 探索位置 <span th:text="${STAGE1_POSITION}"></span> 桁/秒 <span th:text="${STAGE1_SPEED}"></span>
+                            スレッド別残数 <span th:text="${STAGE1_WORKERS}"></span>
+                        </span>
+                        <span th:if="${SEARCH_STAGE == 2}">
+                            探索位置 <span th:text="${STAGE1_POSITION}"></span> 桁/秒 <span th:text="${STAGE1_SPEED}"></span>
+                            生存候補残数 <span th:text="${STAGE1_WORKERS}"></span>
+                        </span>
                     </div>
-                    <form action="/stop" method="post" th:if="${SEARCH_STOPPED == null and SEARCH_STOPPING == null}">
+                    <form action="/stop" method="post" th:if="${STOP_TOKEN != null and SEARCH_STOPPED == null and SEARCH_STOPPING == null}">
                         <input type="hidden" name="token" th:value="${STOP_TOKEN}" />
                         <button type="submit">探索を停止</button>
                     </form>

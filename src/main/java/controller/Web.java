@@ -145,11 +145,15 @@ public class Web {
         model.put("SEARCH_STAGE", StoreController.survivalProgressMap.get("SEARCH_STAGE"));
         model.put("STAGE1_BATCH", StoreController.survivalProgressMap.get("STAGE1_BATCH"));
         model.put("STAGE1_BATCHES", StoreController.survivalProgressMap.get("STAGE1_BATCHES"));
-        model.put("STAGE1_DEPTH", StoreController.survivalProgressMap.get("STAGE1_DEPTH"));
-        model.put("STAGE1_PROGRESS", StoreController.survivalProgressMap.get("STAGE1_PROGRESS"));
+        Object stage1Depth = StoreController.survivalProgressMap.get("STAGE1_DEPTH");
+        model.put("STAGE1_DEPTH", (stage1Depth instanceof Number) ? String.format("%,d", ((Number) stage1Depth).longValue()) : stage1Depth);
+        Object stage1Progress = StoreController.survivalProgressMap.get("STAGE1_PROGRESS");
+        model.put("STAGE1_PROGRESS", (stage1Progress instanceof Number) ? String.format("%.2f", ((Number) stage1Progress).doubleValue()) : stage1Progress);
         model.put("STAGE1_WORKERS", StoreController.survivalProgressMap.get("STAGE1_WORKERS"));
-        model.put("STAGE1_POSITION", StoreController.survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
-        model.put("STAGE1_SPEED", StoreController.survivalProgressMap.get("STAGE1_SPEED"));
+        Object stage1Position = StoreController.survivalProgressMap.get("NOW_SURVIVAL_DEPTH");
+        model.put("STAGE1_POSITION", (stage1Position instanceof Number) ? String.format("%,d", ((Number) stage1Position).longValue()) : stage1Position);
+        Object stage1Speed = StoreController.survivalProgressMap.get("STAGE1_SPEED");
+        model.put("STAGE1_SPEED", (stage1Speed instanceof Number) ? String.format("%,.0f", ((Number) stage1Speed).doubleValue()) : stage1Speed);
 
         final long elapsedSec = (null != pr.getCurenntElapsedTimeInSeconds()) ? pr.getCurenntElapsedTimeInSeconds() : 0L;
         model.put("RUNNING_TIME", elapsedSec);
@@ -272,8 +276,10 @@ public class Web {
 
         ModelAndView modelAndView = new ModelAndView(model, "index");
 
-        // htmlを生成してファイルに保存
-        String html = templateEngine.render(modelAndView);
+        // htmlを生成してファイルに保存（CSRFトークンや停止フォームは静的HTMLへ出力しない）
+        Map<String, Object> exportModel = new HashMap<>(model);
+        exportModel.remove("STOP_TOKEN");
+        String html = templateEngine.render(new ModelAndView(exportModel, "index"));
         FileUtils.writeStringToFile(new File("index.html"), html, CHARACTER_ENCODING);
 
         return modelAndView;

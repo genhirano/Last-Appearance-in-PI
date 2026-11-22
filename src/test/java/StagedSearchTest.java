@@ -49,4 +49,12 @@ class StagedSearchTest {
             assertTrue(combined.isEmpty());
         }
     }
+
+    @Test void invalidCombinedOrBoundsAreRejected() throws Exception {
+        StagedSearch search = new StagedSearch(SearchThreadRealDataTest.ycdFileList(1), 190, 3, 10, 5);
+        assertThrows(IllegalArgumentException.class, () -> search.search(1, 0, 9, null));
+        assertThrows(IllegalArgumentException.class, () -> search.search(1, 0, 9, new SurvivalList(2, 0, 9)));
+        assertThrows(IllegalArgumentException.class, () -> search.search(1, 0, 10, new SurvivalList(1, 0, 9)));
+        assertThrows(IllegalArgumentException.class, () -> search.search(1, 0, 9, new SurvivalList(1, 0, 8)));
+    }
 }

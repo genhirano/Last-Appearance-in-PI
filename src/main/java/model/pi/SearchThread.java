@@ -1,6 +1,5 @@
 package model.pi;
 
-import controller.StoreController;
 import lombok.Getter;
 import model.ycd.YCD_SeqProvider;
 
@@ -103,6 +102,7 @@ public class SearchThread extends Thread {
         if (thresholdCount >= 0 && survivalList.size() <= thresholdCount
                 && seekPos <= len - n && unitStart + seekPos < toWindow) {
             thresholdWindow = unitStart + seekPos;
+            return survivalResult;
         }
 
         while (true) {
@@ -137,9 +137,8 @@ public class SearchThread extends Thread {
 
                 if (thresholdCount >= 0 && thresholdWindow < 0 && survivalList.size() <= thresholdCount) {
                     thresholdWindow = curFindPos - 1;
+                    break;
                 }
-
-                StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
 
                 if (survivalList.isEmpty()) {
                     break;

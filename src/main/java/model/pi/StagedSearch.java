@@ -34,6 +34,20 @@ public final class StagedSearch {
 
     /** Returns null when the available input cannot resolve every candidate. */
     public SurvivalResult search(int length, long start, long end, SurvivalList combined) throws Exception {
+        if (combined == null) {
+            throw new IllegalArgumentException("combined SurvivalList must not be null");
+        }
+        if (length < 1 || length > SurvivalList.MAX_LENGTH || combined.getLength() != length) {
+            throw new IllegalArgumentException("Invalid or mismatched candidate length");
+        }
+        long maxValue = SurvivalList.pow10(length) - 1L;
+        if (start < 0 || end < start || end > maxValue) {
+            throw new IllegalArgumentException("Candidate range out of bounds for length " + length);
+        }
+        long expectedCount = end - start + 1L;
+        if (combined.size() != expectedCount) {
+            throw new IllegalArgumentException("combined SurvivalList size does not match [start, end]");
+        }
         StageOnePartition partition = new StageOnePartition(start, end, threads, batches);
         java.util.concurrent.atomic.AtomicInteger workerNumber = new java.util.concurrent.atomic.AtomicInteger();
         ExecutorService workers = Executors.newFixedThreadPool(Math.min(threads, partition.groupCount()), task ->
@@ -129,8 +143,10 @@ public final class StagedSearch {
                 YCD_SeqProvider.Unit unit = provider.next();
                 checkStop();
                 long unitStart = unit.getStartDigit() - 1;
-                availableEnd = Math.max(availableEnd, unitStart + Math.max(0, unit.getData().length() - length + 1));
+                long unitEnd = unitStart + Math.max(0, unit.getData().length() - length + 1);
+                availableEnd = Math.max(availableEnd, unitEnd);
                 if (unitStart >= end) break;
+                if (unitEnd <= from) continue;
                 List<SearchThread> tasks = new ArrayList<>();
                 List<Future<?>> futures = new ArrayList<>();
                 for (int i = 0; i < lists.size(); i++) {

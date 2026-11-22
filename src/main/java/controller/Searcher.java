@@ -20,8 +20,12 @@ import java.util.List;
 
 public class Searcher extends Thread {
     private volatile boolean stopRequested;
+    private volatile boolean stopped;
 
     public synchronized void requestStop() {
+        if (stopped) {
+            return;
+        }
         stopRequested = true;
         StoreController.survivalProgressMap.put("SEARCH_STOPPING", true);
         interrupt();
@@ -204,9 +208,12 @@ public class Searcher extends Thread {
     private void stop(String reason) {
         System.out.println();
         System.out.println("Search stopped: " + reason);
-        StoreController.survivalProgressMap.put("SEARCH_STOPPED", reason);
-        StoreController.survivalProgressMap.put("SEARCH_STOPPED_AT", ZonedDateTime.now());
-        StoreController.survivalProgressMap.remove("SEARCH_STOPPING");
+        synchronized (this) {
+            stopped = true;
+            StoreController.survivalProgressMap.put("SEARCH_STOPPED", reason);
+            StoreController.survivalProgressMap.put("SEARCH_STOPPED_AT", ZonedDateTime.now());
+            StoreController.survivalProgressMap.remove("SEARCH_STOPPING");
+        }
         boolean interrupted = Thread.interrupted();
         try {
             StoreController.getInstance().saveHTML();
