@@ -2,7 +2,11 @@ import model.pi.StagedSearch;
 import model.pi.SurvivalList;
 import model.pi.SurvivalResult;
 import controller.StoreController;
+import model.pi.SearchThread;
+import model.ycd.YCD_SeqProvider;
 import org.junit.jupiter.api.Test;
+import java.util.ArrayList;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class StagedSearchTest {
@@ -62,5 +66,50 @@ class StagedSearchTest {
         SurvivalList partiallyUsed = new SurvivalList(2, 10, 20);
         partiallyUsed.discover("20", 1L);
         assertThrows(IllegalArgumentException.class, () -> search.search(2, 10, 19, partiallyUsed));
+    }
+
+    @Test void stageTwoUsesMultipleGroupsAndPreservesResults() throws Exception {
+        StoreController.survivalProgressMap.clear();
+        class ObservedList extends SurvivalList {
+            List<?> stageTwoGroups;
+            ObservedList() { super(3, 0, 999); }
+            @Override public synchronized void discover(String target, Long position) {
+                if (Integer.valueOf(2).equals(StoreController.survivalProgressMap.get("SEARCH_STAGE"))
+                        && stageTwoGroups == null) {
+                    stageTwoGroups = (List<?>) StoreController.survivalProgressMap.get("STAGE1_WORKERS");
+                }
+                super.discover(target, position);
+            }
+        }
+        ObservedList combined = new ObservedList();
+        SurvivalResult expected = SearchThreadRealDataTest.runSurvival(3, 0, 999, 190,
+                SearchThreadRealDataTest.ycdFileList(1));
+        SurvivalResult actual = new StagedSearch(SearchThreadRealDataTest.ycdFileList(1), 190, 4, 2, 100)
+                .search(3, 0, 999, combined);
+        assertNotNull(combined.stageTwoGroups);
+        assertEquals(4, combined.stageTwoGroups.size());
+        for (Object size : combined.stageTwoGroups) assertTrue((Integer) size > 0);
+        assertEquals(expected.getTarget(), actual.getTarget());
+        assertEquals(expected.getFindPos(), actual.getFindPos());
+        assertEquals(1000, combined.getDiscoveredCount());
+        assertEquals(100.0, StoreController.survivalProgressMap.get("STAGE1_PROGRESS"));
+        StoreController.survivalProgressMap.clear();
+    }
+
+    @Test void stageTwoPreservesUnresolvedCandidatesAndDiscoveryPositions() throws Exception {
+        StoreController.survivalProgressMap.clear();
+        SurvivalList expected = new SurvivalList(6, 100000, 100199);
+        try (YCD_SeqProvider provider = new YCD_SeqProvider(1, SearchThreadRealDataTest.ycdFileList(1), 6, 19000)) {
+            while (provider.hasNext()) new SearchThread(expected, provider.next()).run();
+        }
+        SurvivalList combined = new SurvivalList(6, 100000, 100199);
+        SurvivalResult result = new StagedSearch(SearchThreadRealDataTest.ycdFileList(1), 19000, 4, 2, 100)
+                .search(6, 100000, 100199, combined);
+        assertNull(result);
+        assertFalse(expected.isEmpty());
+        assertEquals(new ArrayList<>(expected), new ArrayList<>(combined));
+        assertArrayEquals(expected.getDiscoveredPositions(), combined.getDiscoveredPositions());
+        assertEquals(expected.getDiscoveredCount(), combined.getDiscoveredCount());
+        StoreController.survivalProgressMap.clear();
     }
 }

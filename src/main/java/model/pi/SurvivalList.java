@@ -153,6 +153,36 @@ public class SurvivalList extends AbstractList<String> implements RandomAccess {
         this.discoveredPos = new long[slotCount];
     }
 
+    private SurvivalList(SurvivalList source, int firstSlot, int lastSlot, int count) {
+        this.length = source.length;
+        this.startValue = source.startValue + firstSlot;
+        this.slotCount = lastSlot - firstSlot + 1;
+        this.alive = Arrays.copyOfRange(source.alive, firstSlot, lastSlot + 1);
+        this.tree = new int[slotCount + 1];
+        for (int i = 1; i <= slotCount; i++) {
+            if (alive[i - 1]) tree[i]++;
+            long parent = (long) i + (i & -i);
+            if (parent <= slotCount) tree[(int) parent] += tree[i];
+        }
+        this.aliveCount = count;
+        this.discoveredPos = new long[count];
+    }
+
+    synchronized java.util.List<SurvivalList> splitSurvivors(int maxGroups) {
+        if (maxGroups <= 0) throw new IllegalArgumentException("maxGroups must be positive");
+        int groups = Math.min(maxGroups, aliveCount);
+        java.util.List<SurvivalList> result = new ArrayList<>(groups);
+        int firstIndex = 0;
+        for (int i = 0; i < groups; i++) {
+            int count = aliveCount / groups + (i < aliveCount % groups ? 1 : 0);
+            int firstSlot = selectSlot(firstIndex);
+            int lastSlot = selectSlot(firstIndex + count - 1);
+            result.add(new SurvivalList(this, firstSlot, lastSlot, count));
+            firstIndex += count;
+        }
+        return result;
+    }
+
     /**
      * コンストラクタ（使用禁止).
      *
