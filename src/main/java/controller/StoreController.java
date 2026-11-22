@@ -301,7 +301,6 @@ public class StoreController {
         prb.setCurenntSurvivalDepth((Long) survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
         prb.setCurenntSurvivalStartTime(survivalStartTime);
         prb.setCurrentSurvivalElapsedSeconds(elapsed);
-        prb.setDiscoverdPosList(survivalList.getDiscoveredPositions());
         prb.setCurrentDiscoveredCount(total);
         prb.setCurrentUndiscoveredCount(pow10(tr.getLength()) - total);
         prb.setCurenntElapsedTimeInSeconds(savedSeconds + (alreadySaved ? 0L : elapsed));

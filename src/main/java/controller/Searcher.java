@@ -147,6 +147,12 @@ public class Searcher extends Thread {
             StoreController.survivalProgressMap.remove("STAGE1_PROGRESS");
             StoreController.survivalProgressMap.remove("STAGE1_WORKERS");
             StoreController.survivalProgressMap.remove("STAGE1_WORKER_INITIALS");
+            StoreController.survivalProgressMap.remove("STAGE1_WORKER_DETAILS");
+            StoreController.survivalProgressMap.remove("STAGE1_BATCH_MATRIX");
+            StoreController.survivalProgressMap.remove("STAGE1_THREADS_COUNT");
+            StoreController.survivalProgressMap.remove("STAGE1_GROUPS_COUNT");
+            StoreController.survivalProgressMap.remove("STAGE1_SURVIVAL_RATE");
+            StoreController.survivalProgressMap.remove("STAGE1_PILOT_DISCOVERED");
             StoreController.survivalProgressMap.remove("STAGE1_PHASE");
             StoreController.survivalProgressMap.remove("STAGE1_SPEED");
         }

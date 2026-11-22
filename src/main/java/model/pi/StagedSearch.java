@@ -4,7 +4,10 @@ import controller.StoreController;
 import model.ycd.YCD_SeqProvider;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
@@ -52,8 +55,16 @@ public final class StagedSearch {
             throw new IllegalArgumentException("combined SurvivalList must be an undiscovered list matching [start, end]");
         }
         StageOnePartition partition = new StageOnePartition(start, end, threads, batches);
+        int activeThreads = Math.min(threads, partition.groupCount());
+        StoreController.survivalProgressMap.put("STAGE1_THREADS_COUNT", activeThreads);
+        StoreController.survivalProgressMap.put("STAGE1_GROUPS_COUNT", partition.groupCount());
+        StoreController.survivalProgressMap.put("STAGE1_SURVIVAL_RATE", survivalPercent);
+
+        List<Map<String, Object>> batchMatrix = initBatchMatrix(partition, length);
+        publishBatchMatrix(batchMatrix);
+
         java.util.concurrent.atomic.AtomicInteger workerNumber = new java.util.concurrent.atomic.AtomicInteger();
-        ExecutorService workers = Executors.newFixedThreadPool(Math.min(threads, partition.groupCount()), task ->
+        ExecutorService workers = Executors.newFixedThreadPool(activeThreads, task ->
                 new Thread(task, "staged-search-worker-" + workerNumber.incrementAndGet()));
         SurvivalResult deepest = new SurvivalResult("", -1L);
         try {
@@ -62,9 +73,11 @@ public final class StagedSearch {
             System.out.println("  -> Stage 1: パイロット測定中...");
             StoreController.survivalProgressMap.put("STAGE1_PHASE", "PILOT");
             StoreController.survivalProgressMap.put("STAGE1_BATCHES", partition.batchCount());
-            long depth = scan(pilot, length, Long.MAX_VALUE, true, workers, null, deepest);
+            updateBatchStatus(batchMatrix, 0, "PILOT", pilot, 0.0);
+            long depth = scan(pilot, length, Long.MAX_VALUE, true, workers, null, deepest, batchMatrix, 0);
             System.out.printf("  -> Stage 1: パイロット完了 (基準深さ: %,d 桁)%n", depth);
             StoreController.survivalProgressMap.put("STAGE1_DEPTH", depth);
+            StoreController.survivalProgressMap.put("STAGE1_PILOT_DISCOVERED", 0L);
             StoreController.survivalProgressMap.put("STAGE1_PHASE", "BATCH");
             BiConsumer<String, Long> record = (target, position) -> {
                 synchronized (combined) { combined.discover(target, position); }
@@ -73,7 +86,10 @@ public final class StagedSearch {
                 checkStop();
                 StoreController.survivalProgressMap.put("STAGE1_BATCH", batch + 1);
                 StoreController.survivalProgressMap.put("STAGE1_PROGRESS", 100.0 * batch / partition.batchCount());
-                scan(groups(partition, length, batch), length, depth, false, workers, record, deepest);
+                List<SurvivalList> batchGroups = groups(partition, length, batch);
+                updateBatchStatus(batchMatrix, batch, "ACTIVE", batchGroups, 0.0);
+                scan(batchGroups, length, depth, false, workers, record, deepest, batchMatrix, batch);
+                updateBatchStatus(batchMatrix, batch, "DONE", batchGroups, 100.0);
                 System.out.printf("  -> Stage 1: バッチ %d/%d 処理完了 (残り候補: %,d)%n",
                         batch + 1, partition.batchCount(), combined.size());
             }
@@ -103,6 +119,129 @@ public final class StagedSearch {
         }
     }
 
+    private List<Map<String, Object>> initBatchMatrix(StageOnePartition partition, int length) {
+        List<Map<String, Object>> matrix = new ArrayList<>();
+        String fmt = "%0" + length + "d";
+        for (int b = 0; b < partition.batchCount(); b++) {
+            int firstGroup = b * threads;
+            int lastGroup = (int) Math.min((long) firstGroup + threads, partition.groupCount()) - 1;
+            long bStart = partition.start(firstGroup);
+            long bEnd = partition.end(lastGroup);
+            long bCount = bEnd - bStart + 1L;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("batchNo", b + 1);
+            m.put("workerCount", lastGroup - firstGroup + 1);
+            m.put("rangeStart", String.format(fmt, bStart));
+            m.put("rangeEnd", String.format(fmt, bEnd));
+            m.put("initialCount", String.format("%,d", bCount));
+            m.put("initialRaw", bCount);
+            m.put("remainingCount", String.format("%,d", bCount));
+            m.put("eliminatedCount", "0");
+            m.put("eliminatedPct", "0.0");
+            m.put("scanPct", "0.0");
+            m.put("status", "QUEUED");
+            m.put("statusLabel", "待機中");
+            matrix.add(m);
+        }
+        return matrix;
+    }
+
+    private void updateBatchStatus(List<Map<String, Object>> matrix, int batchIdx, String status,
+            List<SurvivalList> batchGroups, double scanPct) {
+        if (matrix == null || batchIdx < 0 || batchIdx >= matrix.size()) return;
+        Map<String, Object> m = new LinkedHashMap<>(matrix.get(batchIdx));
+        long initTotal = 0L;
+        long remTotal = 0L;
+        for (SurvivalList sl : batchGroups) {
+            initTotal += sl.getInitialCount();
+            remTotal += sl.size();
+        }
+        long elimTotal = Math.max(0L, initTotal - remTotal);
+        double elimPct = initTotal > 0 ? Math.min(100.0, Math.max(0.0, (elimTotal * 100.0) / initTotal)) : 0.0;
+        m.put("remainingCount", String.format("%,d", remTotal));
+        m.put("eliminatedCount", String.format("%,d", elimTotal));
+        m.put("eliminatedPct", String.format(Locale.US, "%.1f", elimPct));
+        m.put("scanPct", String.format(Locale.US, "%.1f", Math.min(100.0, Math.max(0.0, scanPct))));
+        m.put("status", status);
+        if ("PILOT".equals(status)) {
+            m.put("statusLabel", "PILOT 計測中");
+        } else if ("ACTIVE".equals(status)) {
+            m.put("statusLabel", "並列走査中");
+        } else if ("DONE".equals(status)) {
+            m.put("statusLabel", "完了 (残" + String.format("%,d", remTotal) + ")");
+        } else {
+            m.put("statusLabel", "待機中");
+        }
+        matrix.set(batchIdx, m);
+        publishBatchMatrix(matrix);
+    }
+
+    private void publishBatchMatrix(List<Map<String, Object>> matrix) {
+        List<Map<String, Object>> snapshot = new ArrayList<>(matrix.size());
+        for (Map<String, Object> item : matrix) {
+            snapshot.add(new LinkedHashMap<>(item));
+        }
+        StoreController.survivalProgressMap.put("STAGE1_BATCH_MATRIX", snapshot);
+    }
+
+    private void publishWorkerDetails(List<SurvivalList> lists, int[] thresholds, boolean pilot, boolean stage2,
+            long currentPos, long targetDepth) {
+        List<Map<String, Object>> details = new ArrayList<>(lists.size());
+        double targetElimRate = Math.max(0.0, 100.0 - survivalPercent);
+        for (int i = 0; i < lists.size(); i++) {
+            SurvivalList sl = lists.get(i);
+            int init = sl.getInitialCount();
+            int rem = sl.size();
+            int elim = Math.max(0, init - rem);
+            int thresh = thresholds[i];
+            double elimPct = init > 0 ? Math.min(100.0, Math.max(0.0, (elim * 100.0) / init)) : 0.0;
+            double remPct = init > 0 ? Math.min(100.0, Math.max(0.0, (rem * 100.0) / init)) : 0.0;
+            int targetElimCount = Math.max(1, init - thresh);
+            double threshProgressPct = Math.min(100.0, Math.max(0.0, (elim * 100.0) / targetElimCount));
+            boolean reached = rem <= thresh;
+            String prefix = sl.getCommonPrefix();
+            String deepestTarget = sl.getDeepestTarget();
+            long deepestPos = sl.getDeepestPos();
+
+            Map<String, Object> w = new LinkedHashMap<>();
+            w.put("index", i + 1);
+            if (stage2) {
+                w.put("name", "Stage 2 Final Sweep Thread");
+                w.put("roleBadge", "FINAL SWEEP // 最終確定走査");
+                w.put("stateClass", rem == 0 ? "is-done" : "is-stage2");
+            } else if (pilot) {
+                w.put("name", "Parallel Thread #" + (i + 1));
+                w.put("roleBadge", reached ? "THRESHOLD REACHED! // 基準到達" : "PILOT SENSOR // 基準深さ測定中");
+                w.put("stateClass", reached ? "is-done" : "is-pilot");
+            } else {
+                w.put("name", "Parallel Thread #" + (i + 1));
+                w.put("roleBadge", "BATCH HUNTER // 並列高速消去中");
+                w.put("stateClass", rem == 0 ? "is-done" : "is-hunting");
+            }
+            w.put("rangeStart", sl.getRangeStartString());
+            w.put("rangeEnd", sl.getRangeEndString());
+            w.put("initial", String.format("%,d", init));
+            w.put("remaining", String.format("%,d", rem));
+            w.put("eliminated", String.format("%,d", elim));
+            w.put("threshold", String.format("%,d", thresh));
+            w.put("eliminatedPct", String.format(Locale.US, "%.1f", elimPct));
+            w.put("remainingPct", String.format(Locale.US, "%.1f", remPct));
+            w.put("targetElimPct", String.format(Locale.US, "%.1f", targetElimRate));
+            w.put("threshProgressPct", String.format(Locale.US, "%.1f", threshProgressPct));
+            w.put("thresholdReached", reached);
+            w.put("commonPrefix", prefix.isEmpty() ? "(なし/全走査)" : prefix);
+            w.put("commonPrefixLen", prefix.length());
+            w.put("deepestTarget", deepestTarget.isEmpty() ? "-" : deepestTarget);
+            w.put("deepestPos", deepestPos >= 0 ? String.format("%,d", deepestPos) : "-");
+            w.put("scanPos", String.format("%,d", currentPos));
+            double scanPct = (targetDepth > 0 && targetDepth < Long.MAX_VALUE)
+                    ? Math.min(100.0, Math.max(0.0, (currentPos * 100.0) / targetDepth)) : 0.0;
+            w.put("scanPct", String.format(Locale.US, "%.1f", scanPct));
+            details.add(w);
+        }
+        StoreController.survivalProgressMap.put("STAGE1_WORKER_DETAILS", details);
+    }
+
     private void checkStop() throws InterruptedException {
         if (Thread.currentThread().isInterrupted() || stopRequested.getAsBoolean()) {
             throw new InterruptedException();
@@ -118,20 +257,23 @@ public final class StagedSearch {
     }
 
     private long scan(List<SurvivalList> lists, int length, long end, boolean pilot,
-            ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest) throws Exception {
-        return scanInternal(lists, length, 0, end, pilot, workers, listener, deepest);
+            ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest,
+            List<Map<String, Object>> batchMatrix, int batchIdx) throws Exception {
+        return scanInternal(lists, length, 0, end, pilot, workers, listener, deepest, batchMatrix, batchIdx);
     }
 
     private long scanFrom(List<SurvivalList> lists, int length, long from, long end,
             ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest) throws Exception {
-        return scanInternal(lists, length, from, end, false, workers, listener, deepest);
+        return scanInternal(lists, length, from, end, false, workers, listener, deepest, null, -1);
     }
 
     private long scanInternal(List<SurvivalList> lists, int length, long from, long end, boolean pilot,
-            ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest) throws Exception {
+            ExecutorService workers, BiConsumer<String, Long> listener, SurvivalResult deepest,
+            List<Map<String, Object>> batchMatrix, int batchIdx) throws Exception {
         int[] thresholds = new int[lists.size()];
         long started = System.nanoTime();
         long lastLog = started;
+        boolean isStage2 = (!pilot && listener == null && from > 0);
         List<Integer> initialRemaining = new ArrayList<>();
         for (int i = 0; i < lists.size(); i++) {
             thresholds[i] = (int) Math.floor(lists.get(i).size() * survivalPercent / 100.0);
@@ -143,6 +285,7 @@ public final class StagedSearch {
             StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", 0L);
             StoreController.survivalProgressMap.put("STAGE1_SPEED", 0.0);
         }
+        publishWorkerDetails(lists, thresholds, pilot, isStage2, from, end);
         long availableEnd = 0;
         try (YCD_SeqProvider provider = new YCD_SeqProvider(5, files, length, unitLength)) {
             while (provider.hasNext()) {
@@ -173,12 +316,25 @@ public final class StagedSearch {
                     lastLog = now;
                 }
                 List<Integer> remaining = new ArrayList<>();
-                for (SurvivalList list : lists) remaining.add(list.size());
+                long pilotDiscovered = 0L;
+                for (SurvivalList list : lists) {
+                    remaining.add(list.size());
+                    pilotDiscovered += list.getDiscoveredCount();
+                }
                 StoreController.survivalProgressMap.put("STAGE1_WORKERS", remaining);
+                if (pilot) {
+                    StoreController.survivalProgressMap.put("STAGE1_PILOT_DISCOVERED", pilotDiscovered);
+                }
                 double seconds = (now - started) / 1_000_000_000.0;
                 long currentPos = pilot ? availableEnd : Math.min(availableEnd, end);
                 StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", currentPos);
                 StoreController.survivalProgressMap.put("STAGE1_SPEED", seconds > 0 ? Math.max(0L, currentPos - from) / seconds : 0.0);
+                publishWorkerDetails(lists, thresholds, pilot, isStage2, currentPos, end);
+                if (batchMatrix != null && batchIdx >= 0) {
+                    double batchScanPct = (end > 0 && end < Long.MAX_VALUE)
+                            ? Math.min(100.0, (currentPos * 100.0) / end) : 0.0;
+                    updateBatchStatus(batchMatrix, batchIdx, pilot ? "PILOT" : "ACTIVE", lists, batchScanPct);
+                }
                 if (!pilot && listener != null) {
                     Object batch = StoreController.survivalProgressMap.get("STAGE1_BATCH");
                     Object count = StoreController.survivalProgressMap.get("STAGE1_BATCHES");
@@ -196,6 +352,7 @@ public final class StagedSearch {
                 if (pilot && reached != Long.MAX_VALUE) {
                     long resolvedDepth = reached + 1;
                     StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", resolvedDepth);
+                    publishWorkerDetails(lists, thresholds, true, false, resolvedDepth, resolvedDepth);
                     return resolvedDepth;
                 }
                 boolean empty = true;

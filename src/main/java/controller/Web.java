@@ -99,10 +99,17 @@ public class Web {
             return "";
         });
         get("/api/status", (req, resp) -> {
-            resp.type("application/json; charset=UTF-8");
-            resp.header("Cache-Control", "no-store, no-cache, must-revalidate");
-            Map<String, Object> model = buildTelemetryModel(startTime, false);
-            return toJson(model);
+            try {
+                resp.type("application/json; charset=UTF-8");
+                resp.header("Cache-Control", "no-store, no-cache, must-revalidate");
+                Map<String, Object> model = buildTelemetryModel(startTime, false);
+                return toJson(model);
+            } catch (Exception e) {
+                System.out.println();
+                System.out.println("Web API status error:");
+                e.printStackTrace();
+                throw e;
+            }
         });
         get("/", new TemplateViewRoute() {
             @Override
@@ -138,7 +145,14 @@ public class Web {
         Map<String, Object> exportModel = new HashMap<>(model);
         exportModel.remove("STOP_TOKEN");
         String html = templateEngine.render(new ModelAndView(exportModel, "index"));
-        FileUtils.writeStringToFile(new File("index.html"), html, CHARACTER_ENCODING);
+        synchronized (Web.class) {
+            try {
+                FileUtils.writeStringToFile(new File("index.html"), html, CHARACTER_ENCODING);
+            } catch (Exception e) {
+                // Windowsでの一時的なファイルロック競合でHTTP 500にしない
+                System.out.println("Warning: could not write static index.html: " + e.getMessage());
+            }
+        }
 
         return modelAndView;
     }
@@ -277,9 +291,29 @@ public class Web {
         model.put("SCAN_RADAR_PCT", String.format(Locale.US, "%.2f", scanRadarPct));
         model.put("PI_SCAN_USAGE_PCT", String.format(Locale.US, "%.3f", piUsagePct));
 
-        // ワーカースレッド別テレメトリ
+        // ワーカースレッド別テレメトリ & バッチ分割マトリクス
+        Object threadsCountObj = StoreController.survivalProgressMap.get("STAGE1_THREADS_COUNT");
+        int stage1ThreadsCount = (threadsCountObj instanceof Number) ? ((Number) threadsCountObj).intValue() : 3;
+        Object groupsCountObj = StoreController.survivalProgressMap.get("STAGE1_GROUPS_COUNT");
+        int stage1GroupsCount = (groupsCountObj instanceof Number) ? ((Number) groupsCountObj).intValue() : 0;
+        Object survivalRateObj = StoreController.survivalProgressMap.get("STAGE1_SURVIVAL_RATE");
+        double stage1SurvivalRate = (survivalRateObj instanceof Number) ? ((Number) survivalRateObj).doubleValue() : 5.0;
+        double stage1TargetElimRate = Math.max(0.0, 100.0 - stage1SurvivalRate);
+        model.put("STAGE1_THREADS_COUNT", stage1ThreadsCount);
+        model.put("STAGE1_GROUPS_COUNT", stage1GroupsCount);
+        model.put("STAGE1_SURVIVAL_RATE", String.format(Locale.US, "%.1f", stage1SurvivalRate));
+        model.put("STAGE1_TARGET_ELIM_RATE", String.format(Locale.US, "%.1f", stage1TargetElimRate));
+
+        Object batchMatrixObj = StoreController.survivalProgressMap.get("STAGE1_BATCH_MATRIX");
+        List<Map<String, Object>> batchMatrix = (batchMatrixObj instanceof List<?>)
+                ? (List<Map<String, Object>>) batchMatrixObj : Collections.emptyList();
+        model.put("STAGE1_BATCH_MATRIX", batchMatrix);
+
+        Object workerDetailsObj = StoreController.survivalProgressMap.get("STAGE1_WORKER_DETAILS");
         List<Map<String, Object>> workerCards = new ArrayList<>();
-        if (workersObj instanceof List<?>) {
+        if (workerDetailsObj instanceof List<?>) {
+            workerCards = (List<Map<String, Object>>) workerDetailsObj;
+        } else if (workersObj instanceof List<?>) {
             List<?> remList = (List<?>) workersObj;
             List<?> initList = (workerInitialsObj instanceof List<?>) ? (List<?>) workerInitialsObj : Collections.emptyList();
             for (int i = 0; i < remList.size(); i++) {
@@ -291,12 +325,26 @@ public class Web {
                 double remPct = (init > 0) ? clampPct((rem * 100.0) / init) : 0.0;
                 Map<String, Object> w = new LinkedHashMap<>();
                 w.put("index", i + 1);
-                w.put("name", (searchStage == 2) ? "Final Sweep" : ("Worker #" + (i + 1)));
+                w.put("name", (searchStage == 2) ? "Stage 2 Final Sweep Thread" : ("Parallel Thread #" + (i + 1)));
+                w.put("roleBadge", (searchStage == 2) ? "FINAL SWEEP" : "PARALLEL WORKER");
+                w.put("stateClass", "is-hunting");
+                w.put("rangeStart", "-");
+                w.put("rangeEnd", "-");
                 w.put("initial", String.format("%,d", init));
                 w.put("remaining", String.format("%,d", rem));
                 w.put("eliminated", String.format("%,d", elim));
+                w.put("threshold", "0");
                 w.put("eliminatedPct", String.format(Locale.US, "%.1f", elimPct));
                 w.put("remainingPct", String.format(Locale.US, "%.1f", remPct));
+                w.put("targetElimPct", String.format(Locale.US, "%.1f", stage1TargetElimRate));
+                w.put("threshProgressPct", String.format(Locale.US, "%.1f", elimPct));
+                w.put("thresholdReached", false);
+                w.put("commonPrefix", "-");
+                w.put("commonPrefixLen", 0);
+                w.put("deepestTarget", "-");
+                w.put("deepestPos", "-");
+                w.put("scanPos", (stage1PositionObj instanceof Number) ? String.format("%,d", currentScanPosRaw) : "0");
+                w.put("scanPct", "0.0");
                 workerCards.add(w);
             }
         }
@@ -310,7 +358,12 @@ public class Web {
         model.put("CURRENT_DIGITS_MIN", StringUtils.repeat("0", currentLength));
         model.put("CURRENT_DIGITS_MAX", StringUtils.repeat("9", currentLength));
 
-        final long discoveredCount = (null != pr.getCurrentDiscoveredCount()) ? pr.getCurrentDiscoveredCount() : 0L;
+        Object pilotDiscoveredObj = StoreController.survivalProgressMap.get("STAGE1_PILOT_DISCOVERED");
+        long pilotDiscovered = ("PILOT".equals(phaseCode) && pilotDiscoveredObj instanceof Number)
+                ? Math.max(0L, ((Number) pilotDiscoveredObj).longValue()) : 0L;
+
+        final long baseDiscoveredCount = (null != pr.getCurrentDiscoveredCount()) ? pr.getCurrentDiscoveredCount() : 0L;
+        final long discoveredCount = baseDiscoveredCount + pilotDiscovered;
         model.put("CURRENT_DISCOVERD_COUNT", String.format("%,d", discoveredCount));
         model.put("CURRENT_ELAPSED_TIME", String.format("%,d", elapsedSec));
         model.put("CURRENT_ELAPSED_HMS", formatDurationHms(elapsedSec));
@@ -392,6 +445,7 @@ public class Web {
             progress = ((double) Math.round(d * 100000)) / 100000;
         }
         model.put("CURRENT_PROGRESS_RATE", progress);
+        model.put("CURRENT_PROGRESS_RATE_FMT", String.format(Locale.US, "%.5f", progress));
         model.put("CURRENT_PROGRESS_PCT_STR", String.format(Locale.US, "%.2f", clampPct(progress)));
 
         double speed = (0L < elapsedSec) ? (double) discoveredCount / (double) elapsedSec : 0.0;
@@ -435,9 +489,10 @@ public class Web {
         }
         model.put("DIGIT_ROADMAP", digitRoadmap);
 
-        // 発見位置（昇順）から出現分布を作る。まだ発見が無い場合は空の分布
-        long[] discoverdInfoList = (null != pr.getDiscoverdPosList()) ? pr.getDiscoverdPosList() : new long[0];
-        LinkedHashMap<Long, Long> discoverdPosMap = distribution(discoverdInfoList);
+        // 発見位置から出現分布を作る（巨大配列のコピー・ソートを避けて O(1) メモリで集計）
+        LinkedHashMap<Long, Long> discoverdPosMap = (activeList != null)
+                ? activeList.getDistributionSnapshot()
+                : distribution((null != pr.getDiscoverdPosList()) ? pr.getDiscoverdPosList() : new long[0]);
         LinkedHashMap<String, String> formatedDiscoverdPosMap = new LinkedHashMap<>();
 
         long maxBucketCount = 1L;
@@ -494,8 +549,9 @@ public class Web {
         model.put("CURRENT_SURVIVAL_INITIAL_COUNT", String.format("%,d", survivalListInitialSize));
 
         // サバイバルリストの現在発見数と残存数
-        final long survivalListDiscoverdCount = (null != pr.getCurenntSurvivalDiscoveredCount())
+        final long baseSurvivalDiscovered = (null != pr.getCurenntSurvivalDiscoveredCount())
                 ? pr.getCurenntSurvivalDiscoveredCount() : 0L;
+        final long survivalListDiscoverdCount = Math.min(survivalListInitialSize, baseSurvivalDiscovered + pilotDiscovered);
         final long survivalListRemainingCount = Math.max(0L, survivalListInitialSize - survivalListDiscoverdCount);
         model.put("CURRENT_SURVIVAL_DISCOVERD_COUNT", String.format("%,d", survivalListDiscoverdCount));
         model.put("CURRENT_SURVIVAL_REMAINING_COUNT", String.format("%,d", survivalListRemainingCount));
@@ -506,6 +562,7 @@ public class Web {
         double survivalDiscoveredPct = ((double) Math.round(survivalProcessRate * 1000000)) / 1000000 * 100;
         double survivalRemainingPct = Math.max(0.0, 100.0 - survivalDiscoveredPct);
         model.put("CURRENT_SURVIVAL_DISCOVERD_RATE", survivalDiscoveredPct);
+        model.put("CURRENT_SURVIVAL_DISCOVERD_RATE_FMT", String.format(Locale.US, "%.4f", survivalDiscoveredPct));
         model.put("CURRENT_SURVIVAL_DISCOVERD_PCT_STR", String.format(Locale.US, "%.2f", clampPct(survivalDiscoveredPct)));
         model.put("CURRENT_SURVIVAL_REMAINING_PCT_STR", String.format(Locale.US, "%.2f", clampPct(survivalRemainingPct)));
 

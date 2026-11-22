@@ -107,6 +107,11 @@ public class SurvivalList extends AbstractList<String> implements RandomAccess {
     private String deepestTarget = "";
     private long deepestPos = -1L;
 
+    /** 出現分布（10区間）のキャッシュ（巨大 listSize 時に毎回配列コピー＆ソートで OOM になるのを防ぐ） */
+    private volatile int cachedDistCount = -1;
+    private volatile long cachedDistTimeMs = 0L;
+    private volatile java.util.LinkedHashMap<Long, Long> cachedDistribution = null;
+
     /**
      * コンストラクタ.
      *
@@ -191,6 +196,33 @@ public class SurvivalList extends AbstractList<String> implements RandomAccess {
      */
     public int getLength() {
         return this.length;
+    }
+
+    /**
+     * 初期要素数（スロット数）を返す.
+     *
+     * @return 初期要素数
+     */
+    public int getInitialCount() {
+        return this.slotCount;
+    }
+
+    /**
+     * このリストの開始番号（ゼロ埋め文字列）を返す.
+     *
+     * @return 開始番号文字列
+     */
+    public String getRangeStartString() {
+        return format(this.startValue);
+    }
+
+    /**
+     * このリストの終了番号（ゼロ埋め文字列）を返す.
+     *
+     * @return 終了番号文字列
+     */
+    public String getRangeEndString() {
+        return format(this.startValue + Math.max(0, this.slotCount - 1));
     }
 
     /**
@@ -343,6 +375,45 @@ public class SurvivalList extends AbstractList<String> implements RandomAccess {
      */
     public synchronized long getDeepestPos() {
         return this.deepestPos;
+    }
+
+    /**
+     * 巨大配列のコピーやソートを行わず、O(1) メモリで10区間の出現位置分布を計算して返す.
+     *
+     * @return 各区間の終端位置をキー、出現件数を値とする LinkedHashMap
+     */
+    public java.util.LinkedHashMap<Long, Long> getDistributionSnapshot() {
+        int count;
+        long last;
+        synchronized (this) {
+            count = this.discoveredCount;
+            last = (count == 0) ? 0L : Math.max(0L, this.deepestPos);
+        }
+        long now = System.currentTimeMillis();
+        java.util.LinkedHashMap<Long, Long> cached = this.cachedDistribution;
+        if (cached != null && (count == this.cachedDistCount || (now - this.cachedDistTimeMs) < 1000L)) {
+            return new java.util.LinkedHashMap<>(cached);
+        }
+        long width = Math.max(1L, last / 10 + (last % 10 == 0 ? 0 : 1));
+        long[] bounds = new long[10];
+        long[] bucketCounts = new long[10];
+        for (int i = 0; i < 10; i++) {
+            bounds[i] = width * (i + 1);
+        }
+        final long[] posArray = this.discoveredPos;
+        for (int i = 0; i < count; i++) {
+            long p = posArray[i];
+            int b = (p <= 0L) ? 0 : (int) Math.min(9L, (p - 1L) / width);
+            bucketCounts[b]++;
+        }
+        java.util.LinkedHashMap<Long, Long> result = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < 10; i++) {
+            result.put(bounds[i], bucketCounts[i]);
+        }
+        this.cachedDistribution = result;
+        this.cachedDistCount = count;
+        this.cachedDistTimeMs = now;
+        return new java.util.LinkedHashMap<>(result);
     }
 
     /**
