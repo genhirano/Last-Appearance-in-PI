@@ -25,6 +25,28 @@ import static spark.Spark.*;
 import static spark.debug.DebugScreen.enableDebugScreen;
 
 public class Web {
+    private static final String STOP_TOKEN = java.util.UUID.randomUUID().toString();
+
+    private static volatile Searcher searcher;
+    public static void setSearcher(Searcher value) { searcher = value; }
+
+    public static boolean isLoopbackAddress(String addr) {
+        return "127.0.0.1".equals(addr) || "::1".equals(addr) || "0:0:0:0:0:0:0:1".equals(addr);
+    }
+
+    public static boolean isLoopbackRequest(String remoteAddr, String forwardedFor) {
+        if (!isLoopbackAddress(remoteAddr)) {
+            return false;
+        }
+        if (forwardedFor != null && !forwardedFor.trim().isEmpty()) {
+            for (String part : forwardedFor.split(",")) {
+                if (!isLoopbackAddress(part.trim())) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
     // ThymeleafTemplateEngine
     private static TemplateEngine templateEngine;
@@ -55,11 +77,30 @@ public class Web {
         // WEB-------------------------------------
         port(Env.getInstance().getPortNo());
         staticFiles.location("/public/");
+        post("/stop", (req, resp) -> {
+            String remote = req.raw().getRemoteAddr();
+            if (!isLoopbackRequest(remote, req.headers("X-Forwarded-For"))) {
+                resp.status(403);
+                return "Forbidden";
+            }
+            String token = req.queryParams("token");
+            if (token == null || !java.security.MessageDigest.isEqual(
+                    STOP_TOKEN.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                    token.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+                resp.status(403);
+                return "Forbidden";
+            }
+            Searcher current = searcher;
+            if (current != null && current.isAlive()) current.requestStop();
+            resp.redirect("/");
+            return "";
+        });
         get("/", new TemplateViewRoute() {
             @Override
             public ModelAndView handle(Request req, Response resp) throws Exception {
                 try {
-                    return buildPage(startTime);
+                    boolean loopback = isLoopbackRequest(req.raw().getRemoteAddr(), req.headers("X-Forwarded-For"));
+                    return buildPage(startTime, loopback);
                 } catch (Exception e) {
                     // ルート内の例外はログに出さないと原因が追えない（SLF4J は NOP）ため、ここで出力してから再スロー
                     System.out.println();
@@ -80,7 +121,7 @@ public class Web {
      * @param startTime システム開始時刻
      * @return モデルとビュー
      */
-    private static ModelAndView buildPage(ZonedDateTime startTime) throws Exception {
+    private static ModelAndView buildPage(ZonedDateTime startTime, boolean includeStopForm) throws Exception {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -100,6 +141,22 @@ public class Web {
         model.put("YCD_MAX_DEPTH", String.format("%,d", pr.getAllPiDataLength()));
         model.put("SYSTEMSTART", startTime);
         model.put("SEARCH_STOPPED", Searcher.getStoppedReason());
+        model.put("SEARCH_STOPPING", StoreController.survivalProgressMap.get("SEARCH_STOPPING"));
+        if (includeStopForm) {
+            model.put("STOP_TOKEN", STOP_TOKEN);
+        }
+        model.put("SEARCH_STAGE", StoreController.survivalProgressMap.get("SEARCH_STAGE"));
+        model.put("STAGE1_BATCH", StoreController.survivalProgressMap.get("STAGE1_BATCH"));
+        model.put("STAGE1_BATCHES", StoreController.survivalProgressMap.get("STAGE1_BATCHES"));
+        Object stage1Depth = StoreController.survivalProgressMap.get("STAGE1_DEPTH");
+        model.put("STAGE1_DEPTH", (stage1Depth instanceof Number) ? String.format("%,d", ((Number) stage1Depth).longValue()) : stage1Depth);
+        Object stage1Progress = StoreController.survivalProgressMap.get("STAGE1_PROGRESS");
+        model.put("STAGE1_PROGRESS", (stage1Progress instanceof Number) ? String.format("%.2f", ((Number) stage1Progress).doubleValue()) : stage1Progress);
+        model.put("STAGE1_WORKERS", StoreController.survivalProgressMap.get("STAGE1_WORKERS"));
+        Object stage1Position = StoreController.survivalProgressMap.get("NOW_SURVIVAL_DEPTH");
+        model.put("STAGE1_POSITION", (stage1Position instanceof Number) ? String.format("%,d", ((Number) stage1Position).longValue()) : stage1Position);
+        Object stage1Speed = StoreController.survivalProgressMap.get("STAGE1_SPEED");
+        model.put("STAGE1_SPEED", (stage1Speed instanceof Number) ? String.format("%,.0f", ((Number) stage1Speed).doubleValue()) : stage1Speed);
 
         final long elapsedSec = (null != pr.getCurenntElapsedTimeInSeconds()) ? pr.getCurenntElapsedTimeInSeconds() : 0L;
         model.put("RUNNING_TIME", elapsedSec);
@@ -222,8 +279,10 @@ public class Web {
 
         ModelAndView modelAndView = new ModelAndView(model, "index");
 
-        // htmlを生成してファイルに保存
-        String html = templateEngine.render(modelAndView);
+        // htmlを生成してファイルに保存（CSRFトークンや停止フォームは静的HTMLへ出力しない）
+        Map<String, Object> exportModel = new HashMap<>(model);
+        exportModel.remove("STOP_TOKEN");
+        String html = templateEngine.render(new ModelAndView(exportModel, "index"));
         FileUtils.writeStringToFile(new File("index.html"), html, CHARACTER_ENCODING);
 
         return modelAndView;

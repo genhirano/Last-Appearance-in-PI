@@ -2,6 +2,7 @@ import controller.Env;
 import controller.Main;
 import controller.Searcher;
 import controller.StoreController;
+import controller.Web;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -13,12 +14,17 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * 3. 保存ファイル（NNN.txt）が桁ごとに作られ、1〜5桁の最遅出現が OEIS と一致する
  * 4. データが尽きたとき（7桁は 1,500万桁では終わらない）にプロセスを落とさず、検索スレッドだけ停止して WEB は応答し続ける
  * 5. 静的 HTML（index.html）が保存される
+ * 6. /stop エンドポイントがトークン・ループバック検証を行い、正当なリクエストでのみ検索を停止して最終 HTML を更新する
  */
 public class WebIntegrationTest {
 
@@ -129,6 +136,68 @@ public class WebIntegrationTest {
         // 5. 静的 HTML が保存される
         assertTrue(Files.exists(INDEX_HTML));
         assertTrue(Files.size(INDEX_HTML) > 1000);
+
+        // 6. /stop エンドポイントの認可（トークン・ループバック）と停止状態遷移の統合検証
+        assertTrue(Web.isLoopbackRequest("127.0.0.1", null));
+        assertTrue(Web.isLoopbackRequest("::1", "127.0.0.1"));
+        assertFalse(Web.isLoopbackRequest("203.0.113.10", null));
+        assertFalse(Web.isLoopbackRequest("127.0.0.1", "203.0.113.10"));
+
+        StoreController.survivalProgressMap.remove("SEARCH_STOPPED");
+        StoreController.survivalProgressMap.remove("SEARCH_STOPPED_AT");
+        StoreController.survivalProgressMap.remove("SEARCH_STOPPING");
+
+        List<File> piFiles = Env.getInstance().createFileListByProp();
+        Searcher activeSearcher = new Searcher(piFiles, Env.getInstance().getListSize(), Env.getInstance().getUnitLength());
+        Web.setSearcher(activeSearcher);
+        activeSearcher.start();
+
+        Response runningPage = get("/");
+        assertEquals(200, runningPage.code);
+        Matcher tokenMatcher = Pattern.compile("name=\"token\"\\s+value=\"([^\"]+)\"").matcher(runningPage.body);
+        assertTrue(tokenMatcher.find(), "停止フォームにCSRFトークンが含まれること");
+        String validToken = tokenMatcher.group(1);
+        String runningExportedHtml = new String(Files.readAllBytes(INDEX_HTML), StandardCharsets.UTF_8);
+        assertFalse(runningExportedHtml.contains(validToken), "静的 index.html にはCSRFトークンを出力しないこと");
+        assertFalse(runningExportedHtml.contains("action=\"/stop\""), "静的 index.html には停止フォームを出力しないこと");
+
+        // 非ループバック経由の GET / 応答には停止トークンや停止フォームを含めない
+        Response nonLoopbackGetRes = get("/", Collections.singletonMap("X-Forwarded-For", "203.0.113.10"));
+        assertEquals(200, nonLoopbackGetRes.code);
+        assertFalse(nonLoopbackGetRes.body.contains(validToken), "非ループバックGET応答にはCSRFトークンを含めないこと");
+        assertFalse(nonLoopbackGetRes.body.contains("action=\"/stop\""), "非ループバックGET応答には停止フォームを含めないこと");
+
+        // トークン欠落は 403 で拒否され、検索は停止しない
+        Response missingTokenRes = post("/stop", Collections.emptyMap());
+        assertEquals(403, missingTokenRes.code);
+        assertNull(Searcher.getStoppedReason());
+        assertTrue(activeSearcher.isAlive());
+
+        // 不正トークンは 403 で拒否され、検索は停止しない
+        Response invalidTokenRes = post("/stop?token=invalid-token", Collections.emptyMap());
+        assertEquals(403, invalidTokenRes.code);
+        assertNull(Searcher.getStoppedReason());
+        assertTrue(activeSearcher.isAlive());
+
+        // 非ループバック経由のリクエストは 403 で拒否され、検索は停止しない
+        Response nonLoopbackRes = post("/stop?token=" + URLEncoder.encode(validToken, "UTF-8"),
+                Collections.singletonMap("X-Forwarded-For", "203.0.113.10"));
+        assertEquals(403, nonLoopbackRes.code);
+        assertNull(Searcher.getStoppedReason());
+        assertTrue(activeSearcher.isAlive());
+
+        // 正当なトークン＋ループバックからの POST で停止が受理され、停止状態へ到達し index.html も更新される
+        Response acceptedStopRes = post("/stop?token=" + URLEncoder.encode(validToken, "UTF-8"), Collections.emptyMap());
+        assertTrue(acceptedStopRes.code == 200 || acceptedStopRes.code == 302);
+        activeSearcher.join(30_000L);
+        assertFalse(activeSearcher.isAlive(), "停止要求後に検索スレッドが終了すること");
+        assertEquals("Search interrupted; unfinished range will be retried.", Searcher.getStoppedReason());
+        assertNull(StoreController.survivalProgressMap.get("SEARCH_STOPPING"), "SEARCH_STOPPING が解除されること");
+        activeSearcher.requestStop();
+        assertNull(StoreController.survivalProgressMap.get("SEARCH_STOPPING"), "停止済みSearcherへのrequestStopでSEARCH_STOPPINGが再設定されないこと");
+        String exportedHtml = new String(Files.readAllBytes(INDEX_HTML), StandardCharsets.UTF_8);
+        assertTrue(exportedHtml.contains("Search interrupted; unfinished range will be retried."),
+                "割り込み停止時でも最終的な index.html が停止状態で更新されること");
     }
 
     private static String firstFields(Path file, int n) throws IOException {
@@ -144,9 +213,33 @@ public class WebIntegrationTest {
     }
 
     private static Response get(String path) throws IOException {
+        return get(path, Collections.emptyMap());
+    }
+
+    private static Response get(String path, Map<String, String> headers) throws IOException {
         HttpURLConnection con = (HttpURLConnection) new URL("http://localhost:" + PORT + path).openConnection();
         con.setConnectTimeout(5000);
         con.setReadTimeout(30000);
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            con.setRequestProperty(entry.getKey(), entry.getValue());
+        }
+        Response r = new Response();
+        r.code = con.getResponseCode();
+        InputStream in = (r.code < 400) ? con.getInputStream() : con.getErrorStream();
+        r.body = (in == null) ? "" : new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        con.disconnect();
+        return r;
+    }
+
+    private static Response post(String path, Map<String, String> headers) throws IOException {
+        HttpURLConnection con = (HttpURLConnection) new URL("http://localhost:" + PORT + path).openConnection();
+        con.setInstanceFollowRedirects(false);
+        con.setRequestMethod("POST");
+        con.setConnectTimeout(5000);
+        con.setReadTimeout(30000);
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            con.setRequestProperty(entry.getKey(), entry.getValue());
+        }
         Response r = new Response();
         r.code = con.getResponseCode();
         InputStream in = (r.code < 400) ? con.getInputStream() : con.getErrorStream();

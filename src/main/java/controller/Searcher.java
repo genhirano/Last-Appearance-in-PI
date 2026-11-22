@@ -10,12 +10,30 @@ import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.text.DecimalFormat;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
 public class Searcher extends Thread {
+    private volatile boolean stopRequested;
+    private volatile boolean stopped;
+
+    public synchronized void requestStop() {
+        if (stopped) {
+            return;
+        }
+        stopRequested = true;
+        StoreController.survivalProgressMap.put("SEARCH_STOPPING", true);
+        interrupt();
+    }
+
+    public boolean isStopRequested() {
+        return stopRequested;
+    }
 
     @Getter
     private final List<File> um_piFileList;// 検索用ファイルリスト（不変にする）
@@ -43,9 +61,15 @@ public class Searcher extends Thread {
 
     @Override
     public void run() {
+        System.out.printf("[準備] 円周率ファイル %,d 件を読み込みました (総桁数: %,d 桁)%n",
+                um_piFileList.size(), StoreController.getAllPiDataLength());
 
         // 検索処理のメインループ
         while (true) {
+            if (stopRequested || isInterrupted()) {
+                stop("Search interrupted; unfinished range will be retried.");
+                return;
+            }
 
             // １サイクルの開始時間
             ZonedDateTime startTime = ZonedDateTime.now();
@@ -61,16 +85,45 @@ public class Searcher extends Thread {
             // 1サイクルのサバイバル実行
             SurvivalResult sr = survive(targetRange);
             if (null == sr) {
-                // YCDデータが尽きて探しきれなかった。検索スレッドだけ終了し、WEB画面は残す
+                // YCDデータが尽きて探しきれなかった、または中断された。検索スレッドだけ終了し、WEB画面は残す
                 return;
             }
 
             // １サイクルの終了時間
             ZonedDateTime endTime = ZonedDateTime.now();
 
-            // １サイクルの結果保存
-            StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
-                    targetRange.getEnd(), sr.getTarget(), sr.getFindPos(), startTime, endTime);
+            // １サイクルの結果保存（停止要求との競合・保存中の割り込みによる部分書き込みや停止状態の未確定を防ぐ）
+            synchronized (this) {
+                if (stopRequested || isInterrupted()) {
+                    stop("Search interrupted; unfinished range will be retried.");
+                    return;
+                }
+                boolean interrupted = Thread.interrupted();
+                try {
+                    StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
+                            targetRange.getEnd(), sr.getTarget(), sr.getFindPos(), startTime, endTime);
+                } catch (RuntimeException e) {
+                    if (stopRequested || isInterrupted() || hasInterruptedCause(e)) {
+                        stop("Search interrupted; unfinished range will be retried.");
+                        return;
+                    }
+                    throw e;
+                } finally {
+                    if (interrupted) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+
+            long elapsedSeconds = Duration.between(startTime, endTime).getSeconds();
+            System.out.printf("  -> [完了] %d 桁 (%s ～ %s) | 最遅出現: \"%s\" (位置: %,d 桁目) [所要時間: %,d秒]%n",
+                    targetRange.getLength(), targetRange.getStart(), targetRange.getEnd(),
+                    sr.getTarget(), sr.getFindPos(), elapsedSeconds);
+
+            if (stopRequested || isInterrupted()) {
+                stop("Search interrupted; unfinished range will be retried.");
+                return;
+            }
 
             // Httpで強制アクセス（静的HTMLを作成するため）
             StoreController.getInstance().saveHTML();
@@ -81,116 +134,70 @@ public class Searcher extends Thread {
 
     private SurvivalResult survive(TargetRange targetRange) {
 
-        // プロセス内新記録の記録
-        SurvivalResult processDeepest = new SurvivalResult("", -1L);
-
-        // サバイバルリスト作成
         SurvivalList survivalList = new SurvivalList(targetRange.getLength(), Long.parseLong(targetRange.getStart()),
                 Long.parseLong(targetRange.getEnd()));
-
-        // 進捗情報用サバイバルリスト初期情報の登録
+        System.out.printf("%n[探索開始] %d 桁 (%s ～ %s / 候補数: %,d)%n",
+                targetRange.getLength(), targetRange.getStart(), targetRange.getEnd(), survivalList.size());
         synchronized (StoreController.survivalProgressMap) {
             StoreController.survivalProgressMap.put("SURVIVAL_INITIAL_INFO", targetRange);
             StoreController.survivalProgressMap.put("SURVIVAL_LIST", survivalList);
             StoreController.survivalProgressMap.put("SURVIVAL_CURRENT_START_TIME", ZonedDateTime.now());
-            StoreController.survivalProgressMap.put("NOW_SURVIVAL_LIST_SIZE", survivalList.size());
+            StoreController.survivalProgressMap.put("SEARCH_STAGE", 1);
             StoreController.survivalProgressMap.remove("NOW_SURVIVAL_DEPTH");
+            StoreController.survivalProgressMap.remove("STAGE1_DEPTH");
+            StoreController.survivalProgressMap.remove("STAGE1_BATCH");
+            StoreController.survivalProgressMap.remove("STAGE1_BATCHES");
+            StoreController.survivalProgressMap.remove("STAGE1_PROGRESS");
+            StoreController.survivalProgressMap.remove("STAGE1_WORKERS");
+            StoreController.survivalProgressMap.remove("STAGE1_SPEED");
         }
-
-        // YCDデータプロバイダ（シーケンシャルにYCDデータをブロックで提供）を作成
-        int overWrapLength = targetRange.getLength(); // ユニットの境目対応として一つ前のケツの部分を今回の先頭に重ねる桁の長さ
-        try (YCD_SeqProvider p = new YCD_SeqProvider(5, this.um_piFileList, overWrapLength, this.unitLength);) {
-
-            // YCDファイルの全ヘッダー情報を記録
-            StoreController.survivalProgressMap.put("YCD_FILE_INFO", p.getFileInfoMap());
-
-            // 検索スレッドオブジェクト
-            SearchThread searchThread = null;
-
-            // 検索処理の開始時間
-            long baseTime = System.currentTimeMillis();
-
-            // 直前に検索スレッドへ渡したユニットの末尾桁（検索深さの表示用）
-            long lastUnitEndDigit = 0L;
-
-            // YCDデータが尽きるまで（または全て発見するまで）繰り返す
-            while (p.hasNext()) {
-
-                // YCDから次の対象文字列を読み込む（前のユニットの検索と並行して読む）
-                final YCD_SeqProvider.Unit currentPi = p.next();
-
-                // ひとつ前の検索処理の終了を待ち合わせる
-                if (searchThread != null) {
-                    searchThread.join();
-
-                    // 現在の検索深さを記録
-                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", lastUnitEndDigit);
-
-                    // 新記録なら結果を更新
-                    if (0 < searchThread.getResult().compareTo(processDeepest)) {
-                        processDeepest.update(searchThread.getResult());
-                    }
-
-                    // サバイバルリストが空になったら終了
-                    if (survivalList.isEmpty()) {
-                        searchThread = null;
-                        break; // read YCD UNIT break
-                    }
-
-                }
-
-                // デバッグ出力は、１秒より短く表示しない
-                if ((null != searchThread) && (baseTime + 1000 < System.currentTimeMillis())) {
-
-                    DecimalFormat decimalFormat = new DecimalFormat("#,###");
-                    final String anowReadDepth = decimalFormat
-                            .format((Long.parseLong(currentPi.getFileInfo().get(YCDFileUtil.FileInfo.END_DIGIT))));
-                    final String nowReadDepth = decimalFormat
-                            .format((currentPi.getStartDigit() + currentPi.getData().length()));
-
-                    String output = "\r"
-                            + "Items:" + survivalList.size()
-                            + " " + nowReadDepth
-                            + " / " + anowReadDepth
-                            + " - \"" + survivalList.get(0) + "\""
-                            + "-\"" + survivalList.get(survivalList.size() - 1) + "\"";
-                    System.out.print(output);
-                    System.out.print(" ".repeat(Math.max(0, 85 - output.length())) + "|"); // ターミナルの幅に応じて調整
-                    System.out.flush();
-
-                    baseTime = System.currentTimeMillis();
-                }
-
-                // 検索スレッドの作成と開始
-                lastUnitEndDigit = currentPi.getStartDigit() + currentPi.getData().length();
-                searchThread = new SearchThread(survivalList, currentPi);
-                searchThread.start();
+        java.util.Properties settings = Env.getInstance().getProp();
+        try {
+            model.pi.StagedSearch search = new model.pi.StagedSearch(um_piFileList, unitLength,
+                    Integer.parseInt(settings.getProperty("stage1Threads", "3")),
+                    Integer.parseInt(settings.getProperty("stage1BatchCount", "10")),
+                    Double.parseDouble(settings.getProperty("stage1SurvivalRate", "5")),
+                    this::isStopRequested);
+            SurvivalResult result = search.search(targetRange.getLength(), Long.parseLong(targetRange.getStart()),
+                    Long.parseLong(targetRange.getEnd()), survivalList);
+            if (result == null) {
+                String sample = survivalList.isEmpty() ? "-" : survivalList.get(0);
+                System.out.println("----------------------------------------------------------------------");
+                System.out.println("[停止] 円周率データが不足したため探索を停止しました");
+                System.out.printf("  - 対象: %d 桁 (%s ～ %s)%n",
+                        targetRange.getLength(), targetRange.getStart(), targetRange.getEnd());
+                System.out.printf("  - 理由: 全 %,d ファイル (%,d 桁) を走査し終えましたが、%n",
+                        um_piFileList.size(), StoreController.getAllPiDataLength());
+                System.out.printf("          未確定の候補が %,d 件残っています (未発見例: \"%s\")%n",
+                        survivalList.size(), sample);
+                System.out.println("  - メモ: この桁数を確定するには、より長い円周率データが必要です。");
+                System.out.println("----------------------------------------------------------------------");
+                stop("The file was too short to finalize all candidates.");
             }
-
-            // 最後のユニットの検索（データが尽きた場合はここで待ち合わせる）
-            if (searchThread != null) {
-                searchThread.join();
-                StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", lastUnitEndDigit);
-                if (0 < searchThread.getResult().compareTo(processDeepest)) {
-                    processDeepest.update(searchThread.getResult());
-                }
-            }
-
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
-        }
-
-        // 検索終了。サバイバルリストが空になっているはず。
-        // サバイバルリストが空でない場合は探しきれなかった、とする。
-        if (!survivalList.isEmpty()) {
-            stop("The file was too short to finalize the last one(発見できず。YCDファイルが短すぎました)"
-                    + "  検索できなかったものの一例: " + survivalList.get(0)
-                    + "  読み込み深さ: " + StoreController.survivalProgressMap.get("NOW_SURVIVAL_DEPTH"));
+            return result;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            stop("Search interrupted; unfinished range will be retried.");
             return null;
+        } catch (Exception e) {
+            if (stopRequested || isInterrupted() || hasInterruptedCause(e)) {
+                stop("Search interrupted; unfinished range will be retried.");
+                return null;
+            }
+            throw new RuntimeException(e);
         }
+    }
 
-        return processDeepest;
-
+    private static boolean hasInterruptedCause(Throwable t) {
+        while (t != null) {
+            if (t instanceof InterruptedException
+                    || t instanceof InterruptedIOException
+                    || t instanceof ClosedByInterruptException) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
     }
 
     /**
@@ -201,9 +208,20 @@ public class Searcher extends Thread {
     private void stop(String reason) {
         System.out.println();
         System.out.println("Search stopped: " + reason);
-        StoreController.survivalProgressMap.put("SEARCH_STOPPED", reason);
-        StoreController.survivalProgressMap.put("SEARCH_STOPPED_AT", ZonedDateTime.now());
-        StoreController.getInstance().saveHTML();
+        synchronized (this) {
+            stopped = true;
+            StoreController.survivalProgressMap.put("SEARCH_STOPPED", reason);
+            StoreController.survivalProgressMap.put("SEARCH_STOPPED_AT", ZonedDateTime.now());
+            StoreController.survivalProgressMap.remove("SEARCH_STOPPING");
+        }
+        boolean interrupted = Thread.interrupted();
+        try {
+            StoreController.getInstance().saveHTML();
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     /**
