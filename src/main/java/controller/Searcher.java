@@ -2,17 +2,14 @@ package controller;
 
 import lombok.Getter;
 import model.TargetRange;
-import model.pi.SearchThread;
 import model.pi.SurvivalList;
 import model.pi.SurvivalResult;
 import model.ycd.YCDFileUtil;
-import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
-import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;

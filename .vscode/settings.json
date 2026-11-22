@@ -2,5 +2,5 @@
     "java.debug.settings.onBuildFailureProceed": true,
     "java.debug.settings.showHex": false,
     "java.debug.settings.showQualifiedNames": true,
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "automatic"
 }
