@@ -172,6 +172,7 @@ public class SearchThread extends Thread {
     }
 
     // ボイヤー・ムーア検索（テーブルを毎回作る版。テスト用に残す）
+    @SuppressWarnings("unused")
     private int boyerMooreSearch(String text, String pattern, int startIndex) {
         return boyerMooreSearch(text, pattern, buildBadCharacterTable(pattern), startIndex);
     }

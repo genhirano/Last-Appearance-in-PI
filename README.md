@@ -1,4 +1,5 @@
 # Last-Appearance-in-PI
+
 円周率の中で最も遅く出現する自然数の探索
 
 > [!NOTE]
@@ -6,13 +7,16 @@
 > 現在の探索進捗をリアルタイムで確認できます：[https://genhirano.coresv.com/](https://genhirano.coresv.com/)
 
 ## プロジェクト概要
+
 このプログラムは、円周率の中で「一番遅く出現する自然数」を桁数ごとに検索するプロジェクトです。例えば1桁では「0」が32桁目で最後に出現し、2桁では「68」が605桁目で最後に出現します。このような探索を3桁、4桁...と継続して行い、「円周率の中には、この世の中のすべての自然数が含まれている」という仮説を検証することを目的としています。
 
 ## プロローグ
+
 「円周率の中には、この世の中のすべての自然数が含まれている」と言われています。  
+
 * 例えば
   * 「999999」（ゼロが6個連続）は762桁目に出現します。  
-  * 「12345678」は186,557,266桁目に出現します。	
+  * 「12345678」は186,557,266桁目に出現します。
 
 このような特徴的なもの、その他のレアな数列もどうやらすべて出現するようです。
 
@@ -24,6 +28,7 @@
 > 数列「999999」（ゼロが6個連続）が出現する762桁目は「ファインマン・ポイント」[(→Wikipedia)](https://ja.wikipedia.org/wiki/ファインマン・ポイント)と呼ばれています。
 
 ## アプローチ
+
 円周率は予測不能ですので、すべての自然数が円周率に含まれていることを証明するためには、**ひとつずつ総当たりで探す**しかないようです。  
 自然数は無限にありますので、**桁数毎に**検索します。
 
@@ -31,7 +36,7 @@
 
 3.141592653589793238462643383279502884......
 
-| 対象 | 出現する場所<br>少数以下 |
+| 対象 | 出現する場所（小数以下） |
 | ---- | ------------------------ |
 | "0"  | 32 桁目 ※最遅出現        |
 | "1"  | 1 桁目                   |
@@ -49,7 +54,7 @@
 
 次に、2桁でやってみましょう。
 
-| 対象 | 出現する場所<br>少数以下 |
+| 対象 | 出現する場所（小数以下） |
 | ---- | ------------------------ |
 | "00" | 307 桁目                 |
 | "01" | 167 桁目                 |
@@ -57,7 +62,7 @@
 | "03" | 85 桁目                  |
 | "04" | 270 桁目                 |
 | :    | :                        |
-| "68" | 605 桁目 ※最遅出現       |  |
+| "68" | 605 桁目 ※最遅出現       |
 | :    | :                        |
 | "95" | 30 桁目                  |
 | "96" | 180 桁目                 |
@@ -65,20 +70,20 @@
 | "98" | 80 桁目                  |
 | "99" | 44 桁目                  |
 
-2桁の場合も見事に全部出現します。    
+2桁の場合も見事に全部出現します。
 
 さあ、3桁、4桁、5桁...N桁の自然数を対象にやってみましょう！！
 目視では、もう無理そうですね、、
 
 > [!NOTE]
->検索対象自然数の数  
->  1桁：[0,1,2,3,4,5,6,7,8,9]の10個  
->  2桁：[00,01,02...97,98,99]の100個  
->  3桁：[000,001,002...998,999]の1,000個  
->  :  
->  8桁：[00000000...99999999]の100,000,000個  
->  :  
->  N桁：[0{N}...9{N}]の10のN乗個  
+> 検索対象自然数の数  
+> 1桁：[0,1,2,3,4,5,6,7,8,9]の10個  
+> 2桁：[00,01,02...97,98,99]の100個  
+> 3桁：[000,001,002...998,999]の1,000個  
+> :  
+> 8桁：[00000000...99999999]の100,000,000個  
+> :  
+> N桁：[0{N}...9{N}]の10のN乗個  
 
 数桁であっても膨大な検索量ですが、「円周率の中には、この世の中のすべての自然数が含まれている」のであれば、すべての桁で全て発見できるはずです。  
 でも目視ではとても難しそうです。
@@ -86,43 +91,48 @@
 **対象桁において、「一番遅く出現する自然数」が特定できれば、その対象桁の自然数はすべて出現したと言えます。このアプローチで証明できそうです。**
 
 > [!NOTE]
->このプロジェクトにおいてN桁の自然数とは、N桁に左ゼロ埋めされた自然数をいいます。  
+> このプロジェクトにおいてN桁の自然数とは、N桁に左ゼロ埋めされた自然数をいいます。  
 > 例：4桁の自然数での「6」は、「0006」とします。
 
 ## クイックスタート
 
 ### 必要環境
-- 実行環境：Java 11以上（実行可能JARをコピーして動かすだけなら Java のみで、Maven は不要）
-- ビルド環境：Java 11以上 ＋ Maven（JDK 23以降でもビルド可能。Lombok のアノテーションプロセッサを pom.xml で明示しています）
-- 円周率データファイル（YCD形式）
-  - [データダウンロード](https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy)からy-cruncher形式の円周率データを事前にダウンロードしてください
+
+* 実行環境：Java 11以上（実行可能JARをコピーして動かすだけなら Java のみで、Maven は不要）
+* ビルド環境：Java 11以上 ＋ Maven（JDK 23以降でもビルド可能。Lombok のアノテーションプロセッサを pom.xml で明示しています）
+* 円周率データファイル（YCD形式）
+  * [データダウンロード](https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy)からy-cruncher形式の円周率データを事前にダウンロードしてください
 
 ### 基本的な実行手順
+
 1. JARファイルのビルド（開発PCで実行。テストも一緒に走ります。テストを省くなら `-DskipTests`）
+
    ```bash
    mvn clean package
    ```
+
    `target/Last-Appearance-in-PI-1.0-SNAPSHOT-jar-with-dependencies.jar` ができます。
 
 2. 実行環境（Raspberry Pi など）へ JAR をコピー
-   - ビルドは開発PCで行い、実行環境では JAR と設定ファイルだけを置きます。実行環境に Maven は不要です。
+   * ビルドは開発PCで行い、実行環境では JAR と設定ファイルだけを置きます。実行環境に Maven は不要です。
 
 3. 設定ファイル「default.properties」を作成
+
    ```properties
    # Web server port
    port=8080
-   
+
    # output path (経過保存用ファイルの吐き出し先パス)
    outputPath=./
-   
+
    # searches per cycle (1サイクルで同時に探す自然数の個数)
    # 大きいほどサイクル数が減り、総読み込み量が減る。メモリは1個あたり約13バイト（1,000万で約130MB）
    listSize=100000
-   
+
    # read pi data per cycle (円周率データの１回の読み込み長さ)
    # Multiples of 19 are desirable (19の倍数が望ましい)
    unitLength=380000
-   
+
    # Pi files (ycd Files)
    ycd000=X:/ycdFile/Pi - Dec - Chudnovsky - 0.ycd
    ycd001=X:/ycdFile/Pi - Dec - Chudnovsky - 1.ycd
@@ -130,18 +140,20 @@
    ```
 
 4. プログラム実行
+
    ```bash
    java -jar Last-Appearance-in-PI-1.0-SNAPSHOT-jar-with-dependencies.jar default.properties
    ```
 
 5. 進捗確認
-   - ブラウザで http://localhost:8080 にアクセス
+   * ブラウザで <http://localhost:8080> にアクセス
 
 > [!NOTE]
 > 対応桁数は 1〜18桁です（自然数の値が 64bit 整数に収まる範囲）。
 > 検索結果は桁数ごとに `outputPath/001.txt`, `002.txt`, ... に1サイクル1行（`開始,終了,最遅出現数,出現位置,所要秒`）で追記され、再起動時はこのファイルの最終行の続きから再開します。
 
 ### テスト
+
 ```bash
 # 単体・結合テスト（約10秒。テスト用の円周率データ 1,500万桁 を同梱）
 mvn test
@@ -149,12 +161,17 @@ mvn test
 # 速度計測（通常はスキップ。読み込み速度・桁数ごとの検索速度・5〜6桁の完了時間を表示）
 mvn test -Dtest=SearchBenchmarkTest -Dbenchmark=true
 ```
+
 テストでは、1〜6桁の最遅出現数と出現位置が [OEIS A032510 / A036903](#関連研究先行事例) と一致することを確認しています。
 
 ## プログラム「Last-Appearance-in-PI」
+
 円周率の中で一番遅く出現する自然数の検索
+
 ### プログラムの方針
-**円周率データから、１桁から始めて２桁、３桁と次々にすべての自然数を検索し、桁数ごとに一番最後に出現する自然数を特定する。** 
+
+**円周率データから、１桁から始めて２桁、３桁と次々にすべての自然数を検索し、桁数ごとに一番最後に出現する自然数を特定する。**
+
 * 円周率のデータ
   * 円周率データはネットで公開されているものをダウンロードして使用します。
   * [利用している円周率データ（Decimal）](https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy)
@@ -175,7 +192,9 @@ mvn test -Dtest=SearchBenchmarkTest -Dbenchmark=true
   4. 上記を守った上で、速ければ速いほどよい
 
 ### 探索の仕組み（なぜ「まだ出ていない数」を探せるのか）
+
 最遅出現の数そのものを探すのではなく、**消去法**で特定します。
+
 1. 対象範囲（例：8桁の 00000000〜00099999 の 10万個）の自然数をすべて「未発見（生存中）」としてサバイバルリストに載せる。
 2. 円周率を先頭から読み、見つかった数をリストから消していく。
 3. 最後に消えた数が、その範囲で最も遅く出現する数であり、その位置が出現位置。リストが空になれば、その範囲の数はすべて出現したことも同時に確定する。
@@ -198,17 +217,19 @@ mvn test -Dtest=SearchBenchmarkTest -Dbenchmark=true
 > [現在のプロジェクト稼働環境](https://genhirano.coresv.com/)では現在、円周率データ(10進数)22,600,000,000,000桁(22兆桁)を対象に実行されています。このデータ量は合計約9TBです。
 
 ## 実行中の画面イメージ
+
 ![Screenshot_20240511-144810.png](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/be791931-3a28-4d90-9ad5-d51bfd7e57a7)
 
 ### 特徴
+
 * 中断・再開が可能
   * プログラムは途方も無い時間を必要とします。実行後に思いついたプログラム実装を適用したり、意図しないプログラムの中断やコンピュータのダウンなどが発生したとき、最初からやり直したくありません。このプログラムは、そういったプログラムの途中終了後に再度実行しても途中から再開します。
 
 * 非富豪的なアプローチ
   * 非力なコンピュータでも実行可能なように設計しています。円周率データをメモリに一気に読み込むことはせず、ユニット（既定38万桁）ずつ読みます。発見した自然数の文字列や日時をすべてメモしておくこともせず、発見位置だけを保持します。
   * メモリ使用量は `listSize` にほぼ比例し、1個あたり約13バイトです（10万で約1MB、100万で約13MB、1,000万で約130MB。発見が進んでも増えません）。
-  *  [現在の稼働環境](https://genhirano.coresv.com/) - [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)（メモリ8GB）
-  *  ![PXL_20240507_111731293](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/37cc4fbb-8a0b-4370-bb22-b8822d4774fa)
+  * [現在の稼働環境](https://genhirano.coresv.com/) - [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)（メモリ8GB）
+  * ![PXL_20240507_111731293](https://github.com/genhirano/Last-Appearance-in-PI/assets/3538386/37cc4fbb-8a0b-4370-bb22-b8822d4774fa)
 
 * 円周率データ（YCDファイル）読み込みをモジュール化した
   * 膨大な円周率が格納されている"YCD"形式ファイルは保管効率のためにバイナリ保存されています。このプロジェクトでは、[y-cruncher](http://www.numberworld.org/y-cruncher/)プログラムが生成する **"YCD形式ファイル"** をJavaで直接扱えるように、読み込み部分のプログラムを隔離して明確にモジュール化しました。YCD_SeqProviderクラスは、YCDファイルから（ファイルをまたぐ場合でも）連続して指定した桁数ずつ切り出し提供できる、拡張forループが利用可能なモジュールを作りました。
@@ -216,26 +237,28 @@ mvn test -Dtest=SearchBenchmarkTest -Dbenchmark=true
 
 * 組み込みWEBサーバーと静的HTMLファイルコンパイル
   * プログラムにはWEBサーバーが組み込まれています。プログラムを開始するだけでWEBサーバーが起動し、WEBブラウザで検索中の様子がリアルタイムに確認できます。
-  * 平行してHTMLファイルを静的コンパイルして作成します。このHTMLファイルを使って、例えばFTPで公開用レンタルサーバーへアップロードするなど活用できます。 
+  * 平行してHTMLファイルを静的コンパイルして作成します。このHTMLファイルを使って、例えばFTPで公開用レンタルサーバーへアップロードするなど活用できます。
   * 円周率データが尽きて探しきれなかった場合や、18桁まで全て終了した場合は、検索スレッドだけが停止し、WEBサーバーは最終状態を表示し続けます（プロセスは終了しません）。
 
 ## 注意
+
 * Just as a hobby（あくまでも趣味）
   * このプロジェクトはあくまでも個人の趣味によって作成されており、結果の正しさはいかなる観点からも保証しません。
   * このプロジェクトが算出して確認すべき結果データは、すでに偉大な先人によって10桁までネットで公開されています。（結果確認のため、プログラムテスト時に参照させていただいています）
-    *  [The On-Line Encyclopedia of Integer Sequences® (OEIS®)](https://oeis.org/A332262)
+    * [The On-Line Encyclopedia of Integer Sequences® (OEIS®)](https://oeis.org/A332262)
 * Entertainment-oriented mindset（エンタメです）
   * このプロジェクトは探索結果を得るためのものでありますが、その探索過程、探索中の様子をリアルタイムで公開することを最重要視しています。
   * 総当り検索であることは変わりません。変換・検索は十分に速くなりましたが、処理時間は円周率データ（約9TB）の読み出しで決まるため、実用的（笑）なスピードは期待できません。
 
 ## 円周率データソース（PI DATA SOURCE）
+
 このプロジェクトでは、円周率計算プログラム「[y-cruncher](http://www.numberworld.org/y-cruncher/)」が出力した計算結果を検索対象としています。
 
 > [!NOTE]
 > **YCD形式ファイルについて**  
 > 膨大な円周率データは効率的な保管のためにバイナリ形式（YCD形式）で保存されています。このプロジェクトでは、YCDファイルをJavaで直接読み込めるモジュールを作成し、ファイルをまたいだ連続データ読み込みを可能にしています。
 
-データダウンロード: https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy
+データダウンロード: <https://drive.google.com/drive/folders/1L_HnNULhHSuDabD036H94pGdD-XbKhLy>
 
 ## 関連研究・先行事例
 
@@ -245,84 +268,99 @@ mvn test -Dtest=SearchBenchmarkTest -Dbenchmark=true
 >
 > **[オンライン整数列大辞典（OEIS）](https://oeis.org/)**  
 > The On-Line Encyclopedia of Integer Sequences® (OEIS®)  
-> - [A032510](https://oeis.org/A032510) 桁数毎の最後に出現する整数  
-> - [A036903](https://oeis.org/A036903) 桁数毎に全てが出現する事を確認するためにスキャンする必要のある桁数  
+>
+> * [A032510](https://oeis.org/A032510) 桁数毎の最後に出現する整数  
+> * [A036903](https://oeis.org/A036903) 桁数毎に全てが出現する事を確認するためにスキャンする必要のある桁数  
 >
 > **[Sequence Machine](https://sequencedb.net/)**  
 > Mathematical conjectures on top of 1301509 machine generated integer and decimal sequences.  
-> - [A032510](https://sequencedb.net/s/A032510): 0, 68, 483, 6716, 33394, 569540, 1075656, 36432643, 172484538, 5918289042, 56377726040,...  
-> - [A036903](https://sequencedb.net/s/A036903): 32, 606, 8555, 99849, 1369564, 14118312, 166100506, 1816743912, 22445207406, 241641121048, 2512258603207,...
+>
+> * [A032510](https://sequencedb.net/s/A032510): 0, 68, 483, 6716, 33394, 569540, 1075656, 36432643, 172484538, 5918289042, 56377726040,...  
+> * [A036903](https://sequencedb.net/s/A036903): 32, 606, 8555, 99849, 1369564, 14118312, 166100506, 1816743912, 22445207406, 241641121048, 2512258603207,...
 
 ## 変更履歴
 
 ### 2026年11月09日　大規模改修（10桁以上対応・高速化・省メモリ化・アルゴリズム一本化）
+
 Raspberry Pi 4（8GB）で22兆桁を対象に継続運用するにあたり、「メモリを大量に使わない範囲で、速ければ速いほどよい」という方針のもと、以下を実施しました。
 
-**1. 10桁以上への対応（`Integer` → `long`）**
+#### 1. 10桁以上への対応（`Integer` → `long`）
+
 * 範囲・件数・終了判定・サマリの計算が `int` だったため、10桁（最大値 9,999,999,999 ＞ int 上限 2,147,483,647）に到達した時点で `NumberFormatException` で停止する状態でした。`long` 化し、対応桁数を 1〜18桁と明記しました。
 * 影響：`SurvivalList`、`StoreController`、`ProgressReportBean`、`Web`、`Searcher`
 
-**2. YCD読み込み・変換の書き直し（`YCD_SeqBlockStream`）**
+#### 2. YCD読み込み・変換の書き直し（`YCD_SeqBlockStream`）
+
 * 旧実装は19桁のブロックを1つ足すたびにバッファ全体を文字列化していたため、1ユニット（38万桁）に約330msかかり、これが処理時間の大半を占めていました。
 * バイト列をまとめて読み、固定の文字配列に19桁ずつ直接書き出す方式に変更。1,500万桁の変換が 14,915ms → 51〜117ms（約130〜290倍）。作業メモリはユニット1つ分で一定。
 * 旧実装と同じ手順の参照デコーダと全15テストファイル・10種類のユニット桁数で完全一致を確認。
 
-**3. サバイバルリストの省メモリ化（`SurvivalList`）**
+#### 3. サバイバルリストの省メモリ化（`SurvivalList`）
+
 * 旧実装は `CopyOnWriteArrayList<String>` で、1件削除するたびに配列全体をコピーし、検索も線形探索でした。生存フラグ＋フェニック木に変更し、検索・削除を O(log n) に。文字列は保持せず番号から生成。
 * 発見済みは「発見位置のみ全件」＋「詳細は直近100件」に変更（旧実装は全件の文字列・位置・日時を保持）。
 * 1,000万件で 652MB＋発見詳細 → 約130MB。
 
-**4. 検索アルゴリズムの一本化（`SearchThread`）**
+#### 4. 検索アルゴリズムの一本化（`SearchThread`）
+
 * 旧実装は SL（生存リストを1件ずつ `indexOf`）と LC（左共通部分シーク）の2方式を切り替えていましたが、SL は6桁以上で実質使われず、5桁以下は数秒で終わるため、LC に一本化しました（共通部分が無い場合は全位置走査）。
 * 検討過程で「ビンゴカード方式（各位置のN桁を数値化して配列を直接参照）」も実装・計測しましたが、6桁以下でしか LC に勝てず（7桁以上は LC が2〜24倍速い）、不採用としました。
 
-**計測結果（1,500万桁のテストデータ、開発PC）**
+#### 計測結果（1,500万桁のテストデータ、開発PC）
 
 | 項目 | 変更前 | 変更後 |
-|---|---|---|
+| --- | --- | --- |
 | YCD読み込み・変換のみ | 14,915 ms | 51〜117 ms |
 | 5桁 00000-99999 完了まで | 55,627 ms | 54 ms |
 | 6桁 000000-099999 完了まで | 91,368 ms | 125 ms |
 | 6桁 500000-599999 完了まで | 79,078 ms | 164 ms |
 | 検索のみ1ユニット（7桁 / 10桁 / 12桁） | 2.78 / 0.66 / 0.35 ms | 1.53 / 0.34 / 0.24 ms |
 
-**あわせて修正した既存の不具合**
+#### あわせて修正した既存の不具合
+
 * データ末尾のユニットで探索が完了すると `YCD_SeqProvider.next()` が NPE で落ちる（`hasNext()` を見ずに `next()` を呼んでいた）。
 * 進行中の桁が無い瞬間（桁の切り替わり直後・起動直後）に WEB 画面が HTTP 500 になる。null を既定値に置き換え、ルート内の例外をログ出力するようにした。
 * 静的HTML生成の内部アクセス先がポート8080固定だった（設定値を使うように変更）。
 * 発見済み件数の表示が1件ずれていた。
 
-**動作の変更**
+#### 動作の変更
+
 * 円周率データが尽きた／全桁完了のとき、旧実装は `Runtime.exit` でプロセスごと終了していたが、検索スレッドだけ停止して WEB 画面を残すようにした。
 * `SearchThread.getAlgorithm()` を削除（方式が1つになったため）。
 
-**テスト**
+#### 改修時のテスト
+
 * 新規：`YCDSeqBlockStreamTest`（参照デコーダとの一致）、`SearchThreadRealDataTest`（OEIS との一致、参照実装との一致）、`SurvivalListLongRangeTest`、`SurvivalListStructureTest`、`StoreControllerLongRangeTest`、`WebIntegrationTest`（Main を起動して WEB を取得する結合テスト）、`SearchBenchmarkTest`（速度計測、通常はスキップ）。
 * 全138件。
 
-**ビルド環境**
-* Lombok を 1.18.42 に更新し、JDK 23以降でも必要なアノテーションプロセッサの明示を `pom.xml` に追加（開発PCの JDK 25 でビルドできなかったため）。生成されるクラスファイルは Java 8 形式で、実行には Java 11 以上が必要。
+#### ビルド環境
+
+* Lombok を 1.18.42 に更新し、JDK 23以降でも必要なアノテーションプロセッサの明示を `pom.xml` に追加（開発PCの JDK 25 でビルドできなかったため）。生成されるクラスファイルは Java 11 形式で、実行には Java 11 以上が必要。
 
 ## 謝辞・使用技術（SPECIAL THANKS）
+
 このプロジェクトの実現にあたり、以下の優秀なツールやサービスを利用させていただいています：
 
 ### 主要技術・ツール
+
 * [y-cruncher - A Multi-Threaded Pi-Program](http://www.numberworld.org/y-cruncher/)
-  * Alexander J. Yee - y-cruncher is a program that can compute Pi and other constants to trillions of digits. 
+  * Alexander J. Yee - y-cruncher is a program that can compute Pi and other constants to trillions of digits.
 * [OpenJDK](https://openjdk.org/)
   * The place to collaborate on an open-source implementation of the Java Platform, Standard Edition, and related projects.
 * [Spark Framework](https://sparkjava.com/)
   * micro framework for creating web applications in Kotlin and Java 8 with minimal effort
 
 ### UI・デザイン
+
 * [Bulma](https://bulma.io/)
-  * CSS Framework 
+  * CSS Framework
 * [Octicons](https://github.com/primer/octicons)
   * Octicons are a set of SVG icons
 
 ### 開発環境・ツール
+
 * [Apache Maven](https://maven.apache.org/)
-  * software project management and comprehension tool. 
+  * software project management and comprehension tool.
 * [IntelliJ IDEA](https://www.jetbrains.com/idea/)
   * The IDE that makes development a more productive and enjoyable experience
 * [GitHub](https://github.com/)
@@ -333,7 +371,8 @@ Raspberry Pi 4（8GB）で22兆桁を対象に継続運用するにあたり、�
   * The leading open source automation server
 
 ### その他
-* ~~[Gitlab, Gitlab Pages]~~ 
+
+* ~~[Gitlab, Gitlab Pages]~~
   * ~~結果公開用にGitLabPagesを利用していましたが、400分/月のパイプラインの利用制限により要件と見合わなくなったため現在未使用~~
 * [Real-World Data Sets](https://introcs.cs.princeton.edu/java/data/)
-  * list of real-world data sets collected from the web.  
+  * list of real-world data sets collected from the web.

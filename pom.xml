@@ -22,8 +22,6 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
                     <!-- JDK 23以降はアノテーション処理が既定で無効のため、Lombokを明示指定 -->
                     <annotationProcessorPaths>
                         <path>

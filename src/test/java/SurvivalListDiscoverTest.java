@@ -88,6 +88,7 @@ public class SurvivalListDiscoverTest extends TestBase {
 
     /** SurvivalList の remove(int) は使用禁止で RuntimeException を投げる */
     @Test
+    @SuppressWarnings("deprecation")
     void remove_使用禁止メソッドは例外を投げる() {
         SurvivalList sl = new SurvivalList(3, 0, 9);
 

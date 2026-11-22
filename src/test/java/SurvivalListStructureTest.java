@@ -86,6 +86,7 @@ public class SurvivalListStructureTest {
     }
 
     @Test
+    @SuppressWarnings("unlikely-arg-type")
     void 範囲外や形式違いの文字列は含まれない() {
         SurvivalList sl = new SurvivalList(3, 100, 199);
         assertFalse(sl.contains("099"));
@@ -114,6 +115,7 @@ public class SurvivalListStructureTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void 変更系メソッドは使用できない() {
         SurvivalList sl = new SurvivalList(2, 0, 9);
         assertThrows(RuntimeException.class, () -> sl.add("10"));
