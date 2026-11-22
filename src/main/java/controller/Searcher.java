@@ -146,6 +146,8 @@ public class Searcher extends Thread {
             StoreController.survivalProgressMap.remove("STAGE1_BATCHES");
             StoreController.survivalProgressMap.remove("STAGE1_PROGRESS");
             StoreController.survivalProgressMap.remove("STAGE1_WORKERS");
+            StoreController.survivalProgressMap.remove("STAGE1_WORKER_INITIALS");
+            StoreController.survivalProgressMap.remove("STAGE1_PHASE");
             StoreController.survivalProgressMap.remove("STAGE1_SPEED");
         }
         java.util.Properties settings = Env.getInstance().getProp();
