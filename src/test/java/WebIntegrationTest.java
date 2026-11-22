@@ -161,6 +161,12 @@ public class WebIntegrationTest {
         assertFalse(runningExportedHtml.contains(validToken), "静的 index.html にはCSRFトークンを出力しないこと");
         assertFalse(runningExportedHtml.contains("action=\"/stop\""), "静的 index.html には停止フォームを出力しないこと");
 
+        // 非ループバック経由の GET / 応答には停止トークンや停止フォームを含めない
+        Response nonLoopbackGetRes = get("/", Collections.singletonMap("X-Forwarded-For", "203.0.113.10"));
+        assertEquals(200, nonLoopbackGetRes.code);
+        assertFalse(nonLoopbackGetRes.body.contains(validToken), "非ループバックGET応答にはCSRFトークンを含めないこと");
+        assertFalse(nonLoopbackGetRes.body.contains("action=\"/stop\""), "非ループバックGET応答には停止フォームを含めないこと");
+
         // トークン欠落は 403 で拒否され、検索は停止しない
         Response missingTokenRes = post("/stop", Collections.emptyMap());
         assertEquals(403, missingTokenRes.code);
@@ -207,9 +213,16 @@ public class WebIntegrationTest {
     }
 
     private static Response get(String path) throws IOException {
+        return get(path, Collections.emptyMap());
+    }
+
+    private static Response get(String path, Map<String, String> headers) throws IOException {
         HttpURLConnection con = (HttpURLConnection) new URL("http://localhost:" + PORT + path).openConnection();
         con.setConnectTimeout(5000);
         con.setReadTimeout(30000);
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            con.setRequestProperty(entry.getKey(), entry.getValue());
+        }
         Response r = new Response();
         r.code = con.getResponseCode();
         InputStream in = (r.code < 400) ? con.getInputStream() : con.getErrorStream();

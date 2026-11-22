@@ -45,8 +45,11 @@ public final class StagedSearch {
             throw new IllegalArgumentException("Candidate range out of bounds for length " + length);
         }
         long expectedCount = end - start + 1L;
-        if (combined.size() != expectedCount) {
-            throw new IllegalArgumentException("combined SurvivalList size does not match [start, end]");
+        if (combined.getDiscoveredCount() != 0
+                || combined.size() != expectedCount
+                || Long.parseLong(combined.get(0)) != start
+                || Long.parseLong(combined.get(combined.size() - 1)) != end) {
+            throw new IllegalArgumentException("combined SurvivalList must be an undiscovered list matching [start, end]");
         }
         StageOnePartition partition = new StageOnePartition(start, end, threads, batches);
         java.util.concurrent.atomic.AtomicInteger workerNumber = new java.util.concurrent.atomic.AtomicInteger();

@@ -99,7 +99,8 @@ public class Web {
             @Override
             public ModelAndView handle(Request req, Response resp) throws Exception {
                 try {
-                    return buildPage(startTime);
+                    boolean loopback = isLoopbackRequest(req.raw().getRemoteAddr(), req.headers("X-Forwarded-For"));
+                    return buildPage(startTime, loopback);
                 } catch (Exception e) {
                     // ルート内の例外はログに出さないと原因が追えない（SLF4J は NOP）ため、ここで出力してから再スロー
                     System.out.println();
@@ -120,7 +121,7 @@ public class Web {
      * @param startTime システム開始時刻
      * @return モデルとビュー
      */
-    private static ModelAndView buildPage(ZonedDateTime startTime) throws Exception {
+    private static ModelAndView buildPage(ZonedDateTime startTime, boolean includeStopForm) throws Exception {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -141,7 +142,9 @@ public class Web {
         model.put("SYSTEMSTART", startTime);
         model.put("SEARCH_STOPPED", Searcher.getStoppedReason());
         model.put("SEARCH_STOPPING", StoreController.survivalProgressMap.get("SEARCH_STOPPING"));
-        model.put("STOP_TOKEN", STOP_TOKEN);
+        if (includeStopForm) {
+            model.put("STOP_TOKEN", STOP_TOKEN);
+        }
         model.put("SEARCH_STAGE", StoreController.survivalProgressMap.get("SEARCH_STAGE"));
         model.put("STAGE1_BATCH", StoreController.survivalProgressMap.get("STAGE1_BATCH"));
         model.put("STAGE1_BATCHES", StoreController.survivalProgressMap.get("STAGE1_BATCHES"));

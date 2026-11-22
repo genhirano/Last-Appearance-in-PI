@@ -56,5 +56,11 @@ class StagedSearchTest {
         assertThrows(IllegalArgumentException.class, () -> search.search(1, 0, 9, new SurvivalList(2, 0, 9)));
         assertThrows(IllegalArgumentException.class, () -> search.search(1, 0, 10, new SurvivalList(1, 0, 9)));
         assertThrows(IllegalArgumentException.class, () -> search.search(1, 0, 9, new SurvivalList(1, 0, 8)));
+        // 件数が一致しても範囲が異なるリストは拒否される
+        assertThrows(IllegalArgumentException.class, () -> search.search(2, 10, 19, new SurvivalList(2, 0, 9)));
+        // 一部発見済みで残り件数が一致するだけのリストも拒否される
+        SurvivalList partiallyUsed = new SurvivalList(2, 10, 20);
+        partiallyUsed.discover("20", 1L);
+        assertThrows(IllegalArgumentException.class, () -> search.search(2, 10, 19, partiallyUsed));
     }
 }
