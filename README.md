@@ -36,7 +36,7 @@
 
 3.141592653589793238462643383279502884......
 
-| 対象 | 出現する場所（少数以下） |
+| 対象 | 出現する場所（小数以下） |
 | ---- | ------------------------ |
 | "0"  | 32 桁目 ※最遅出現        |
 | "1"  | 1 桁目                   |
@@ -54,7 +54,7 @@
 
 次に、2桁でやってみましょう。
 
-| 対象 | 出現する場所（少数以下） |
+| 対象 | 出現する場所（小数以下） |
 | ---- | ------------------------ |
 | "00" | 307 桁目                 |
 | "01" | 167 桁目                 |
@@ -328,7 +328,7 @@ Raspberry Pi 4（8GB）で22兆桁を対象に継続運用するにあたり、�
 * 円周率データが尽きた／全桁完了のとき、旧実装は `Runtime.exit` でプロセスごと終了していたが、検索スレッドだけ停止して WEB 画面を残すようにした。
 * `SearchThread.getAlgorithm()` を削除（方式が1つになったため）。
 
-#### テスト
+#### 改修時のテスト
 
 * 新規：`YCDSeqBlockStreamTest`（参照デコーダとの一致）、`SearchThreadRealDataTest`（OEIS との一致、参照実装との一致）、`SurvivalListLongRangeTest`、`SurvivalListStructureTest`、`StoreControllerLongRangeTest`、`WebIntegrationTest`（Main を起動して WEB を取得する結合テスト）、`SearchBenchmarkTest`（速度計測、通常はスキップ）。
 * 全138件。
