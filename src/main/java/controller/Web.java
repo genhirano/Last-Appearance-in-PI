@@ -30,6 +30,24 @@ public class Web {
     private static volatile Searcher searcher;
     public static void setSearcher(Searcher value) { searcher = value; }
 
+    public static boolean isLoopbackAddress(String addr) {
+        return "127.0.0.1".equals(addr) || "::1".equals(addr) || "0:0:0:0:0:0:0:1".equals(addr);
+    }
+
+    public static boolean isLoopbackRequest(String remoteAddr, String forwardedFor) {
+        if (!isLoopbackAddress(remoteAddr)) {
+            return false;
+        }
+        if (forwardedFor != null && !forwardedFor.trim().isEmpty()) {
+            for (String part : forwardedFor.split(",")) {
+                if (!isLoopbackAddress(part.trim())) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     // ThymeleafTemplateEngine
     private static TemplateEngine templateEngine;
 
@@ -61,7 +79,7 @@ public class Web {
         staticFiles.location("/public/");
         post("/stop", (req, resp) -> {
             String remote = req.raw().getRemoteAddr();
-            if (!("127.0.0.1".equals(remote) || "::1".equals(remote) || "0:0:0:0:0:0:0:1".equals(remote))) {
+            if (!isLoopbackRequest(remote, req.headers("X-Forwarded-For"))) {
                 resp.status(403);
                 return "Forbidden";
             }

@@ -10,6 +10,8 @@ import model.ycd.YCD_SeqProvider;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -19,10 +21,14 @@ import java.util.List;
 public class Searcher extends Thread {
     private volatile boolean stopRequested;
 
-    public void requestStop() {
+    public synchronized void requestStop() {
         stopRequested = true;
         StoreController.survivalProgressMap.put("SEARCH_STOPPING", true);
         interrupt();
+    }
+
+    public boolean isStopRequested() {
+        return stopRequested;
     }
 
     @Getter
@@ -56,7 +62,7 @@ public class Searcher extends Thread {
 
         // 検索処理のメインループ
         while (true) {
-            if (stopRequested) {
+            if (stopRequested || isInterrupted()) {
                 stop("Search interrupted; unfinished range will be retried.");
                 return;
             }
@@ -75,24 +81,45 @@ public class Searcher extends Thread {
             // 1サイクルのサバイバル実行
             SurvivalResult sr = survive(targetRange);
             if (null == sr) {
-                // YCDデータが尽きて探しきれなかった。検索スレッドだけ終了し、WEB画面は残す
-                return;
-            }
-            if (stopRequested || isInterrupted()) {
-                stop("Search interrupted; unfinished range will be retried.");
+                // YCDデータが尽きて探しきれなかった、または中断された。検索スレッドだけ終了し、WEB画面は残す
                 return;
             }
 
             // １サイクルの終了時間
             ZonedDateTime endTime = ZonedDateTime.now();
+
+            // １サイクルの結果保存（停止要求との競合・保存中の割り込みによる部分書き込みや停止状態の未確定を防ぐ）
+            synchronized (this) {
+                if (stopRequested || isInterrupted()) {
+                    stop("Search interrupted; unfinished range will be retried.");
+                    return;
+                }
+                boolean interrupted = Thread.interrupted();
+                try {
+                    StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
+                            targetRange.getEnd(), sr.getTarget(), sr.getFindPos(), startTime, endTime);
+                } catch (RuntimeException e) {
+                    if (stopRequested || isInterrupted() || hasInterruptedCause(e)) {
+                        stop("Search interrupted; unfinished range will be retried.");
+                        return;
+                    }
+                    throw e;
+                } finally {
+                    if (interrupted) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+
             long elapsedSeconds = Duration.between(startTime, endTime).getSeconds();
             System.out.printf("  -> [完了] %d 桁 (%s ～ %s) | 最遅出現: \"%s\" (位置: %,d 桁目) [所要時間: %,d秒]%n",
                     targetRange.getLength(), targetRange.getStart(), targetRange.getEnd(),
                     sr.getTarget(), sr.getFindPos(), elapsedSeconds);
 
-            // １サイクルの結果保存
-            StoreController.getInstance().saveFile(targetRange.getLength(), targetRange.getStart(),
-                    targetRange.getEnd(), sr.getTarget(), sr.getFindPos(), startTime, endTime);
+            if (stopRequested || isInterrupted()) {
+                stop("Search interrupted; unfinished range will be retried.");
+                return;
+            }
 
             // Httpで強制アクセス（静的HTMLを作成するため）
             StoreController.getInstance().saveHTML();
@@ -115,14 +142,18 @@ public class Searcher extends Thread {
             StoreController.survivalProgressMap.remove("NOW_SURVIVAL_DEPTH");
             StoreController.survivalProgressMap.remove("STAGE1_DEPTH");
             StoreController.survivalProgressMap.remove("STAGE1_BATCH");
+            StoreController.survivalProgressMap.remove("STAGE1_BATCHES");
             StoreController.survivalProgressMap.remove("STAGE1_PROGRESS");
+            StoreController.survivalProgressMap.remove("STAGE1_WORKERS");
+            StoreController.survivalProgressMap.remove("STAGE1_SPEED");
         }
         java.util.Properties settings = Env.getInstance().getProp();
         try {
             model.pi.StagedSearch search = new model.pi.StagedSearch(um_piFileList, unitLength,
                     Integer.parseInt(settings.getProperty("stage1Threads", "3")),
                     Integer.parseInt(settings.getProperty("stage1BatchCount", "10")),
-                    Double.parseDouble(settings.getProperty("stage1SurvivalRate", "5")));
+                    Double.parseDouble(settings.getProperty("stage1SurvivalRate", "5")),
+                    this::isStopRequested);
             SurvivalResult result = search.search(targetRange.getLength(), Long.parseLong(targetRange.getStart()),
                     Long.parseLong(targetRange.getEnd()), survivalList);
             if (result == null) {
@@ -145,12 +176,24 @@ public class Searcher extends Thread {
             stop("Search interrupted; unfinished range will be retried.");
             return null;
         } catch (Exception e) {
-            if (stopRequested) {
+            if (stopRequested || isInterrupted() || hasInterruptedCause(e)) {
                 stop("Search interrupted; unfinished range will be retried.");
                 return null;
             }
             throw new RuntimeException(e);
         }
+    }
+
+    private static boolean hasInterruptedCause(Throwable t) {
+        while (t != null) {
+            if (t instanceof InterruptedException
+                    || t instanceof InterruptedIOException
+                    || t instanceof ClosedByInterruptException) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
     }
 
     /**
@@ -164,7 +207,14 @@ public class Searcher extends Thread {
         StoreController.survivalProgressMap.put("SEARCH_STOPPED", reason);
         StoreController.survivalProgressMap.put("SEARCH_STOPPED_AT", ZonedDateTime.now());
         StoreController.survivalProgressMap.remove("SEARCH_STOPPING");
-        StoreController.getInstance().saveHTML();
+        boolean interrupted = Thread.interrupted();
+        try {
+            StoreController.getInstance().saveHTML();
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     /**

@@ -7,14 +7,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 
 /** Two-stage search of a single inclusive candidate range. */
 public final class StagedSearch {
     private final List<File> files;
     private final int unitLength, threads, batches;
     private final double survivalPercent;
+    private final BooleanSupplier stopRequested;
 
     public StagedSearch(List<File> files, int unitLength, int threads, int batches, double survivalPercent) {
+        this(files, unitLength, threads, batches, survivalPercent, () -> false);
+    }
+
+    public StagedSearch(List<File> files, int unitLength, int threads, int batches, double survivalPercent,
+            BooleanSupplier stopRequested) {
         if (unitLength <= 0 || threads <= 0 || batches <= 0 || !Double.isFinite(survivalPercent)
                 || survivalPercent <= 0 || survivalPercent > 100) throw new IllegalArgumentException("Invalid staged search settings");
         this.files = files;
@@ -22,6 +29,7 @@ public final class StagedSearch {
         this.threads = threads;
         this.batches = batches;
         this.survivalPercent = survivalPercent;
+        this.stopRequested = stopRequested != null ? stopRequested : () -> false;
     }
 
     /** Returns null when the available input cannot resolve every candidate. */
@@ -32,6 +40,7 @@ public final class StagedSearch {
                 new Thread(task, "staged-search-worker-" + workerNumber.incrementAndGet()));
         SurvivalResult deepest = new SurvivalResult("", -1L);
         try {
+            checkStop();
             List<SurvivalList> pilot = groups(partition, length, 0);
             System.out.println("  -> Stage 1: パイロット測定中...");
             long depth = scan(pilot, length, Long.MAX_VALUE, true, workers, null, deepest);
@@ -42,6 +51,7 @@ public final class StagedSearch {
                 synchronized (combined) { combined.discover(target, position); }
             };
             for (int batch = 0; batch < partition.batchCount(); batch++) {
+                checkStop();
                 StoreController.survivalProgressMap.put("STAGE1_BATCH", batch + 1);
                 StoreController.survivalProgressMap.put("STAGE1_PROGRESS", 100.0 * batch / partition.batchCount());
                 scan(groups(partition, length, batch), length, depth, false, workers, record, deepest);
@@ -51,6 +61,7 @@ public final class StagedSearch {
             StoreController.survivalProgressMap.put("STAGE1_PROGRESS", 100.0);
             System.out.printf("  -> Stage 1: 全バッチ完了 (Stage 2 へ引き継ぐ候補: %,d 件)%n", combined.size());
             if (!combined.isEmpty()) {
+                checkStop();
                 StoreController.survivalProgressMap.put("SEARCH_STAGE", 2);
                 System.out.printf("  -> Stage 2: 残り候補 %,d 件の最終確定走査中...%n", combined.size());
                 List<SurvivalList> all = new ArrayList<>();
@@ -69,6 +80,12 @@ public final class StagedSearch {
                 }
             }
             if (interrupted) Thread.currentThread().interrupt();
+        }
+    }
+
+    private void checkStop() throws InterruptedException {
+        if (Thread.currentThread().isInterrupted() || stopRequested.getAsBoolean()) {
+            throw new InterruptedException();
         }
     }
 
@@ -95,12 +112,22 @@ public final class StagedSearch {
         int[] thresholds = new int[lists.size()];
         long started = System.nanoTime();
         long lastLog = started;
-        for (int i = 0; i < lists.size(); i++) thresholds[i] = (int) Math.floor(lists.get(i).size() * survivalPercent / 100.0);
+        List<Integer> initialRemaining = new ArrayList<>();
+        for (int i = 0; i < lists.size(); i++) {
+            thresholds[i] = (int) Math.floor(lists.get(i).size() * survivalPercent / 100.0);
+            initialRemaining.add(lists.get(i).size());
+        }
+        StoreController.survivalProgressMap.put("STAGE1_WORKERS", initialRemaining);
+        if (pilot) {
+            StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", 0L);
+            StoreController.survivalProgressMap.put("STAGE1_SPEED", 0.0);
+        }
         long availableEnd = 0;
         try (YCD_SeqProvider provider = new YCD_SeqProvider(5, files, length, unitLength)) {
             while (provider.hasNext()) {
-                if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+                checkStop();
                 YCD_SeqProvider.Unit unit = provider.next();
+                checkStop();
                 long unitStart = unit.getStartDigit() - 1;
                 availableEnd = Math.max(availableEnd, unitStart + Math.max(0, unit.getData().length() - length + 1));
                 if (unitStart >= end) break;
@@ -113,6 +140,7 @@ public final class StagedSearch {
                     futures.add(workers.submit(task::run));
                 }
                 for (Future<?> future : futures) future.get();
+                checkStop();
                 long now = System.nanoTime();
                 if (now - lastLog >= TimeUnit.SECONDS.toNanos(5)) {
                     long remaining = 0;
@@ -121,18 +149,14 @@ public final class StagedSearch {
                             Math.min(availableEnd, end), remaining);
                     lastLog = now;
                 }
-                if (pilot) {
-                    List<Integer> remaining = new ArrayList<>();
-                    for (SurvivalList list : lists) remaining.add(list.size());
-                    StoreController.survivalProgressMap.put("STAGE1_WORKERS", remaining);
-                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", availableEnd);
-                    double seconds = (System.nanoTime() - started) / 1_000_000_000.0;
-                    StoreController.survivalProgressMap.put("STAGE1_SPEED", seconds > 0 ? availableEnd / seconds : 0.0);
-                }
+                List<Integer> remaining = new ArrayList<>();
+                for (SurvivalList list : lists) remaining.add(list.size());
+                StoreController.survivalProgressMap.put("STAGE1_WORKERS", remaining);
+                double seconds = (now - started) / 1_000_000_000.0;
+                long currentPos = pilot ? availableEnd : Math.min(availableEnd, end);
+                StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", currentPos);
+                StoreController.survivalProgressMap.put("STAGE1_SPEED", seconds > 0 ? Math.max(0L, currentPos - from) / seconds : 0.0);
                 if (!pilot && listener != null) {
-                    List<Integer> remaining = new ArrayList<>();
-                    for (SurvivalList list : lists) remaining.add(list.size());
-                    StoreController.survivalProgressMap.put("STAGE1_WORKERS", remaining);
                     Object batch = StoreController.survivalProgressMap.get("STAGE1_BATCH");
                     Object count = StoreController.survivalProgressMap.get("STAGE1_BATCHES");
                     if (end > 0 && batch instanceof Integer && count instanceof Integer) {
@@ -146,8 +170,11 @@ public final class StagedSearch {
                     if (!pilot && task.getResult().compareTo(deepest) > 0) deepest.update(task.getResult());
                     if (task.getThresholdWindow() >= 0) reached = Math.min(reached, task.getThresholdWindow());
                 }
-                if (pilot && reached != Long.MAX_VALUE) return reached + 1;
-                if (!pilot) StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", Math.min(availableEnd, end));
+                if (pilot && reached != Long.MAX_VALUE) {
+                    long resolvedDepth = reached + 1;
+                    StoreController.survivalProgressMap.put("NOW_SURVIVAL_DEPTH", resolvedDepth);
+                    return resolvedDepth;
+                }
                 boolean empty = true;
                 for (SurvivalList list : lists) empty &= list.isEmpty();
                 if (empty || availableEnd >= end) break;
